@@ -1,0 +1,25 @@
+{
+  "name": "amsterdam-to-vzla",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Plataforma multi-tenant de comercio electrónico - amsterdamToVzla & asociados",
+  "workspaces": [
+    "server",
+    "apps/web",
+    "apps/mobile"
+  ],
+  "scripts": {
+    "server": "npm run dev -w server",
+    "web": "npm run dev -w apps/web",
+    "mobile": "npm run start -w apps/mobile",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "plane:pull": "node scripts/sync-plane.js pull",
+    "plane:push": "node scripts/sync-plane.js push",
+    "plane:status": "node scripts/sync-plane.js status"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.7",
+    "vitest": "^4.1.10"
+  }
+}
