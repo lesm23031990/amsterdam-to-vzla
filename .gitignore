@@ -1,7 +1,37 @@
+# Dependencies
 node_modules/
+
+# Environment
 .env
-*.db
+.env.local
+.env.*.local
+
+# Build outputs
 dist/
 .next/
 .expo/
 *.tsbuildinfo
+*.js.map
+
+# Database
+*.db
+*.sqlite
+prisma/migrations/
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Coverage
+coverage/
