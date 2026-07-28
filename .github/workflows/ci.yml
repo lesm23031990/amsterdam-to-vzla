@@ -15,7 +15,7 @@ jobs:
         with:
           node-version: 22
           cache: 'npm'
-      - run: npm ci
+      - run: npm install
       - name: Generate Prisma client (if schema exists)
         run: npm run db:generate 2>/dev/null || true
       - run: npm test
