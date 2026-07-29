@@ -64,9 +64,30 @@ export default function Home() {
             </div>
           </div>
           <div className={styles.heroVisual}>
-            <div className={styles.heroCard1}><span className={styles.heroCardEmoji}>🍞</span><span>Pan artesanal</span><strong>$3.50</strong></div>
-            <div className={styles.heroCard2}><span className={styles.heroCardEmoji}>📱</span><span>Auriculares</span><strong>$45.00</strong></div>
-            <div className={styles.heroCard3}><span className={styles.heroCardEmoji}>🍕</span><span>Pizza Margherita</span><strong>$10.00</strong></div>
+            <a href="/products?category=comida" className={styles.heroCard1}>
+              <div className={styles.heroCardImg} style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600)' }} />
+              <div className={styles.heroCardLabel}>
+                <span className={styles.heroCardTag}>🍕 Más vendido</span>
+                <strong className={styles.heroCardName}>Pizza Margherita</strong>
+                <span className={styles.heroCardPrice}>$10.00</span>
+              </div>
+            </a>
+            <a href="/products?category=electronica" className={styles.heroCard2}>
+              <div className={styles.heroCardImg} style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600)' }} />
+              <div className={styles.heroCardLabel}>
+                <span className={styles.heroCardTag}>🎧 Popular</span>
+                <strong className={styles.heroCardName}>Auriculares Bluetooth</strong>
+                <span className={styles.heroCardPrice}>$45.00</span>
+              </div>
+            </a>
+            <a href="/products?category=ropa" className={styles.heroCard3}>
+              <div className={styles.heroCardImg} style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=600)' }} />
+              <div className={styles.heroCardLabel}>
+                <span className={styles.heroCardTag}>👟 Nuevo</span>
+                <strong className={styles.heroCardName}>Zapatos Deportivos</strong>
+                <span className={styles.heroCardPrice}>$48.00</span>
+              </div>
+            </a>
           </div>
         </div>
       </section>
