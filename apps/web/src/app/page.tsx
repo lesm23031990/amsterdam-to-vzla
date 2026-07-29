@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import styles from './page.module.css';
 
-interface Store {
-  id: string; name: string; slug: string; description?: string;
-  category?: string; coverImage?: string; logoImage?: string;
+interface Product {
+  id: string; name: string; price: number; currency: string;
+  description?: string; category?: string; images: string[]; stock: number;
+  storeId: string; store?: { name: string; slug: string };
 }
 
 const categories = [
@@ -18,199 +20,170 @@ const categories = [
   { id: 'electronica', label: 'Electrónica', emoji: '📱' },
   { id: 'hogar', label: 'Hogar', emoji: '🏠' },
   { id: 'artesania', label: 'Artesanía', emoji: '🎨' },
-]
+];
 
 export default function Home() {
-  const { user } = useAuth()
-  const [stores, setStores] = useState<Store[]>([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('')
+  const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const q = searchParams.get('q') || '';
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [addedToCart, setAddedToCart] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    api.get<Store[]>('/stores').then((res) => {
-      if (res.ok && res.data) setStores(res.data)
-      setLoading(false)
-    })
-  }, [])
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (selectedCategory) params.set('category', selectedCategory);
+    api.get<Product[]>(`/products?${params}`).then((res) => {
+      if (res.ok && res.data) setProducts(res.data);
+      setLoading(false);
+    });
+  }, [q, selectedCategory]);
 
-  const filtered = stores.filter((s) => {
-    const matchSearch = s.name.toLowerCase().includes(search.toLowerCase())
-    const matchCategory = !selectedCategory || s.category === selectedCategory
-    return matchSearch && matchCategory
-  })
+  useEffect(() => { if (q) setSelectedCategory(''); }, [q]);
+
+  const featuredProducts = useMemo(() => products.filter(p => p.stock > 0).slice(0, 8), [products]);
+
+  const handleQuickAdd = async (productId: string) => {
+    if (!user) { window.location.href = '/login'; return; }
+    const res = await api.post('/cart/items', { productId, quantity: 1 });
+    if (res.ok) {
+      setAddedToCart(prev => ({ ...prev, [productId]: true }));
+      setTimeout(() => setAddedToCart(prev => ({ ...prev, [productId]: false })), 2000);
+    }
+  };
 
   return (
     <div className={styles.page}>
-      <section className={styles.hero}>
-        <div className={styles.heroBg} />
-        <div className={styles.heroOverlay} />
+      <section className={styles.heroBanner}>
         <div className={styles.heroContent}>
-          <div className={styles.heroBadge}></div>
-          <h1 className={styles.heroTitle}>
-            San Cristóbal<span className={styles.heroAccent}> en tu mesa</span>
-          </h1>
-          <p className={styles.heroSubtitle}>
-            Descubre los sabores, productos y servicios de las mejores tiendas locales.
-            Todo desde un solo lugar. 🚀
-          </p>
-          <div className={styles.heroSearch}>
-            <input
-              type="text"
-              placeholder="¿Qué antojo tienes hoy?"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className={styles.heroInput}
-            />
-            <Link href="/stores" className={styles.heroBtn}>Explorar</Link>
+          <div className={styles.heroText}>
+            <span className={styles.heroBadge}>🚀 Envío gratis en tu primera compra</span>
+            <h1 className={styles.heroTitle}>Lo mejor de San Cristóbal,<br /><span className={styles.heroAccent}>en un solo lugar</span></h1>
+            <p className={styles.heroSub}>Compra directo a las mejores tiendas locales. Pan recién horneado, tecnología, ropa y más.</p>
+            <div className={styles.heroCtas}>
+              <Link href="#products" className={styles.heroCta}>Ver productos</Link>
+              <Link href="/register" className={styles.heroCtaOutline} onClick={(e) => { if (user) e.preventDefault(); }}>{user ? 'Mis pedidos' : 'Crear cuenta'}</Link>
+            </div>
           </div>
-          <div className={styles.heroStats}>
-            <div className={styles.stat}>
-              <span className={styles.statNumber}>{stores.length}</span>
-              <span className={styles.statLabel}>Tiendas</span>
+          <div className={styles.heroVisual}>
+            <div className={styles.heroCard1}>
+              <span className={styles.heroCardEmoji}>🍞</span>
+              <span>Pan artesanal</span>
+              <strong>$3.50</strong>
             </div>
-            <div className={styles.stat}>
-              <span className={styles.statNumber}>100+</span>
-              <span className={styles.statLabel}>Productos</span>
+            <div className={styles.heroCard2}>
+              <span className={styles.heroCardEmoji}>📱</span>
+              <span>Auriculares</span>
+              <strong>$45.00</strong>
             </div>
-            <div className={styles.stat}>
-              <span className={styles.statNumber}>24/7</span>
-              <span className={styles.statLabel}>Delivery</span>
+            <div className={styles.heroCard3}>
+              <span className={styles.heroCardEmoji}>🍕</span>
+              <span>Pizza Margherita</span>
+              <strong>$10.00</strong>
             </div>
           </div>
         </div>
       </section>
 
-      <section className={styles.categoriesSection}>
-        <div className={styles.sectionInner}>
-          <h2 className={styles.sectionTitle}>Categorías</h2>
-          <p className={styles.sectionSub}>Encuentra lo que buscas</p>
-          <div className={styles.categoriesGrid}>
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(selectedCategory === cat.id ? '' : cat.id)}
-                className={`${styles.categoryCard} ${selectedCategory === cat.id ? styles.categoryActive : ''}`}
-              >
-                <span className={styles.categoryEmoji}>{cat.emoji}</span>
-                <span className={styles.categoryLabel}>{cat.label}</span>
-              </button>
-            ))}
-          </div>
+      <section className={styles.categoriesBar}>
+        <div className={styles.catInner}>
+          <button
+            className={`${styles.catPill} ${!selectedCategory ? styles.catActive : ''}`}
+            onClick={() => setSelectedCategory('')}
+          >✨ Todos</button>
+          {categories.map(cat => (
+            <button
+              key={cat.id}
+              className={`${styles.catPill} ${selectedCategory === cat.id ? styles.catActive : ''}`}
+              onClick={() => setSelectedCategory(selectedCategory === cat.id ? '' : cat.id)}
+            >{cat.emoji} {cat.label}</button>
+          ))}
         </div>
       </section>
 
-      <section className={styles.storesSection}>
+      <section id="products" className={styles.productsSection}>
         <div className={styles.sectionInner}>
           <div className={styles.sectionHeader}>
             <div>
-              <h2 className={styles.sectionTitle}>Tiendas destacadas</h2>
-              <p className={styles.sectionSub}>
-                {selectedCategory
-                  ? `Mostrando ${filtered.length} tienda(s) en esta categoría`
-                  : 'Las mejores tiendas de San Cristóbal'}
-              </p>
+              <h2 className={styles.sectionTitle}>
+                {q ? `Resultados para "${q}"` : selectedCategory ? categories.find(c => c.id === selectedCategory)?.label : 'Productos destacados'}
+              </h2>
+              <p className={styles.sectionCount}>{products.length} producto(s)</p>
             </div>
-            <Link href="/stores" className={styles.seeAll}>Ver todas →</Link>
           </div>
 
           {loading ? (
-            <div className={styles.loadingState}>
-              <div className={styles.loadingSpinner} />
-              <p>Buscando las mejores tiendas...</p>
+            <div className={styles.loadingGrid}>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className={styles.skeleton}>
+                  <div className={styles.skeletonImg} />
+                  <div className={styles.skeletonLine} style={{ width: '70%' }} />
+                  <div className={styles.skeletonLine} style={{ width: '40%' }} />
+                </div>
+              ))}
             </div>
-          ) : filtered.length === 0 ? (
+          ) : products.length === 0 ? (
             <div className={styles.emptyState}>
               <span className={styles.emptyEmoji}>🔍</span>
-              <h3>No encontramos tiendas</h3>
+              <h3>No encontramos productos</h3>
               <p>Intenta con otra búsqueda o categoría</p>
             </div>
           ) : (
-            <div className={styles.storeGrid}>
-              {filtered.slice(0, 6).map((store, i) => (
-                <Link
-                  href={`/stores/${store.slug}`}
-                  key={store.id}
-                  className={styles.storeCard}
-                  style={{ animationDelay: `${i * 0.1}s` }}
-                >
-                  <div className={styles.storeCover}>
-                    <div
-                      className={styles.storeImage}
-                      style={{ backgroundImage: `url(${store.coverImage || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600'})` }}
-                    />
-                    {store.category && (
-                      <span className={styles.storeCategory}>
-                        {categories.find(c => c.id === store.category)?.emoji} {store.category}
-                      </span>
-                    )}
+            <div className={styles.productGrid}>
+              {products.map((p, i) => (
+                <div key={p.id} className={styles.productCard} style={{ animationDelay: `${i * 0.05}s` }}>
+                  <Link href={`/products/${p.id}`} className={styles.productImageWrap}>
+                    <div className={styles.productImage} style={{ backgroundImage: `url(${p.images?.[0] || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400'})` }} />
+                    {p.stock <= 5 && p.stock > 0 && <span className={styles.badgeLow}>Quedan {p.stock}</span>}
+                    {p.price < 5 && <span className={styles.badgeOffer}>🔥 Oferta</span>}
+                  </Link>
+                  <div className={styles.productInfo}>
+                    {p.store && <Link href={`/stores/${p.store.slug}`} className={styles.productStore}>{p.store.name}</Link>}
+                    <Link href={`/products/${p.id}`} className={styles.productName}>{p.name}</Link>
+                    <div className={styles.productPriceRow}>
+                      <span className={styles.productPrice}>{p.currency === 'USD' ? '$' : ''}{p.price.toFixed(2)}</span>
+                      {p.price < 5 && <span className={styles.productOldPrice}>${(p.price * 1.3).toFixed(2)}</span>}
+                    </div>
+                    <button
+                      onClick={() => handleQuickAdd(p.id)}
+                      className={`${styles.addBtn} ${addedToCart[p.id] ? styles.addedBtn : ''}`}
+                      disabled={addedToCart[p.id] as boolean}
+                    >
+                      {addedToCart[p.id] ? '✓ Agregado' : 'Agregar al carrito'}
+                    </button>
                   </div>
-                  <div className={styles.storeBody}>
-                    <h3 className={styles.storeName}>{store.name}</h3>
-                    <p className={styles.storeDesc}>{store.description?.slice(0, 80)}...</p>
-                    <span className={styles.storeLink}>Ver tienda →</span>
-                  </div>
-                </Link>
+                </div>
               ))}
             </div>
           )}
         </div>
       </section>
 
-      <section className={styles.featuresSection}>
-        <div className={styles.sectionInner}>
-          <h2 className={styles.sectionTitle}>¿Por qué amsterdamToVzla?</h2>
-          <p className={styles.sectionSub}>La mejor forma de comprar en San Cristóbal</p>
-          <div className={styles.featuresGrid}>
-            <div className={styles.featureCard}>
-              <span className={styles.featureIcon}>🛒</span>
-              <h3>Carrito Universal</h3>
-              <p>Compra de varias tiendas en un solo carrito. Un pago, un delivery.</p>
-            </div>
-            <div className={styles.featureCard}>
-              <span className={styles.featureIcon}>🚚</span>
-              <h3>Delivery en vivo</h3>
-              <p>Rastrea tu pedido en tiempo real con mapa interactivo.</p>
-            </div>
-            <div className={styles.featureCard}>
-              <span className={styles.featureIcon}>💳</span>
-              <h3>Múltiples formas de pago</h3>
-              <p>Binance Pay, efectivo o transferencia. Tú eliges.</p>
-            </div>
-            <div className={styles.featureCard}>
-              <span className={styles.featureIcon}>🤖</span>
-              <h3>Asistente IA</h3>
-              <p>¿Dudas? Nuestro asistente inteligente te ayuda al instante.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {!user && (
-        <section className={styles.ctaSection}>
-          <div className={styles.sectionInner}>
-            <div className={styles.ctaContent}>
-              <h2 className={styles.ctaTitle}>¿Tienes un negocio en San Cristóbal?</h2>
-              <p className={styles.ctaText}>Llega a más clientes, gestiona tus pedidos y haz crecer tu negocio.</p>
-              <div className={styles.ctaButtons}>
-                <Link href="/register" className={styles.ctaPrimary}>Crear cuenta de tienda</Link>
-                <Link href="/stores" className={styles.ctaSecondary}>Explorar como cliente</Link>
-              </div>
-            </div>
+        <section className={styles.ctaBanner}>
+          <div className={styles.ctaInner}>
+            <h2 className={styles.ctaTitle}>¿Tienes un negocio?</h2>
+            <p className={styles.ctaText}>Regístrate como tienda y llega a cientos de clientes en San Cristóbal</p>
+            <Link href="/register" className={styles.ctaBtn}>Crear cuenta de tienda →</Link>
           </div>
         </section>
       )}
 
-      <section className={styles.instagramSection}>
-        <div className={styles.sectionInner}>
-          <div className={styles.instaGrid}>
-            <div className={styles.instaItem} style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400)' }} />
-            <div className={styles.instaItem} style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400)' }} />
-            <div className={styles.instaItem} style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400)' }} />
-            <div className={styles.instaItem} style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400)' }} />
+      <footer className={styles.footer}>
+        <div className={styles.footerInner}>
+          <div className={styles.footerBrand}>
+            <strong>🛍️ amsterdamToVzla</strong>
+            <p>Tu mercado local de San Cristóbal</p>
+          </div>
+          <div className={styles.footerLinks}>
+            <Link href="/stores">Tiendas</Link>
+            <Link href="/cart">Carrito</Link>
+            <Link href="/assistant">Ayuda</Link>
           </div>
         </div>
-      </section>
+      </footer>
     </div>
-  )
+  );
 }
