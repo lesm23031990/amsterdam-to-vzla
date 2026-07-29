@@ -1,0 +1,173 @@
+.page {
+  flex: 1;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 32px 16px;
+}
+
+.breadcrumb {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 24px;
+}
+
+.breadcrumb a {
+  color: #2563eb;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+
+.imageSection {
+  display: flex;
+  align-items: flex-start;
+}
+
+.mainImage {
+  width: 100%;
+  height: 400px;
+  background: #e5e7eb;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.infoSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.name {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.category {
+  font-size: 13px;
+  color: #2563eb;
+  font-weight: 500;
+}
+
+.price {
+  font-size: 28px;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.description {
+  font-size: 15px;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.stockInfo {
+  margin: 8px 0;
+}
+
+.inStock {
+  color: #22c55e;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.outOfStock {
+  color: #ef4444;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 16px 0;
+}
+
+.quantityControl {
+  display: flex;
+  align-items: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.qtyBtn {
+  width: 36px;
+  height: 36px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #374151;
+  transition: background 0.2s;
+}
+
+.qtyBtn:hover {
+  background: #f3f4f6;
+}
+
+.qty {
+  width: 40px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.addBtn {
+  flex: 1;
+  padding: 10px 24px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.addBtn:hover {
+  background: #1d4ed8;
+}
+
+.addBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.storeInfo {
+  font-size: 14px;
+  color: #6b7280;
+  margin-top: 8px;
+}
+
+.storeLink {
+  color: #2563eb;
+  font-weight: 500;
+}
+
+.loading {
+  text-align: center;
+  padding: 60px;
+  color: #6b7280;
+  font-size: 16px;
+}
+
+@media (max-width: 700px) {
+  .content {
+    grid-template-columns: 1fr;
+  }
+
+  .mainImage {
+    height: 250px;
+  }
+}
