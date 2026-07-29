@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import styles from './page.module.css';
@@ -24,8 +23,6 @@ const categories = [
 
 export default function Home() {
   const { user } = useAuth();
-  const searchParams = useSearchParams();
-  const q = searchParams.get('q') || '';
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -33,17 +30,16 @@ export default function Home() {
 
   useEffect(() => {
     const params = new URLSearchParams();
-    if (q) params.set('q', q);
     if (selectedCategory) params.set('category', selectedCategory);
     api.get<Product[]>(`/products?${params}`).then((res) => {
       if (res.ok && res.data) setProducts(res.data);
       setLoading(false);
     });
-  }, [q, selectedCategory]);
+  }, [selectedCategory]);
 
-  useEffect(() => { if (q) setSelectedCategory(''); }, [q]);
-
-  const featuredProducts = useMemo(() => products.filter(p => p.stock > 0).slice(0, 8), [products]);
+  const offers = useMemo(() => products.filter(p => p.price < 8 && p.stock > 0).slice(0, 6), [products]);
+  const featured = useMemo(() => products.filter(p => p.price >= 8 && p.stock > 0).slice(0, 12), [products]);
+  const hasMoreProducts = products.length > 12;
 
   const handleQuickAdd = async (productId: string) => {
     if (!user) { window.location.href = '/login'; return; }
@@ -61,102 +57,118 @@ export default function Home() {
           <div className={styles.heroText}>
             <span className={styles.heroBadge}>🚀 Envío gratis en tu primera compra</span>
             <h1 className={styles.heroTitle}>Lo mejor de San Cristóbal,<br /><span className={styles.heroAccent}>en un solo lugar</span></h1>
-            <p className={styles.heroSub}>Compra directo a las mejores tiendas locales. Pan recién horneado, tecnología, ropa y más.</p>
+            <p className={styles.heroSub}>Compra directo a las mejores tiendas locales</p>
             <div className={styles.heroCtas}>
-              <Link href="#products" className={styles.heroCta}>Ver productos</Link>
-              <Link href="/register" className={styles.heroCtaOutline} onClick={(e) => { if (user) e.preventDefault(); }}>{user ? 'Mis pedidos' : 'Crear cuenta'}</Link>
+              <Link href="#offers" className={styles.heroCta}>Ver ofertas</Link>
+              <Link href={user ? '/orders' : '/register'} className={styles.heroCtaOutline}>{user ? 'Mis pedidos' : 'Crear cuenta'}</Link>
             </div>
           </div>
           <div className={styles.heroVisual}>
-            <div className={styles.heroCard1}>
-              <span className={styles.heroCardEmoji}>🍞</span>
-              <span>Pan artesanal</span>
-              <strong>$3.50</strong>
-            </div>
-            <div className={styles.heroCard2}>
-              <span className={styles.heroCardEmoji}>📱</span>
-              <span>Auriculares</span>
-              <strong>$45.00</strong>
-            </div>
-            <div className={styles.heroCard3}>
-              <span className={styles.heroCardEmoji}>🍕</span>
-              <span>Pizza Margherita</span>
-              <strong>$10.00</strong>
-            </div>
+            <div className={styles.heroCard1}><span className={styles.heroCardEmoji}>🍞</span><span>Pan artesanal</span><strong>$3.50</strong></div>
+            <div className={styles.heroCard2}><span className={styles.heroCardEmoji}>📱</span><span>Auriculares</span><strong>$45.00</strong></div>
+            <div className={styles.heroCard3}><span className={styles.heroCardEmoji}>🍕</span><span>Pizza Margherita</span><strong>$10.00</strong></div>
           </div>
         </div>
       </section>
 
       <section className={styles.categoriesBar}>
         <div className={styles.catInner}>
-          <button
-            className={`${styles.catPill} ${!selectedCategory ? styles.catActive : ''}`}
-            onClick={() => setSelectedCategory('')}
-          >✨ Todos</button>
+          <button className={`${styles.catPill} ${!selectedCategory ? styles.catActive : ''}`} onClick={() => setSelectedCategory('')}>✨ Todos</button>
           {categories.map(cat => (
-            <button
-              key={cat.id}
-              className={`${styles.catPill} ${selectedCategory === cat.id ? styles.catActive : ''}`}
-              onClick={() => setSelectedCategory(selectedCategory === cat.id ? '' : cat.id)}
-            >{cat.emoji} {cat.label}</button>
+            <button key={cat.id} className={`${styles.catPill} ${selectedCategory === cat.id ? styles.catActive : ''}`} onClick={() => setSelectedCategory(selectedCategory === cat.id ? '' : cat.id)}>{cat.emoji} {cat.label}</button>
           ))}
         </div>
       </section>
 
-      <section id="products" className={styles.productsSection}>
+      {offers.length > 0 && (
+        <section id="offers" className={styles.offersSection}>
+          <div className={styles.sectionInner}>
+            <div className={styles.sectionHeader}>
+              <div>
+                <h2 className={styles.offersTitle}>🔥 Ofertas del día</h2>
+                <p className={styles.offersSub}>Precios increíbles por tiempo limitado</p>
+              </div>
+              <Link href="/offers" className={styles.offersLink}>Ver todas →</Link>
+            </div>
+            <div className={styles.offersGrid}>
+              {offers.map(p => {
+                const discount = Math.round((1 - p.price / (p.price * 1.4)) * 100);
+                return (
+                  <div key={p.id} className={styles.offerCard}>
+                    <Link href={`/products/${p.id}`} className={styles.offerImgWrap}>
+                      <div className={styles.offerImg} style={{ backgroundImage: `url(${p.images?.[0] || ''})` }} />
+                      <span className={styles.discountPill}>-{discount}%</span>
+                    </Link>
+                    <div className={styles.offerInfo}>
+                      <Link href={`/products/${p.id}`} className={styles.offerName}>{p.name}</Link>
+                      <div className={styles.offerPriceRow}>
+                        <span className={styles.offerPrice}>${p.price.toFixed(2)}</span>
+                        <span className={styles.offerOld}>${(p.price * 1.4).toFixed(2)}</span>
+                      </div>
+                      <button onClick={() => handleQuickAdd(p.id)} className={`${styles.offerBtn} ${addedToCart[p.id] ? styles.offerBtnAdded : ''}`} disabled={!!addedToCart[p.id]}>
+                        {addedToCart[p.id] ? '✓ Agregado' : 'Comprar'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section className={styles.featuredSection}>
         <div className={styles.sectionInner}>
           <div className={styles.sectionHeader}>
             <div>
-              <h2 className={styles.sectionTitle}>
-                {q ? `Resultados para "${q}"` : selectedCategory ? categories.find(c => c.id === selectedCategory)?.label : 'Productos destacados'}
-              </h2>
-              <p className={styles.sectionCount}>{products.length} producto(s)</p>
+              <h2 className={styles.sectionTitle}>{selectedCategory ? categories.find(c => c.id === selectedCategory)?.label : 'Productos destacados'}</h2>
+              <p className={styles.sectionSub}>Los más populares de la semana</p>
             </div>
           </div>
 
           {loading ? (
             <div className={styles.loadingGrid}>
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className={styles.skeleton}>
-                  <div className={styles.skeletonImg} />
-                  <div className={styles.skeletonLine} style={{ width: '70%' }} />
-                  <div className={styles.skeletonLine} style={{ width: '40%' }} />
-                </div>
+                <div key={i} className={styles.skeleton}><div className={styles.skelImg} /><div className={styles.skelLine} style={{width:'70%'}} /><div className={styles.skelLine} style={{width:'40%'}} /></div>
               ))}
             </div>
-          ) : products.length === 0 ? (
+          ) : featured.length === 0 ? (
             <div className={styles.emptyState}>
               <span className={styles.emptyEmoji}>🔍</span>
-              <h3>No encontramos productos</h3>
-              <p>Intenta con otra búsqueda o categoría</p>
+              <h3>No hay productos en esta categoría</h3>
+              <p>Prueba con otra categoría</p>
             </div>
           ) : (
-            <div className={styles.productGrid}>
-              {products.map((p, i) => (
-                <div key={p.id} className={styles.productCard} style={{ animationDelay: `${i * 0.05}s` }}>
-                  <Link href={`/products/${p.id}`} className={styles.productImageWrap}>
-                    <div className={styles.productImage} style={{ backgroundImage: `url(${p.images?.[0] || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400'})` }} />
-                    {p.stock <= 5 && p.stock > 0 && <span className={styles.badgeLow}>Quedan {p.stock}</span>}
-                    {p.price < 5 && <span className={styles.badgeOffer}>🔥 Oferta</span>}
-                  </Link>
-                  <div className={styles.productInfo}>
-                    {p.store && <Link href={`/stores/${p.store.slug}`} className={styles.productStore}>{p.store.name}</Link>}
-                    <Link href={`/products/${p.id}`} className={styles.productName}>{p.name}</Link>
-                    <div className={styles.productPriceRow}>
-                      <span className={styles.productPrice}>{p.currency === 'USD' ? '$' : ''}{p.price.toFixed(2)}</span>
-                      {p.price < 5 && <span className={styles.productOldPrice}>${(p.price * 1.3).toFixed(2)}</span>}
+            <>
+              <div className={styles.productGrid}>
+                {featured.map((p, i) => (
+                  <div key={p.id} className={styles.productCard} style={{ animationDelay: `${i * 0.05}s` }}>
+                    <Link href={`/products/${p.id}`} className={styles.productImgWrap}>
+                      <div className={styles.productImg} style={{ backgroundImage: `url(${p.images?.[0] || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400'})` }} />
+                      {p.stock <= 5 && p.stock > 0 && <span className={styles.badgeLow}>Quedan {p.stock}</span>}
+                    </Link>
+                    <div className={styles.productInfo}>
+                      {p.store && <Link href={`/stores/${p.store.slug}`} className={styles.productStore}>{p.store.name}</Link>}
+                      <Link href={`/products/${p.id}`} className={styles.productName}>{p.name}</Link>
+                      <div className={styles.productPriceRow}>
+                        <span className={styles.productPrice}>{p.currency === 'USD' ? '$' : ''}{p.price.toFixed(2)}</span>
+                      </div>
+                      <button onClick={() => handleQuickAdd(p.id)} className={`${styles.addBtn} ${addedToCart[p.id] ? styles.addedBtn : ''}`} disabled={!!addedToCart[p.id]}>
+                        {addedToCart[p.id] ? '✓ Agregado' : 'Agregar al carrito'}
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleQuickAdd(p.id)}
-                      className={`${styles.addBtn} ${addedToCart[p.id] ? styles.addedBtn : ''}`}
-                      disabled={addedToCart[p.id] as boolean}
-                    >
-                      {addedToCart[p.id] ? '✓ Agregado' : 'Agregar al carrito'}
-                    </button>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+
+              <div className={styles.viewMoreWrap}>
+                {hasMoreProducts && (
+                  <Link href="/products" className={styles.viewMoreBtn}>
+                    Ver todos los productos ({products.length}) →
+                  </Link>
+                )}
+              </div>
+            </>
           )}
         </div>
       </section>
@@ -173,14 +185,12 @@ export default function Home() {
 
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
-          <div className={styles.footerBrand}>
-            <strong>🛍️ amsterdamToVzla</strong>
-            <p>Tu mercado local de San Cristóbal</p>
-          </div>
+          <div className={styles.footerBrand}><strong>🛍️ amsterdamToVzla</strong><p>Tu mercado local de San Cristóbal</p></div>
           <div className={styles.footerLinks}>
+            <Link href="/offers">Ofertas</Link>
+            <Link href="/products">Productos</Link>
             <Link href="/stores">Tiendas</Link>
             <Link href="/cart">Carrito</Link>
-            <Link href="/assistant">Ayuda</Link>
           </div>
         </div>
       </footer>
