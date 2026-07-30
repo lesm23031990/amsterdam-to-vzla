@@ -3,6 +3,13 @@ import cors from 'cors'
 import { createServer } from 'http'
 import { Server as SocketIOServer } from 'socket.io'
 import authRoutes from './routes/auth'
+import storeRoutes from './routes/stores'
+import productRoutes from './routes/products'
+import cartRoutes from './routes/cart'
+import checkoutRoutes from './routes/checkout'
+import deliveryRoutes from './routes/delivery'
+import fastfoodRoutes from './routes/fastfood'
+import assistantRoutes from './routes/assistant'
 
 const app = express()
 const httpServer = createServer(app)
@@ -16,6 +23,13 @@ app.get('/api/v1/health', (_req, res) => {
 })
 
 app.use('/api/v1/auth', authRoutes)
+app.use('/api/v1/stores', storeRoutes)
+app.use('/api/v1/products', productRoutes)
+app.use('/api/v1/cart', cartRoutes)
+app.use('/api/v1/checkout', checkoutRoutes)
+app.use('/api/v1/delivery', deliveryRoutes)
+app.use('/api/v1/fastfood', fastfoodRoutes)
+app.use('/api/v1/assistant', assistantRoutes)
 
 io.on('connection', (socket) => {
   console.log('Cliente conectado:', socket.id)
@@ -26,7 +40,6 @@ const PORT = process.env.PORT || 3001
 if (process.env.NODE_ENV !== 'test') {
   httpServer.listen(PORT, () => {
     console.log(`\n  amsterdam-to-vzla server corriendo en http://localhost:${PORT}`)
-    console.log(`  API: http://localhost:${PORT}/api/v1/health\n`)
   })
 }
 

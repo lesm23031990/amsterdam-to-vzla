@@ -27,7 +27,6 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
     res.status(401).json({ ok: false, error: 'Token requerido' })
     return
   }
-
   try {
     const token = header.slice(7)
     req.user = jwt.verify(token, JWT_SECRET) as AuthPayload
