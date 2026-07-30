@@ -13,7 +13,9 @@
     "web": "npm run dev -w apps/web",
     "mobile": "npm run start -w apps/mobile",
     "test": "vitest run",
+    "pretest": "npm run db:generate",
     "test:watch": "vitest",
+    "db:generate": "npm run db:generate -w server",
     "plane:pull": "node scripts/sync-plane.js pull",
     "plane:push": "node scripts/sync-plane.js push",
     "plane:status": "node scripts/sync-plane.js status"
