@@ -1,0 +1,201 @@
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  height: 64px;
+}
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 20px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.logoEmoji { font-size: 24px; }
+
+.logoText {
+  font-size: 20px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #f97316, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  white-space: nowrap;
+}
+
+.searchBar {
+  flex: 1;
+  max-width: 600px;
+  display: flex;
+  align-items: center;
+  background: #f3f4f6;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+  overflow: hidden;
+}
+
+.searchBar:focus-within {
+  border-color: #f97316;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
+}
+
+.searchIcon {
+  padding: 0 8px 0 16px;
+  font-size: 16px;
+  opacity: 0.4;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+}
+
+.searchBtn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #f97316, #f59e0b);
+  color: #fff;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.searchBtn:hover { background: linear-gradient(135deg, #ea580c, #d97706); }
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.actionBtn:hover { background: #f3f4f6; }
+
+.actionLabel { font-size: 13px; }
+
+.userDropdown { position: relative; }
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  min-width: 200px;
+  padding: 8px;
+  z-index: 200;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdownItem {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+  font-family: inherit;
+  text-decoration: none;
+}
+
+.dropdownItem:hover { background: #f3f4f6; color: #f97316; }
+
+.dropdownDivider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 6px 0;
+}
+
+.authBtns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loginBtn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.loginBtn:hover { background: #f3f4f6; }
+
+.registerBtn {
+  padding: 8px 20px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #f97316, #f59e0b);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.registerBtn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4); }
+
+@media (max-width: 768px) {
+  .container { gap: 12px; }
+  .searchBar { order: 3; max-width: none; width: 100%; grid-column: 1 / -1; }
+  .container { flex-wrap: wrap; height: auto; padding: 12px 16px; gap: 8px; }
+  .actionLabel { display: none; }
+  .actionBtn { padding: 8px; }
+  .logoText { font-size: 16px; }
+  .registerBtn { padding: 8px 14px; font-size: 13px; }
+}

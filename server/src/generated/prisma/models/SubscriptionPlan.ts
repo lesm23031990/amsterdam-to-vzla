@@ -221,7 +221,7 @@ export type SubscriptionPlanWhereInput = {
   AND?: Prisma.SubscriptionPlanWhereInput | Prisma.SubscriptionPlanWhereInput[]
   OR?: Prisma.SubscriptionPlanWhereInput[]
   NOT?: Prisma.SubscriptionPlanWhereInput | Prisma.SubscriptionPlanWhereInput[]
-  id?: Prisma.UuidFilter<"SubscriptionPlan"> | string
+  id?: Prisma.StringFilter<"SubscriptionPlan"> | string
   name?: Prisma.StringFilter<"SubscriptionPlan"> | string
   price?: Prisma.FloatFilter<"SubscriptionPlan"> | number
   currency?: Prisma.StringFilter<"SubscriptionPlan"> | string
@@ -275,7 +275,7 @@ export type SubscriptionPlanScalarWhereWithAggregatesInput = {
   AND?: Prisma.SubscriptionPlanScalarWhereWithAggregatesInput | Prisma.SubscriptionPlanScalarWhereWithAggregatesInput[]
   OR?: Prisma.SubscriptionPlanScalarWhereWithAggregatesInput[]
   NOT?: Prisma.SubscriptionPlanScalarWhereWithAggregatesInput | Prisma.SubscriptionPlanScalarWhereWithAggregatesInput[]
-  id?: Prisma.UuidWithAggregatesFilter<"SubscriptionPlan"> | string
+  id?: Prisma.StringWithAggregatesFilter<"SubscriptionPlan"> | string
   name?: Prisma.StringWithAggregatesFilter<"SubscriptionPlan"> | string
   price?: Prisma.FloatWithAggregatesFilter<"SubscriptionPlan"> | number
   currency?: Prisma.StringWithAggregatesFilter<"SubscriptionPlan"> | string
@@ -285,7 +285,7 @@ export type SubscriptionPlanScalarWhereWithAggregatesInput = {
 }
 
 export type SubscriptionPlanCreateInput = {
-  id?: string
+  id: string
   name: string
   price: number
   currency?: string
@@ -296,7 +296,7 @@ export type SubscriptionPlanCreateInput = {
 }
 
 export type SubscriptionPlanUncheckedCreateInput = {
-  id?: string
+  id: string
   name: string
   price: number
   currency?: string
@@ -329,7 +329,7 @@ export type SubscriptionPlanUncheckedUpdateInput = {
 }
 
 export type SubscriptionPlanCreateManyInput = {
-  id?: string
+  id: string
   name: string
   price: number
   currency?: string
@@ -439,7 +439,7 @@ export type SubscriptionPlanUpdateOneRequiredWithoutSubscriptionsNestedInput = {
 }
 
 export type SubscriptionPlanCreateWithoutSubscriptionsInput = {
-  id?: string
+  id: string
   name: string
   price: number
   currency?: string
@@ -449,7 +449,7 @@ export type SubscriptionPlanCreateWithoutSubscriptionsInput = {
 }
 
 export type SubscriptionPlanUncheckedCreateWithoutSubscriptionsInput = {
-  id?: string
+  id: string
   name: string
   price: number
   currency?: string

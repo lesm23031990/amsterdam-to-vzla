@@ -1,0 +1,165 @@
+.page {
+  flex: 1;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 16px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 32px;
+  align-items: start;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: #374151;
+}
+
+.input, .textarea {
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input:focus, .textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.submitBtn {
+  padding: 14px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 8px;
+}
+
+.submitBtn:hover {
+  background: #1d4ed8;
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error {
+  color: #ef4444;
+  font-size: 14px;
+  padding: 8px;
+  background: #fef2f2;
+  border-radius: 6px;
+}
+
+.summary {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.summary h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.itemsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.summaryItem {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.summaryName {
+  color: #374151;
+}
+
+.summaryPrice {
+  font-weight: 500;
+}
+
+.summaryTotal {
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  font-weight: 600;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.totalAmount {
+  color: #2563eb;
+}
+
+.empty {
+  text-align: center;
+  padding: 60px 0;
+  color: #6b7280;
+}
+
+.shopBtn {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 10px 24px;
+  background: #2563eb;
+  color: #fff;
+  border-radius: 8px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.loading {
+  text-align: center;
+  padding: 60px;
+  color: #6b7280;
+}
+
+@media (max-width: 700px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

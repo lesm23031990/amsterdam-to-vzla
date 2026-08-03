@@ -104,8 +104,8 @@ describe('Auth - Register', () => {
       name: 'Test',
       role: 'cliente',
     })
-    expect(res.status).toBe(400)
-    expect(res.body.error).toBe('Email ya registrado')
+    expect(res.status).toBe(409)
+    expect(res.body.error).toBe('El email ya está registrado')
   })
 
   it('rechaza password débil', async () => {
