@@ -116,7 +116,7 @@ router.get('/', async (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const product = await db.product.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       include: {
         store: { select: { id: true, name: true, slug: true } },
       },
@@ -136,7 +136,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const product = await db.product.findUnique({ where: { id: req.params.id } })
+    const product = await db.product.findUnique({ where: { id: req.params.id as string } })
 
     if (!product) {
       res.status(404).json({ ok: false, error: 'Producto no encontrado' })
@@ -160,7 +160,7 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
     }
 
     const updated = await db.product.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: {
         ...(req.body.name && { name: req.body.name }),
         ...(req.body.description !== undefined && { description: req.body.description }),
@@ -181,7 +181,7 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
 
 router.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const product = await db.product.findUnique({ where: { id: req.params.id } })
+    const product = await db.product.findUnique({ where: { id: req.params.id as string } })
 
     if (!product) {
       res.status(404).json({ ok: false, error: 'Producto no encontrado' })
@@ -195,7 +195,7 @@ router.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
     }
 
     await db.product.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: { isActive: false },
     })
 
