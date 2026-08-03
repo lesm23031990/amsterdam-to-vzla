@@ -3,6 +3,7 @@ node_modules/
 
 # Environment
 .env
+credenciales-prueba.txt
 .env.local
 .env.*.local
 

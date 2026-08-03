@@ -14,9 +14,10 @@ import assistantRoutes from './routes/assistant'
 
 const app = express()
 const httpServer = createServer(app)
-const io = new SocketIOServer(httpServer, { cors: { origin: '*' } })
+const corsOrigin = process.env.CORS_ORIGIN || '*'
+const io = new SocketIOServer(httpServer, { cors: { origin: corsOrigin } })
 
-app.use(cors())
+app.use(cors({ origin: corsOrigin }))
 app.use(express.json({ limit: '10mb' }))
 
 app.get('/api/v1/health', (_req, res) => {
