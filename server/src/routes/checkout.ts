@@ -44,7 +44,7 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
     const orders = []
 
     for (const [storeId, items] of Object.entries(grouped)) {
-      const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+      const total = items.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0)
 
       const orderData: any = {
         userId,
@@ -58,7 +58,7 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
         contactPhone: contactPhone || null,
         status: paymentMethod === 'binance_pay' ? OrderStatus.pending_payment : OrderStatus.confirmed,
         items: {
-          create: items.map((item) => ({
+          create: items.map((item: any) => ({
             productId: item.productId,
             name: item.product.name,
             price: item.price,

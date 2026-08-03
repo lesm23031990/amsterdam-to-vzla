@@ -44,7 +44,7 @@ router.post('/chat', authMiddleware, async (req: Request, res: Response) => {
         take: 20,
       })
 
-      const chatMessages = previousMessages.map((m) => ({
+      const chatMessages = previousMessages.map((m: { role: string; content: string }) => ({
         role: m.role as 'user' | 'assistant',
         content: m.content,
       }))
@@ -115,7 +115,7 @@ router.get('/conversations', authMiddleware, async (req: Request, res: Response)
       },
     })
 
-    const data = conversations.map((c) => ({
+    const data = conversations.map((c: any) => ({
       id: c.id,
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
@@ -133,7 +133,7 @@ router.get('/conversations', authMiddleware, async (req: Request, res: Response)
 router.get('/conversations/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
     const conversation = await db.conversation.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       include: {
         messages: {
           orderBy: { createdAt: 'asc' },
@@ -160,7 +160,7 @@ router.get('/conversations/:id', authMiddleware, async (req: Request, res: Respo
 
 router.delete('/conversations/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const conversation = await db.conversation.findUnique({ where: { id: req.params.id } })
+    const conversation = await db.conversation.findUnique({ where: { id: req.params.id as string } })
     if (!conversation) {
       res.status(404).json({ ok: false, error: 'Conversación no encontrada' })
       return

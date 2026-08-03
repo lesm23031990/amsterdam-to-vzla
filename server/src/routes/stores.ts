@@ -80,7 +80,7 @@ router.get('/mine', authMiddleware, requireRole('tienda'), async (req: Request, 
       },
     })
 
-    const data = stores.map((store) => ({
+    const data = stores.map((store: any) => ({
       ...store,
       activeSubscription: store.subscriptions[0] || null,
     }))
