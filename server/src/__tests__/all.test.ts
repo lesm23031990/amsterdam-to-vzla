@@ -153,7 +153,7 @@ describe('Auth', () => {
     ;(mockDb.user.create as MockFn).mockResolvedValue(mockUser)
 
     const res = await request('POST', '/api/v1/auth/register', {
-      email: 'test@test.com', password: 'SecurePass123!', name: 'Test User', phone: '+584241234567',
+      email: 'test@test.com', password: 'SecurePass123!', name: 'Test User', phone: '+584241234567', role: 'tienda',
     })
 
     expect(res.status).toBe(201)
@@ -166,7 +166,7 @@ describe('Auth', () => {
     ;(mockDb.user.findUnique as MockFn).mockResolvedValue(mockUser)
 
     const res = await request('POST', '/api/v1/auth/register', {
-      email: 'test@test.com', password: 'SecurePass123!', name: 'Test User',
+      email: 'test@test.com', password: 'SecurePass123!', name: 'Test User', role: 'tienda',
     })
 
     expect(res.status).toBe(409)
