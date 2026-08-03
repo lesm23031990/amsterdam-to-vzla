@@ -13,30 +13,43 @@ interface Order {
   total: number;
   currency: string;
   paymentMethod: string;
+  paymentStatus: string;
   deliveryAddress: string;
   contactPhone: string;
   notes: string;
-  referenceNumber?: string;
   createdAt: string;
   items: {
     id: string;
     quantity: number;
     price: number;
-    product: { id: string; name: string; images: string[] };
+    name: string;
+    subtotal: number;
   }[];
-  tracking?: { lat: number; lng: number; updatedAt: string }[];
+  store: { id: string; name: string; slug: string };
+  delivery?: {
+    id: string;
+    status: string;
+    driver: { id: string; name: string; phone: string };
+    locations: { lat: number; lng: number; createdAt: string }[];
+  };
 }
 
 const statusLabels: Record<string, string> = {
-  pendiente: 'Pendiente',
-  confirmado: 'Confirmado',
-  preparando: 'En preparación',
-  enviado: 'En camino',
-  entregado: 'Entregado',
-  cancelado: 'Cancelado',
+  pending_payment: 'Pendiente de pago',
+  confirmed: 'Confirmado',
+  preparing: 'En preparación',
+  in_transit: 'En camino',
+  delivered: 'Entregado',
+  cancelled: 'Cancelado',
 };
 
-const statusSteps = ['pendiente', 'confirmado', 'preparando', 'enviado', 'entregado'];
+const statusSteps = ['pending_payment', 'confirmed', 'preparing', 'in_transit', 'delivered'];
+
+const paymentLabels: Record<string, string> = {
+  cash: 'Efectivo',
+  transfer: 'Transferencia',
+  binance_pay: 'Binance Pay',
+};
 
 export default function OrderDetailPage() {
   const params = useParams();
@@ -45,7 +58,7 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
-  const [payForm, setPayForm] = useState({ paymentMethod: '', paymentRef: '' });
+  const [payRef, setPayRef] = useState('');
 
   useEffect(() => {
     if (!user) { router.push('/login'); return; }
@@ -58,11 +71,12 @@ export default function OrderDetailPage() {
 
   const handlePay = async () => {
     setPaying(true);
-    const res = await api.post(`/checkout/orders/${order!.id}/pay`, payForm);
+    const res = await api.post(`/checkout/orders/${order!.id}/pay`, { paymentRef: payRef });
     if (res.ok) {
       api.get<Order>(`/checkout/orders/${order!.id}`).then((r) => {
         if (r.ok && r.data) setOrder(r.data);
       });
+      setPayRef('');
     }
     setPaying(false);
   };
@@ -99,20 +113,14 @@ export default function OrderDetailPage() {
             <div className={styles.items}>
               {order.items.map((item) => (
                 <div key={item.id} className={styles.item}>
-                  <div
-                    className={styles.itemImage}
-                    style={{ backgroundImage: item.product.images?.[0] ? `url(${item.product.images[0]})` : undefined }}
-                  />
                   <div className={styles.itemInfo}>
-                    <Link href={`/products/${item.product.id}`} className={styles.itemName}>
-                      {item.product.name}
-                    </Link>
+                    <span className={styles.itemName}>{item.name}</span>
                     <p className={styles.itemMeta}>
                       {item.quantity} x {order.currency} {Number(item.price).toLocaleString()}
                     </p>
                   </div>
                   <span className={styles.itemTotal}>
-                    {order.currency} {(Number(item.price) * item.quantity).toLocaleString()}
+                    {order.currency} {Number(item.subtotal).toLocaleString()}
                   </span>
                 </div>
               ))}
@@ -134,7 +142,7 @@ export default function OrderDetailPage() {
               </div>
               <div className={styles.detailRow}>
                 <span className={styles.detailLabel}>Método de pago</span>
-                <span>{order.paymentMethod}</span>
+                <span>{paymentLabels[order.paymentMethod] || order.paymentMethod}</span>
               </div>
               <div className={styles.detailRow}>
                 <span className={styles.detailLabel}>Dirección</span>
@@ -152,28 +160,21 @@ export default function OrderDetailPage() {
               )}
             </div>
 
-            {(order.status === 'pendiente' || order.status === 'confirmado') && (
+            {(order.paymentMethod === 'cash' || order.paymentMethod === 'transfer') && order.paymentStatus !== 'paid' && (
               <div className={styles.paySection}>
-                <h3>Realizar pago</h3>
+                <h3>Registrar pago</h3>
                 <div className={styles.payForm}>
-                  <select
-                    value={payForm.paymentMethod}
-                    onChange={(e) => setPayForm({ ...payForm, paymentMethod: e.target.value })}
-                    className={styles.input}
-                  >
-                    <option value="">Seleccionar método</option>
-                    <option value="efectivo">Efectivo</option>
-                    <option value="transferencia">Transferencia</option>
-                    <option value="binance">Binance Pay</option>
-                  </select>
+                  <p className={styles.payInfo}>
+                    Método: {order.paymentMethod === 'cash' ? 'Efectivo' : 'Transferencia'}
+                  </p>
                   <input
                     type="text"
                     placeholder="Número de referencia"
-                    value={payForm.paymentRef}
-                    onChange={(e) => setPayForm({ ...payForm, paymentRef: e.target.value })}
+                    value={payRef}
+                    onChange={(e) => setPayRef(e.target.value)}
                     className={styles.input}
                   />
-                  <button onClick={handlePay} className={styles.payBtn} disabled={paying || !payForm.paymentMethod}>
+                  <button onClick={handlePay} className={styles.payBtn} disabled={paying || !payRef}>
                     {paying ? 'Procesando...' : 'Confirmar pago'}
                   </button>
                 </div>

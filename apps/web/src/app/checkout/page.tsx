@@ -18,7 +18,7 @@ export default function CheckoutPage() {
     deliveryAddress: '',
     contactPhone: '',
     notes: '',
-    paymentMethod: 'efectivo',
+    paymentMethod: 'cash',
   });
 
   useEffect(() => {
@@ -98,9 +98,9 @@ export default function CheckoutPage() {
                 onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })}
                 className={styles.input}
               >
-                <option value="efectivo">Efectivo (Bs/COP/USD)</option>
-                <option value="transferencia">Transferencia</option>
-                <option value="binance">Binance Pay</option>
+                <option value="cash">Efectivo (Bs/COP/USD)</option>
+                <option value="transfer">Transferencia</option>
+                <option value="binance_pay">Binance Pay</option>
               </select>
             </div>
 
