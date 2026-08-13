@@ -193,7 +193,7 @@ export type StoreSubscriptionWhereInput = {
   NOT?: Prisma.StoreSubscriptionWhereInput | Prisma.StoreSubscriptionWhereInput[]
   id?: Prisma.UuidFilter<"StoreSubscription"> | string
   storeId?: Prisma.UuidFilter<"StoreSubscription"> | string
-  planId?: Prisma.UuidFilter<"StoreSubscription"> | string
+  planId?: Prisma.StringFilter<"StoreSubscription"> | string
   status?: Prisma.StringFilter<"StoreSubscription"> | string
   startsAt?: Prisma.DateTimeFilter<"StoreSubscription"> | Date | string
   expiresAt?: Prisma.DateTimeFilter<"StoreSubscription"> | Date | string
@@ -220,7 +220,7 @@ export type StoreSubscriptionWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.StoreSubscriptionWhereInput[]
   NOT?: Prisma.StoreSubscriptionWhereInput | Prisma.StoreSubscriptionWhereInput[]
   storeId?: Prisma.UuidFilter<"StoreSubscription"> | string
-  planId?: Prisma.UuidFilter<"StoreSubscription"> | string
+  planId?: Prisma.StringFilter<"StoreSubscription"> | string
   status?: Prisma.StringFilter<"StoreSubscription"> | string
   startsAt?: Prisma.DateTimeFilter<"StoreSubscription"> | Date | string
   expiresAt?: Prisma.DateTimeFilter<"StoreSubscription"> | Date | string
@@ -248,7 +248,7 @@ export type StoreSubscriptionScalarWhereWithAggregatesInput = {
   NOT?: Prisma.StoreSubscriptionScalarWhereWithAggregatesInput | Prisma.StoreSubscriptionScalarWhereWithAggregatesInput[]
   id?: Prisma.UuidWithAggregatesFilter<"StoreSubscription"> | string
   storeId?: Prisma.UuidWithAggregatesFilter<"StoreSubscription"> | string
-  planId?: Prisma.UuidWithAggregatesFilter<"StoreSubscription"> | string
+  planId?: Prisma.StringWithAggregatesFilter<"StoreSubscription"> | string
   status?: Prisma.StringWithAggregatesFilter<"StoreSubscription"> | string
   startsAt?: Prisma.DateTimeWithAggregatesFilter<"StoreSubscription"> | Date | string
   expiresAt?: Prisma.DateTimeWithAggregatesFilter<"StoreSubscription"> | Date | string
@@ -497,7 +497,7 @@ export type StoreSubscriptionScalarWhereInput = {
   NOT?: Prisma.StoreSubscriptionScalarWhereInput | Prisma.StoreSubscriptionScalarWhereInput[]
   id?: Prisma.UuidFilter<"StoreSubscription"> | string
   storeId?: Prisma.UuidFilter<"StoreSubscription"> | string
-  planId?: Prisma.UuidFilter<"StoreSubscription"> | string
+  planId?: Prisma.StringFilter<"StoreSubscription"> | string
   status?: Prisma.StringFilter<"StoreSubscription"> | string
   startsAt?: Prisma.DateTimeFilter<"StoreSubscription"> | Date | string
   expiresAt?: Prisma.DateTimeFilter<"StoreSubscription"> | Date | string
