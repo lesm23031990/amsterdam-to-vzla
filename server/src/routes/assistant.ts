@@ -133,7 +133,7 @@ router.get('/conversations', authMiddleware, async (req: Request, res: Response)
 router.get('/conversations/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
     const conversation = await db.conversation.findUnique({
-      where: { id: req.params.id as string },
+      where: { id: String(req.params.id) },
       include: {
         messages: {
           orderBy: { createdAt: 'asc' },
@@ -160,7 +160,7 @@ router.get('/conversations/:id', authMiddleware, async (req: Request, res: Respo
 
 router.delete('/conversations/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const conversation = await db.conversation.findUnique({ where: { id: req.params.id as string } })
+    const conversation = await db.conversation.findUnique({ where: { id: String(req.params.id) } })
     if (!conversation) {
       res.status(404).json({ ok: false, error: 'Conversación no encontrada' })
       return
