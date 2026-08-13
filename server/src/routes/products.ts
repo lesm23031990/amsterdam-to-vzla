@@ -70,8 +70,8 @@ router.post('/', authMiddleware, requireRole('tienda'), async (req: Request, res
 router.get('/', async (req: Request, res: Response) => {
   try {
     const { storeId, category, q, minPrice, maxPrice } = req.query
-    const page = Math.max(1, parseInt(req.query.page as string) || 1)
-    const perPage = Math.min(50, Math.max(1, parseInt(req.query.perPage as string) || 20))
+    const page = Math.max(1, parseInt(String(req.query.page)) || 1)
+    const perPage = Math.min(50, Math.max(1, parseInt(String(req.query.perPage)) || 20))
 
     const where: Record<string, unknown> = { isActive: true }
 
@@ -116,7 +116,7 @@ router.get('/', async (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const product = await db.product.findUnique({
-      where: { id: req.params.id },
+      where: { id: String(req.params.id) },
       include: {
         store: { select: { id: true, name: true, slug: true } },
       },
@@ -136,7 +136,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const product = await db.product.findUnique({ where: { id: req.params.id } })
+    const product = await db.product.findUnique({ where: { id: req.params.id as string } })
 
     if (!product) {
       res.status(404).json({ ok: false, error: 'Producto no encontrado' })
@@ -160,7 +160,7 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
     }
 
     const updated = await db.product.update({
-      where: { id: req.params.id },
+      where: { id: String(req.params.id) },
       data: {
         ...(req.body.name && { name: req.body.name }),
         ...(req.body.description !== undefined && { description: req.body.description }),
@@ -181,7 +181,7 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
 
 router.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const product = await db.product.findUnique({ where: { id: req.params.id } })
+    const product = await db.product.findUnique({ where: { id: req.params.id as string } })
 
     if (!product) {
       res.status(404).json({ ok: false, error: 'Producto no encontrado' })
@@ -195,11 +195,11 @@ router.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
     }
 
     await db.product.update({
-      where: { id: req.params.id },
+      where: { id: String(req.params.id) },
       data: { isActive: false },
     })
 
-    res.json({ ok: true, data: { id: req.params.id } })
+    res.json({ ok: true, data: { id: String(req.params.id) } })
   } catch (error) {
     console.error('Delete product error:', error)
     res.status(500).json({ ok: false, error: 'Error al eliminar producto' })
