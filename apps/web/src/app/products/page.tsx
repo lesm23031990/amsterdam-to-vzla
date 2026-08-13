@@ -25,8 +25,9 @@ export default function ProductsPage() {
     setLoading(true);
     api.get<Product[]>(`/products?page=${page}&perPage=${pageSize}`).then((res) => {
       if (res.ok && res.data) {
-        setProducts(prev => page === 1 ? res.data : [...prev, ...res.data]);
-        setHasMore(res.data.length === pageSize);
+        const items = res.data;
+        setProducts(prev => page === 1 ? items : [...prev, ...items]);
+        setHasMore(items.length === pageSize);
       }
       setLoading(false);
     });
