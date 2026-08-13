@@ -14,7 +14,9 @@ import assistantRoutes from './routes/assistant'
 
 const app = express()
 const httpServer = createServer(app)
-const corsOrigin = process.env.CORS_ORIGIN || '*'
+const corsOriginRaw = process.env.CORS_ORIGIN || '*'
+const corsOrigin: string | string[] =
+  corsOriginRaw === '*' ? '*' : corsOriginRaw.split(',').map((s) => s.trim()).filter(Boolean)
 const io = new SocketIOServer(httpServer, { cors: { origin: corsOrigin } })
 
 app.use(cors({ origin: corsOrigin }))
