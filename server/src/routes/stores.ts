@@ -95,7 +95,7 @@ router.get('/mine', authMiddleware, requireRole('tienda'), async (req: Request, 
 router.get('/:slug', async (req: Request, res: Response) => {
   try {
     const store = await db.store.findUnique({
-      where: { slug: req.params.slug as string },
+      where: { slug: String(req.params.slug) },
       include: {
         owner: { select: { id: true, name: true } },
       },
@@ -136,7 +136,7 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
     }
 
     const updated = await db.store.update({
-      where: { id: req.params.id as string },
+      where: { id: String(req.params.id) },
       data: {
         ...(req.body.name && { name: req.body.name }),
         ...(req.body.slug && { slug: req.body.slug }),
@@ -177,7 +177,7 @@ router.post('/:storeId/subscribe', authMiddleware, async (req: Request, res: Res
       return
     }
 
-    const store = await db.store.findUnique({ where: { id: req.params.storeId as string } })
+    const store = await db.store.findUnique({ where: { id: String(req.params.storeId) } })
     if (!store) {
       res.status(404).json({ ok: false, error: 'Tienda no encontrada' })
       return

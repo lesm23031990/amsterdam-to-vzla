@@ -7,7 +7,7 @@ const router = Router()
 router.get('/stores/:storeId/menu', async (req: Request, res: Response) => {
   try {
     const items = await db.menuItem.findMany({
-      where: { storeId: req.params.storeId as string, isAvailable: true },
+      where: { storeId: String(req.params.storeId), isAvailable: true },
       orderBy: { createdAt: 'desc' },
       include: {
         options: {
@@ -25,7 +25,7 @@ router.get('/stores/:storeId/menu', async (req: Request, res: Response) => {
 
 router.post('/stores/:storeId/menu', authMiddleware, requireRole('tienda'), async (req: Request, res: Response) => {
   try {
-    const store = await db.store.findUnique({ where: { id: req.params.storeId as string } })
+    const store = await db.store.findUnique({ where: { id: String(req.params.storeId) } })
     if (!store) {
       res.status(404).json({ ok: false, error: 'Tienda no encontrada' })
       return
@@ -79,7 +79,7 @@ router.patch('/menu/:id', authMiddleware, async (req: Request, res: Response) =>
     }
 
     const updated = await db.menuItem.update({
-      where: { id: req.params.id as string },
+      where: { id: String(req.params.id) },
       data: {
         ...(req.body.name && { name: req.body.name }),
         ...(req.body.description !== undefined && { description: req.body.description }),
@@ -171,10 +171,10 @@ router.post('/menu/:id/options', authMiddleware, async (req: Request, res: Respo
 router.get('/stores/:storeId/preparation-time', async (req: Request, res: Response) => {
   try {
     const result = await db.menuItem.aggregate({
-      where: { storeId: req.params.storeId as string, isAvailable: true },
+      where: { storeId: String(req.params.storeId), isAvailable: true },
       _avg: { preparationTime: true },
     })
-    res.json({ ok: true, data: { averagePreparationTime: Math.round(result._avg?.preparationTime || 0) } })
+    res.json({ ok: true, data: { averagePreparationTime: Math.round(result._avg?.preparationTime ?? 0) } })
   } catch (error) {
     console.error('Get preparation time error:', error)
     res.status(500).json({ ok: false, error: 'Error al obtener tiempo de preparación' })

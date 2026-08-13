@@ -138,7 +138,7 @@ router.patch('/items/:id', authMiddleware, async (req: Request, res: Response) =
     }
 
     const cartItem = await db.cartItem.findUnique({
-      where: { id: req.params.id as string },
+      where: { id: String(req.params.id) },
       include: { cart: true, product: true },
     }) as any
 
@@ -158,7 +158,7 @@ router.patch('/items/:id', authMiddleware, async (req: Request, res: Response) =
     }
 
     const updated = await db.cartItem.update({
-      where: { id: req.params.id as string },
+      where: { id: String(req.params.id) },
       data: { quantity },
     })
 
@@ -172,7 +172,7 @@ router.patch('/items/:id', authMiddleware, async (req: Request, res: Response) =
 router.delete('/items/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
     const cartItem = await db.cartItem.findUnique({
-      where: { id: req.params.id as string },
+      where: { id: String(req.params.id) },
       include: { cart: true },
     }) as any
 
@@ -188,7 +188,7 @@ router.delete('/items/:id', authMiddleware, async (req: Request, res: Response) 
 
     await db.cartItem.delete({ where: { id: req.params.id as string } })
 
-    res.json({ ok: true, data: { id: req.params.id } })
+    res.json({ ok: true, data: { id: String(req.params.id) } })
   } catch (error) {
     console.error('Delete cart item error:', error)
     res.status(500).json({ ok: false, error: 'Error al eliminar item del carrito' })
