@@ -3,9 +3,8 @@ node_modules/
 
 # Environment
 .env
-.env.development
-.env.local
-.env.*.local
+.env.*
+!.env.example
 credenciales-prueba.txt
 
 # Build outputs
