@@ -1,4 +1,4 @@
-import 'dotenv/config'
+import { db } from './lib/db'
 import express from 'express'
 import cors from 'cors'
 import { createServer } from 'http'

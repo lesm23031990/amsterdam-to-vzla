@@ -65,7 +65,7 @@ function request(method: string, path: string, body?: any, token?: string): Prom
 
 const mockUser = {
   id: 'user-1', email: 'test@test.com', name: 'Test User', phone: '+584241234567',
-  role: 'tienda', password: 'hashed_password', createdAt: new Date('2024-01-01'), updatedAt: new Date('2024-01-01'),
+  role: 'admin', password: 'hashed_password', createdAt: new Date('2024-01-01'), updatedAt: new Date('2024-01-01'),
 }
 
 const mockStore = {
@@ -138,9 +138,7 @@ const mockMessage = {
 }
 
 const clienteToken = token({ userId: 'user-1', role: 'cliente', email: 'client@test.com' })
-const tiendaToken = token({ userId: 'user-1', role: 'tienda', email: 'test@test.com' })
 const adminToken = token({ userId: 'user-admin', role: 'admin', email: 'admin@test.com' })
-const repartidorToken = token({ userId: 'driver-1', role: 'repartidor', email: 'driver@test.com' })
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -153,7 +151,7 @@ describe('Auth', () => {
     ;(mockDb.user.create as MockFn).mockResolvedValue(mockUser)
 
     const res = await request('POST', '/api/v1/auth/register', {
-      email: 'test@test.com', password: 'SecurePass123!', name: 'Test User', phone: '+584241234567', role: 'tienda',
+      email: 'test@test.com', password: 'SecurePass123!', name: 'Test User', phone: '+584241234567', role: 'cliente',
     })
 
     expect(res.status).toBe(201)
@@ -166,7 +164,7 @@ describe('Auth', () => {
     ;(mockDb.user.findUnique as MockFn).mockResolvedValue(mockUser)
 
     const res = await request('POST', '/api/v1/auth/register', {
-      email: 'test@test.com', password: 'SecurePass123!', name: 'Test User', role: 'tienda',
+      email: 'test@test.com', password: 'SecurePass123!', name: 'Test User', role: 'cliente',
     })
 
     expect(res.status).toBe(409)
@@ -221,10 +219,10 @@ describe('Auth', () => {
 
   it('GET /me with valid token returns user', async () => {
     ;(mockDb.user.findUnique as MockFn).mockResolvedValue({
-      id: 'user-1', email: 'test@test.com', name: 'Test User', phone: '+584241234567', role: 'tienda', createdAt: new Date('2024-01-01'),
+      id: 'user-1', email: 'test@test.com', name: 'Test User', phone: '+584241234567', role: 'admin', createdAt: new Date('2024-01-01'),
     })
 
-    const res = await request('GET', '/api/v1/auth/me', undefined, tiendaToken)
+    const res = await request('GET', '/api/v1/auth/me', undefined, adminToken)
 
     expect(res.status).toBe(200)
     expect(res.body.ok).toBe(true)
@@ -246,7 +244,7 @@ describe('Stores', () => {
 
     const res = await request('POST', '/api/v1/stores', {
       name: 'Tienda Test', slug: 'tienda-test', description: 'Descripción', phone: '+584241234567', address: 'San Cristóbal',
-    }, tiendaToken)
+    }, adminToken)
 
     expect(res.status).toBe(201)
     expect(res.body.ok).toBe(true)
@@ -258,14 +256,14 @@ describe('Stores', () => {
 
     const res = await request('POST', '/api/v1/stores', {
       name: 'Tienda Test', slug: 'tienda-test',
-    }, tiendaToken)
+    }, adminToken)
 
     expect(res.status).toBe(409)
     expect(res.body.ok).toBe(false)
     expect(res.body.error).toContain('slug')
   })
 
-  it('Create store without tienda role returns 403', async () => {
+  it('Create store without admin role returns 403', async () => {
     const res = await request('POST', '/api/v1/stores', {
       name: 'Tienda Test', slug: 'tienda-test',
     }, clienteToken)
@@ -309,7 +307,7 @@ describe('Stores', () => {
     ;(mockDb.store.findUnique as MockFn).mockResolvedValue(mockStore)
     ;(mockDb.store.update as MockFn).mockResolvedValue({ ...mockStore, name: 'Updated Store' })
 
-    const res = await request('PATCH', '/api/v1/stores/store-1', { name: 'Updated Store' }, tiendaToken)
+    const res = await request('PATCH', '/api/v1/stores/store-1', { name: 'Updated Store' }, adminToken)
 
     expect(res.status).toBe(200)
     expect(res.body.ok).toBe(true)
@@ -319,7 +317,7 @@ describe('Stores', () => {
   it('Update someone else\'s store returns 403', async () => {
     ;(mockDb.store.findUnique as MockFn).mockResolvedValue({ ...mockStore, ownerId: 'other-user' })
 
-    const res = await request('PATCH', '/api/v1/stores/store-1', { name: 'Hacked' }, tiendaToken)
+    const res = await request('PATCH', '/api/v1/stores/store-1', { name: 'Hacked' }, clienteToken)
 
     expect(res.status).toBe(403)
     expect(res.body.ok).toBe(false)
@@ -340,7 +338,7 @@ describe('Stores', () => {
     ;(mockDb.subscriptionPlan.findUnique as MockFn).mockResolvedValue(mockPlan)
     ;(mockDb.storeSubscription.create as MockFn).mockResolvedValue(mockSubscription)
 
-    const res = await request('POST', '/api/v1/stores/store-1/subscribe', { planId: 'plan-1' }, tiendaToken)
+    const res = await request('POST', '/api/v1/stores/store-1/subscribe', { planId: 'plan-1' }, adminToken)
 
     expect(res.status).toBe(201)
     expect(res.body.ok).toBe(true)
@@ -358,29 +356,26 @@ describe('Stores', () => {
 describe('Products', () => {
   it('Create product with valid data returns 201', async () => {
     ;(mockDb.store.findUnique as MockFn).mockResolvedValue(mockStore)
-    ;(mockDb.storeSubscription.findFirst as MockFn).mockResolvedValue(mockSubscription)
     ;(mockDb.product.create as MockFn).mockResolvedValue(mockProduct)
 
     const res = await request('POST', '/api/v1/products', {
-      storeId: 'store-1', name: 'Producto Test', price: 25.50, category: 'ropa', stock: 100,
-    }, tiendaToken)
+      storeId: 'store-1', name: 'Producto Test', price: 25.50, category: 'congelados', stock: 100,
+    }, adminToken)
 
     expect(res.status).toBe(201)
     expect(res.body.ok).toBe(true)
     expect(res.body.data.name).toBe('Producto Test')
   })
 
-  it('Create product without subscription returns 403', async () => {
+  it('Create product without admin role returns 403', async () => {
     ;(mockDb.store.findUnique as MockFn).mockResolvedValue(mockStore)
-    ;(mockDb.storeSubscription.findFirst as MockFn).mockResolvedValue(null)
 
     const res = await request('POST', '/api/v1/products', {
       storeId: 'store-1', name: 'Producto Test', price: 25.50,
-    }, tiendaToken)
+    }, clienteToken)
 
     expect(res.status).toBe(403)
     expect(res.body.ok).toBe(false)
-    expect(res.body.error).toContain('suscripción')
   })
 
   it('Create product without being owner returns 403', async () => {
@@ -388,7 +383,7 @@ describe('Products', () => {
 
     const res = await request('POST', '/api/v1/products', {
       storeId: 'store-1', name: 'Producto Test', price: 25.50,
-    }, tiendaToken)
+    }, clienteToken)
 
     expect(res.status).toBe(403)
     expect(res.body.ok).toBe(false)
@@ -442,7 +437,7 @@ describe('Products', () => {
     ;(mockDb.store.findUnique as MockFn).mockResolvedValue(mockStore)
     ;(mockDb.product.update as MockFn).mockResolvedValue({ ...mockProduct, name: 'Updated', price: 30 })
 
-    const res = await request('PATCH', '/api/v1/products/product-1', { name: 'Updated', price: 30 }, tiendaToken)
+    const res = await request('PATCH', '/api/v1/products/product-1', { name: 'Updated', price: 30 }, adminToken)
 
     expect(res.status).toBe(200)
     expect(res.body.ok).toBe(true)
@@ -452,7 +447,7 @@ describe('Products', () => {
     ;(mockDb.product.findUnique as MockFn).mockResolvedValue({ ...mockProduct, storeId: 'other-store' })
     ;(mockDb.store.findUnique as MockFn).mockResolvedValue({ ...mockStore, id: 'other-store', ownerId: 'other-user' })
 
-    const res = await request('PATCH', '/api/v1/products/product-1', { name: 'Hacked' }, tiendaToken)
+    const res = await request('PATCH', '/api/v1/products/product-1', { name: 'Hacked' }, clienteToken)
 
     expect(res.status).toBe(403)
   })
@@ -462,7 +457,7 @@ describe('Products', () => {
     ;(mockDb.store.findUnique as MockFn).mockResolvedValue(mockStore)
     ;(mockDb.product.update as MockFn).mockResolvedValue({ ...mockProduct, isActive: false })
 
-    const res = await request('DELETE', '/api/v1/products/product-1', undefined, tiendaToken)
+    const res = await request('DELETE', '/api/v1/products/product-1', undefined, adminToken)
 
     expect(res.status).toBe(200)
     expect(res.body.ok).toBe(true)
@@ -684,7 +679,7 @@ describe('Delivery', () => {
     ;(mockDb.store.findUnique as MockFn).mockResolvedValue(mockStore)
     ;(mockDb.order.update as MockFn).mockResolvedValue({ ...mockOrder, status: 'confirmed' })
 
-    const res = await request('PATCH', '/api/v1/delivery/orders/order-1/status', { status: 'confirmed' }, tiendaToken)
+    const res = await request('PATCH', '/api/v1/delivery/orders/order-1/status', { status: 'confirmed' }, adminToken)
 
     expect(res.status).toBe(200)
     expect(res.body.ok).toBe(true)
@@ -694,7 +689,7 @@ describe('Delivery', () => {
   it('Update order status with invalid transition returns 400', async () => {
     ;(mockDb.order.findUnique as MockFn).mockResolvedValue({ ...mockOrder, status: 'delivered' })
 
-    const res = await request('PATCH', '/api/v1/delivery/orders/order-1/status', { status: 'confirmed' }, tiendaToken)
+    const res = await request('PATCH', '/api/v1/delivery/orders/order-1/status', { status: 'confirmed' }, adminToken)
 
     expect(res.status).toBe(400)
     expect(res.body.ok).toBe(false)
@@ -716,22 +711,26 @@ describe('Delivery', () => {
     ;(mockDb.delivery.create as MockFn).mockResolvedValue(mockDelivery)
     ;(mockDb.order.update as MockFn).mockResolvedValue({ ...mockOrder, status: 'preparing' })
 
-    const res = await request('POST', '/api/v1/delivery/orders/order-1/assign', { driverId: 'driver-1' }, tiendaToken)
+    const res = await request('POST', '/api/v1/delivery/orders/order-1/assign', { driverId: 'driver-1' }, adminToken)
 
     expect(res.status).toBe(201)
     expect(res.body.ok).toBe(true)
     expect(res.body.data.status).toBe('assigned')
   })
 
-  it('Assign driver with non-driver user returns 400', async () => {
+  it('Assign driver with any user returns 201', async () => {
     ;(mockDb.order.findUnique as MockFn).mockResolvedValue(mockOrder)
     ;(mockDb.store.findUnique as MockFn).mockResolvedValue(mockStore)
-    ;(mockDb.user.findUnique as MockFn).mockResolvedValue({ id: 'user-1', role: 'cliente' })
+    ;(mockDb.user.findUnique as MockFn).mockResolvedValue({ id: 'user-1', role: 'cliente', name: 'User', email: 'user@test.com' })
+    ;(mockDb.delivery.findUnique as MockFn).mockResolvedValue(null)
+    ;(mockDb.delivery.create as MockFn).mockResolvedValue(mockDelivery)
+    ;(mockDb.order.update as MockFn).mockResolvedValue({ ...mockOrder, status: 'preparing' })
 
-    const res = await request('POST', '/api/v1/delivery/orders/order-1/assign', { driverId: 'user-1' }, tiendaToken)
+    const res = await request('POST', '/api/v1/delivery/orders/order-1/assign', { driverId: 'user-1' }, adminToken)
 
-    expect(res.status).toBe(400)
-    expect(res.body.ok).toBe(false)
+    expect(res.status).toBe(201)
+    expect(res.body.ok).toBe(true)
+    expect(res.body.data.status).toBe('assigned')
   })
 
   it('Assign driver when already assigned returns 409', async () => {
@@ -740,7 +739,7 @@ describe('Delivery', () => {
     ;(mockDb.user.findUnique as MockFn).mockResolvedValue({ id: 'driver-1', role: 'repartidor' })
     ;(mockDb.delivery.findUnique as MockFn).mockResolvedValue(mockDelivery)
 
-    const res = await request('POST', '/api/v1/delivery/orders/order-1/assign', { driverId: 'driver-1' }, tiendaToken)
+    const res = await request('POST', '/api/v1/delivery/orders/order-1/assign', { driverId: 'driver-1' }, adminToken)
 
     expect(res.status).toBe(409)
     expect(res.body.ok).toBe(false)
@@ -793,14 +792,14 @@ describe('Delivery', () => {
     })
     ;(mockDb.deliveryLocation.create as MockFn).mockResolvedValue(mockLocation)
 
-    const res = await request('PATCH', '/api/v1/delivery/delivery/delivery-1/location', { lat: 7.7703, lng: -72.2292 }, repartidorToken)
+    const res = await request('PATCH', '/api/v1/delivery/delivery/delivery-1/location', { lat: 7.7703, lng: -72.2292 }, adminToken)
 
     expect(res.status).toBe(200)
     expect(res.body.ok).toBe(true)
   })
 
   it('Update location without coordinates returns 400', async () => {
-    const res = await request('PATCH', '/api/v1/delivery/delivery/delivery-1/location', {}, repartidorToken)
+    const res = await request('PATCH', '/api/v1/delivery/delivery/delivery-1/location', {}, adminToken)
 
     expect(res.status).toBe(400)
     expect(res.body.ok).toBe(false)
@@ -809,35 +808,24 @@ describe('Delivery', () => {
 
 describe('FastFood', () => {
   it('Create menu item returns 201', async () => {
-    ;(mockDb.store.findUnique as MockFn).mockResolvedValue({ ...mockStore, category: 'comida' })
+    ;(mockDb.store.findUnique as MockFn).mockResolvedValue(mockStore)
     ;(mockDb.menuItem.create as MockFn).mockResolvedValue(mockMenuItem)
 
     const res = await request('POST', '/api/v1/fastfood/stores/store-1/menu', {
       name: 'Hamburguesa', basePrice: 8.50, description: 'Deliciosa', preparationTime: 15, category: 'comida rápida',
-    }, tiendaToken)
+    }, adminToken)
 
     expect(res.status).toBe(201)
     expect(res.body.ok).toBe(true)
     expect(res.body.data.name).toBe('Hamburguesa')
   })
 
-  it('Create menu item for non-food store returns 400', async () => {
-    ;(mockDb.store.findUnique as MockFn).mockResolvedValue({ ...mockStore, category: 'ropa' })
-
-    const res = await request('POST', '/api/v1/fastfood/stores/store-1/menu', {
-      name: 'Hamburguesa', basePrice: 8.50,
-    }, tiendaToken)
-
-    expect(res.status).toBe(400)
-    expect(res.body.ok).toBe(false)
-  })
-
   it('Create menu item for another store returns 403', async () => {
-    ;(mockDb.store.findUnique as MockFn).mockResolvedValue({ ...mockStore, ownerId: 'other-user', category: 'comida' })
+    ;(mockDb.store.findUnique as MockFn).mockResolvedValue({ ...mockStore, ownerId: 'other-user' })
 
     const res = await request('POST', '/api/v1/fastfood/stores/store-1/menu', {
       name: 'Hamburguesa', basePrice: 8.50,
-    }, tiendaToken)
+    }, clienteToken)
 
     expect(res.status).toBe(403)
   })
@@ -865,7 +853,7 @@ describe('FastFood', () => {
     const res = await request('POST', '/api/v1/fastfood/menu/menu-1/options', {
       name: 'Tamaño', type: 'single', required: true,
       choices: [{ name: 'Grande', priceModifier: 1.50 }, { name: 'Pequeño', priceModifier: 0 }],
-    }, tiendaToken)
+    }, adminToken)
 
     expect(res.status).toBe(201)
     expect(res.body.ok).toBe(true)

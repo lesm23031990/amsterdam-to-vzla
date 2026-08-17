@@ -11,8 +11,6 @@
 
 export const Role = {
   cliente: 'cliente',
-  tienda: 'tienda',
-  repartidor: 'repartidor',
   admin: 'admin'
 } as const
 

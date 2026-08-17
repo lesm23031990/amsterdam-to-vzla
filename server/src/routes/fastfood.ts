@@ -23,19 +23,11 @@ router.get('/stores/:storeId/menu', async (req: Request, res: Response) => {
   }
 })
 
-router.post('/stores/:storeId/menu', authMiddleware, requireRole('tienda'), async (req: Request, res: Response) => {
+router.post('/stores/:storeId/menu', authMiddleware, requireRole('admin'), async (req: Request, res: Response) => {
   try {
     const store = await db.store.findUnique({ where: { id: String(req.params.storeId) } })
     if (!store) {
       res.status(404).json({ ok: false, error: 'Tienda no encontrada' })
-      return
-    }
-    if (store.ownerId !== req.user!.userId) {
-      res.status(403).json({ ok: false, error: 'No autorizado para esta tienda' })
-      return
-    }
-    if (store.category !== 'comida') {
-      res.status(400).json({ ok: false, error: 'La tienda no es de categoría comida' })
       return
     }
 

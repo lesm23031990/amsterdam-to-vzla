@@ -3,9 +3,10 @@ node_modules/
 
 # Environment
 .env
-credenciales-prueba.txt
+.env.development
 .env.local
 .env.*.local
+credenciales-prueba.txt
 
 # Build outputs
 dist/

@@ -55,11 +55,7 @@ export default function Navbar() {
                 <div className={styles.dropdownMenu}>
                   {user.role === 'cliente' && <Link href="/orders" className={styles.dropdownItem} onClick={() => setMenuOpen(false)}>Mis pedidos</Link>}
                   {user.role === 'cliente' && <Link href="/assistant" className={styles.dropdownItem} onClick={() => setMenuOpen(false)}>Asistente</Link>}
-                  {user.role === 'tienda' && <Link href="/dashboard" className={styles.dropdownItem} onClick={() => setMenuOpen(false)}>Dashboard</Link>}
-                  {user.role === 'tienda' && <Link href="/dashboard/products" className={styles.dropdownItem} onClick={() => setMenuOpen(false)}>Mis productos</Link>}
-                  {user.role === 'tienda' && <Link href="/dashboard/orders" className={styles.dropdownItem} onClick={() => setMenuOpen(false)}>Pedidos</Link>}
-                  {user.role === 'admin' && <Link href="/admin/stores" className={styles.dropdownItem} onClick={() => setMenuOpen(false)}>Admin tiendas</Link>}
-                  {user.role === 'admin' && <Link href="/admin/users" className={styles.dropdownItem} onClick={() => setMenuOpen(false)}>Admin usuarios</Link>}
+                  {user.role === 'admin' && <Link href="/admin" className={styles.dropdownItem} onClick={() => setMenuOpen(false)}>Panel Admin</Link>}
                   <div className={styles.dropdownDivider} />
                   <button onClick={handleLogout} className={styles.dropdownItem}>Cerrar sesión</button>
                 </div>

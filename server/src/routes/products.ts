@@ -4,7 +4,7 @@ import { authMiddleware, requireRole } from '../middleware/auth'
 
 const router = Router()
 
-router.post('/', authMiddleware, requireRole('tienda'), async (req: Request, res: Response) => {
+router.post('/', authMiddleware, requireRole('admin'), async (req: Request, res: Response) => {
   try {
     const { storeId, name, description, price, currency, category, images, stock } = req.body
 
@@ -26,24 +26,6 @@ router.post('/', authMiddleware, requireRole('tienda'), async (req: Request, res
     const store = await db.store.findUnique({ where: { id: storeId } })
     if (!store) {
       res.status(404).json({ ok: false, error: 'Tienda no encontrada' })
-      return
-    }
-
-    if (store.ownerId !== req.user!.userId) {
-      res.status(403).json({ ok: false, error: 'No eres dueño de esta tienda' })
-      return
-    }
-
-    const activeSubscription = await db.storeSubscription.findFirst({
-      where: {
-        storeId,
-        status: 'active',
-        expiresAt: { gte: new Date() },
-      },
-    })
-
-    if (!activeSubscription) {
-      res.status(403).json({ ok: false, error: 'La tienda no tiene una suscripción activa' })
       return
     }
 

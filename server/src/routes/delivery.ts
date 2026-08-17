@@ -34,7 +34,7 @@ router.patch('/orders/:id/status', authMiddleware, async (req: Request, res: Res
     }
 
     const store = await db.store.findUnique({ where: { id: order.storeId } })
-    const allowed = store?.ownerId === req.user!.userId || req.user!.role === 'admin' || req.user!.role === 'repartidor'
+    const allowed = store?.ownerId === req.user!.userId || req.user!.role === 'admin'
 
     if (!allowed) {
       res.status(403).json({ ok: false, error: 'No autorizado para actualizar este pedido' })
@@ -86,14 +86,14 @@ router.post('/orders/:id/assign', authMiddleware, requireRole('tienda', 'admin')
     }
 
     const driver = await db.user.findUnique({ where: { id: driverId } })
-    if (!driver || driver.role !== 'repartidor') {
-      res.status(400).json({ ok: false, error: 'El usuario seleccionado no es un repartidor válido' })
+    if (!driver) {
+      res.status(400).json({ ok: false, error: 'El usuario seleccionado no existe' })
       return
     }
 
     const existing = await db.delivery.findUnique({ where: { orderId: order.id } })
     if (existing) {
-      res.status(409).json({ ok: false, error: 'Este pedido ya tiene un repartidor asignado' })
+      res.status(409).json({ ok: false, error: 'Este pedido ya tiene un conductor asignado' })
       return
     }
 
@@ -115,7 +115,7 @@ router.post('/orders/:id/assign', authMiddleware, requireRole('tienda', 'admin')
     res.status(201).json({ ok: true, data: delivery })
   } catch (error) {
     console.error('Assign driver error:', error)
-    res.status(500).json({ ok: false, error: 'Error al asignar repartidor' })
+    res.status(500).json({ ok: false, error: 'Error al asignar conductor' })
   }
 })
 
@@ -139,7 +139,7 @@ router.get('/orders/:id/tracking', authMiddleware, async (req: Request, res: Res
       return
     }
 
-    if (order.userId !== req.user!.userId && order.store?.ownerId !== req.user!.userId && req.user!.role !== 'admin' && req.user!.role !== 'repartidor') {
+    if (order.userId !== req.user!.userId && order.store?.ownerId !== req.user!.userId && req.user!.role !== 'admin') {
       res.status(403).json({ ok: false, error: 'No autorizado para ver el tracking de este pedido' })
       return
     }

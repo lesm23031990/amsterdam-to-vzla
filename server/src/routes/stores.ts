@@ -4,9 +4,9 @@ import { authMiddleware, requireRole } from '../middleware/auth'
 
 const router = Router()
 
-router.post('/', authMiddleware, requireRole('tienda', 'admin'), async (req: Request, res: Response) => {
+router.post('/', authMiddleware, requireRole('admin'), async (req: Request, res: Response) => {
   try {
-    const { name, slug, description, phone, address, category, coverImage, logoImage } = req.body
+    const { name, slug, description, phone, address, category, coverImage, logoImage, ownerId } = req.body
 
     if (!name || !slug) {
       res.status(400).json({ ok: false, error: 'Nombre y slug son requeridos' })
@@ -29,7 +29,7 @@ router.post('/', authMiddleware, requireRole('tienda', 'admin'), async (req: Req
         category: category || null,
         coverImage: coverImage || null,
         logoImage: logoImage || null,
-        ownerId: req.user!.userId,
+        ownerId: ownerId || req.user!.userId,
       },
     })
 

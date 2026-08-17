@@ -9,7 +9,7 @@ import styles from './page.module.css';
 export default function RegisterPage() {
   const { register, user } = useAuth();
   const router = useRouter();
-  const [form, setForm] = useState({ email: '', password: '', name: '', phone: '', role: 'cliente' });
+  const [form, setForm] = useState({ email: '', password: '', name: '', phone: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -23,7 +23,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    const err = await register(form);
+    const err = await register({ ...form, role: 'cliente' });
     if (err) {
       setError(err);
       setLoading(false);
@@ -32,10 +32,6 @@ export default function RegisterPage() {
     }
   };
 
-  const roles = [
-    { value: 'cliente', label: 'Cliente - Quiero comprar' },
-    { value: 'tienda', label: 'Dueño de tienda - Quiero vender' },
-  ];
 
   return (
     <div className={styles.page}>
@@ -82,18 +78,6 @@ export default function RegisterPage() {
               required
               minLength={6}
             />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label}>Tipo de cuenta</label>
-            <select
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-              className={styles.input}
-            >
-              {roles.map((r) => (
-                <option key={r.value} value={r.value}>{r.label}</option>
-              ))}
-            </select>
           </div>
           <button type="submit" className={styles.submitBtn} disabled={loading}>
             {loading ? 'Creando cuenta...' : 'Crear cuenta'}

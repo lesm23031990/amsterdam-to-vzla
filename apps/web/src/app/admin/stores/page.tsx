@@ -11,9 +11,7 @@ interface Store {
   id: string;
   name: string;
   slug: string;
-  category: string;
-  owner?: { name: string; email: string };
-  status?: string;
+  description?: string;
 }
 
 export default function AdminStoresPage() {
@@ -36,7 +34,7 @@ export default function AdminStoresPage() {
   return (
     <div className={styles.page}>
       <div className={styles.container}>
-        <h1 className={styles.title}>Administrar Tiendas</h1>
+        <h1 className={styles.title}>Tiendas</h1>
 
         {stores.length === 0 ? (
           <p className={styles.empty}>No hay tiendas registradas</p>
@@ -44,7 +42,6 @@ export default function AdminStoresPage() {
           <div className={styles.table}>
             <div className={styles.tableHeader}>
               <span>Nombre</span>
-              <span>Categoría</span>
               <span>Slug</span>
               <span>Acciones</span>
             </div>
@@ -53,7 +50,6 @@ export default function AdminStoresPage() {
                 <span className={styles.storeName}>
                   <Link href={`/stores/${store.slug}`}>{store.name}</Link>
                 </span>
-                <span className={styles.category}>{store.category}</span>
                 <span className={styles.slug}>{store.slug}</span>
                 <span className={styles.actions}>
                   <Link href={`/stores/${store.slug}`} className={styles.viewBtn}>Ver</Link>

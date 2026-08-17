@@ -5,7 +5,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-prod'
 
 export interface AuthPayload {
   userId: string
-  role: 'cliente' | 'tienda' | 'repartidor' | 'admin'
+  role: 'cliente' | 'admin'
   email: string
 }
 

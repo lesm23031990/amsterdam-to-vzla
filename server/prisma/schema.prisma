@@ -9,8 +9,6 @@ datasource db {
 
 enum Role {
   cliente
-  tienda
-  repartidor
   admin
 }
 

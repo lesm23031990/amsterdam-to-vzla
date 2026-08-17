@@ -16,17 +16,7 @@ interface Store {
   address?: string;
 }
 
-const categories = [
-  'Todas',
-  'Ropa',
-  'Electrónica',
-  'Hogar',
-  'Alimentos',
-  'Salud',
-  'Deportes',
-  'Juguetes',
-  'Otros',
-];
+const categories = ['Todas', 'Congelados', 'Comida Rápida'];
 
 export default function StoresPage() {
   const [stores, setStores] = useState<Store[]>([]);

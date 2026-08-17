@@ -191,11 +191,27 @@
 .registerBtn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4); }
 
 @media (max-width: 768px) {
-  .container { gap: 12px; }
-  .searchBar { order: 3; max-width: none; width: 100%; grid-column: 1 / -1; }
-  .container { flex-wrap: wrap; height: auto; padding: 12px 16px; gap: 8px; }
+  .container { gap: 12px; flex-wrap: wrap; height: auto; padding: 10px 12px; }
+  .nav { height: auto; }
+  .searchBar { order: 3; max-width: none; width: 100%; }
   .actionLabel { display: none; }
   .actionBtn { padding: 8px; }
-  .logoText { font-size: 16px; }
-  .registerBtn { padding: 8px 14px; font-size: 13px; }
+  .logoText { font-size: 15px; }
+  .logoEmoji { font-size: 20px; }
+  .searchInput { font-size: 13px; }
+  .searchBtn { padding: 8px 14px; font-size: 13px; }
+  .searchIcon { padding: 0 6px 0 12px; }
+  .registerBtn { padding: 6px 12px; font-size: 12px; }
+  .loginBtn { padding: 6px 12px; font-size: 12px; }
+  .dropdownMenu { min-width: 180px; right: -8px; }
+}
+
+@media (max-width: 400px) {
+  .container { padding: 8px; gap: 8px; }
+  .logoText { font-size: 13px; }
+  .searchBar { border-radius: 8px; }
+  .searchInput { padding: 8px 0; font-size: 12px; }
+  .searchBtn { padding: 8px 10px; font-size: 12px; }
+  .actionBtn { padding: 6px; }
+  .authBtns { gap: 4px; }
 }

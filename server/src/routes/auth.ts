@@ -9,7 +9,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password, name, phone, role } = req.body
 
-    const validRoles = ['cliente', 'tienda', 'repartidor']
+    const validRoles = ['cliente']
     if (!email || !password || !name || !role) {
       res.status(400).json({ ok: false, error: 'Faltan campos requeridos: email, password, name, role' })
       return

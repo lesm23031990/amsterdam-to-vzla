@@ -1,88 +1,23 @@
-.page {
-  flex: 1;
-}
+.page { flex: 1; }
+.container { max-width: 900px; margin: 0 auto; padding: 32px 16px; }
+.title { font-size: 24px; font-weight: 700; margin-bottom: 24px; }
+.empty { text-align: center; padding: 60px; color: #6b7280; }
+.loading { text-align: center; padding: 60px; color: #6b7280; }
 
-.container {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 32px 16px;
-}
+.table { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+.tableHeader { display: grid; grid-template-columns: 2fr 1fr auto; padding: 12px 16px; background: #f9fafb; font-size: 13px; font-weight: 600; color: #6b7280; }
+.tableRow { display: grid; grid-template-columns: 2fr 1fr auto; padding: 12px 16px; border-top: 1px solid #e5e7eb; font-size: 14px; align-items: center; }
 
-.title {
-  font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 24px;
-}
-
-.empty {
-  text-align: center;
-  padding: 60px;
-  color: #6b7280;
-}
-
-.table {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.tableHeader {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  padding: 12px 16px;
-  background: #f9fafb;
-  font-size: 13px;
-  font-weight: 600;
-  color: #6b7280;
-}
-
-.tableRow {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  padding: 12px 16px;
-  border-top: 1px solid #e5e7eb;
-  font-size: 14px;
-  align-items: center;
-}
-
-.storeName a {
-  color: #2563eb;
-  font-weight: 500;
-}
-
-.category {
-  font-size: 13px;
-}
-
-.slug {
-  font-size: 13px;
-  color: #6b7280;
-  font-family: monospace;
-}
-
-.viewBtn {
-  padding: 4px 12px;
-  border: 1px solid #2563eb;
-  color: #2563eb;
-  border-radius: 4px;
-  font-size: 12px;
-  text-decoration: none;
-  transition: all 0.2s;
-}
-
-.viewBtn:hover {
-  background: #2563eb;
-  color: #fff;
-}
-
-.loading {
-  text-align: center;
-  padding: 60px;
-  color: #6b7280;
-}
+.storeName a { color: #2563eb; font-weight: 500; text-decoration: none; }
+.storeName a:hover { color: #f97316; }
+.slug { font-size: 13px; color: #6b7280; font-family: monospace; }
+.actions { display: flex; gap: 8px; }
+.viewBtn { padding: 4px 12px; border: 1px solid #2563eb; color: #2563eb; border-radius: 4px; font-size: 12px; text-decoration: none; transition: all 0.2s; }
+.viewBtn:hover { background: #2563eb; color: #fff; }
 
 @media (max-width: 600px) {
-  .tableHeader, .tableRow {
-    grid-template-columns: 1fr 1fr;
-  }
+  .container { padding: 20px 12px; }
+  .title { font-size: 20px; }
+  .tableHeader, .tableRow { grid-template-columns: 1fr auto; gap: 8px; }
+  .tableHeader span:nth-child(2), .tableRow span:nth-child(2) { display: none; }
 }

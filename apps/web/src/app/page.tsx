@@ -13,12 +13,8 @@ interface Product {
 }
 
 const categories = [
-  { id: 'comida', label: 'Comida', emoji: '🍽️' },
-  { id: 'bebida', label: 'Bebidas', emoji: '🥤' },
-  { id: 'ropa', label: 'Ropa', emoji: '👕' },
-  { id: 'electronica', label: 'Electrónica', emoji: '📱' },
-  { id: 'hogar', label: 'Hogar', emoji: '🏠' },
-  { id: 'artesania', label: 'Artesanía', emoji: '🎨' },
+  { id: 'congelados', label: 'Congelados', emoji: '❄️' },
+  { id: 'comida-rapida', label: 'Comida Rápida', emoji: '🍔' },
 ];
 
 export default function Home() {
@@ -57,35 +53,35 @@ export default function Home() {
           <div className={styles.heroText}>
             <span className={styles.heroBadge}>🚀 Envío gratis en tu primera compra</span>
             <h1 className={styles.heroTitle}>Lo mejor de San Cristóbal,<br /><span className={styles.heroAccent}>en un solo lugar</span></h1>
-            <p className={styles.heroSub}>Compra directo a las mejores tiendas locales</p>
+            <p className={styles.heroSub}>Productos congelados e insumos de comida rápida a domicilio</p>
             <div className={styles.heroCtas}>
               <Link href="#offers" className={styles.heroCta}>Ver ofertas</Link>
               <Link href={user ? '/orders' : '/register'} className={styles.heroCtaOutline}>{user ? 'Mis pedidos' : 'Crear cuenta'}</Link>
             </div>
           </div>
           <div className={styles.heroVisual}>
-            <a href="/products?category=comida" className={styles.heroCard1}>
-              <div className={styles.heroCardImg} style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600)' }} />
+            <a href="/products?category=congelados" className={styles.heroCard1}>
+              <div className={styles.heroCardImg} style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1627485937980-221c88ac04f9?w=600)' }} />
               <div className={styles.heroCardLabel}>
-                <span className={styles.heroCardTag}>🍕 Más vendido</span>
-                <strong className={styles.heroCardName}>Pizza Margherita</strong>
-                <span className={styles.heroCardPrice}>$10.00</span>
+                <span className={styles.heroCardTag}>❄️ Más vendido</span>
+                <strong className={styles.heroCardName}>Nuggets de Pollo x1kg</strong>
+                <span className={styles.heroCardPrice}>$8.50</span>
               </div>
             </a>
-            <a href="/products?category=electronica" className={styles.heroCard2}>
-              <div className={styles.heroCardImg} style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600)' }} />
+            <a href="/products?category=comida-rapida" className={styles.heroCard2}>
+              <div className={styles.heroCardImg} style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600)' }} />
               <div className={styles.heroCardLabel}>
-                <span className={styles.heroCardTag}>🎧 Popular</span>
-                <strong className={styles.heroCardName}>Auriculares Bluetooth</strong>
-                <span className={styles.heroCardPrice}>$45.00</span>
+                <span className={styles.heroCardTag}>🍔 Popular</span>
+                <strong className={styles.heroCardName}>Pan de Hamburguesa x12</strong>
+                <span className={styles.heroCardPrice}>$4.00</span>
               </div>
             </a>
-            <a href="/products?category=ropa" className={styles.heroCard3}>
-              <div className={styles.heroCardImg} style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=600)' }} />
+            <a href="/products?category=congelados" className={styles.heroCard3}>
+              <div className={styles.heroCardImg} style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1551024601-bec78aea704b?w=600)' }} />
               <div className={styles.heroCardLabel}>
-                <span className={styles.heroCardTag}>👟 Nuevo</span>
-                <strong className={styles.heroCardName}>Zapatos Deportivos</strong>
-                <span className={styles.heroCardPrice}>$48.00</span>
+                <span className={styles.heroCardTag}>🍩 Nuevo</span>
+                <strong className={styles.heroCardName}>Donas Congeladas x24</strong>
+                <span className={styles.heroCardPrice}>$12.00</span>
               </div>
             </a>
           </div>
@@ -197,9 +193,9 @@ export default function Home() {
       {!user && (
         <section className={styles.ctaBanner}>
           <div className={styles.ctaInner}>
-            <h2 className={styles.ctaTitle}>¿Tienes un negocio?</h2>
-            <p className={styles.ctaText}>Regístrate como tienda y llega a cientos de clientes en San Cristóbal</p>
-            <Link href="/register" className={styles.ctaBtn}>Crear cuenta de tienda →</Link>
+            <h2 className={styles.ctaTitle}>Productos congelados y de comida rápida</h2>
+            <p className={styles.ctaText}>La mejor calidad para tu hogar o negocio en San Cristóbal</p>
+            <Link href="/products" className={styles.ctaBtn}>Ver productos →</Link>
           </div>
         </section>
       )}
