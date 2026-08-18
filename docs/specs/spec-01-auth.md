@@ -7,7 +7,7 @@ assignees: []
 ## Endpoints
 
 ### POST /api/v1/auth/register
-Registro de nuevo usuario (cliente, tienda, repartidor).
+Registro de nuevo usuario (solo cliente).
 
 ### POST /api/v1/auth/login
 Inicio de sesión para cualquier rol.
@@ -26,8 +26,7 @@ Actualizar perfil del usuario autenticado.
   "email": "usuario@ejemplo.com",
   "password": "Str0ngPass!",
   "name": "Juan Pérez",
-  "phone": "+584141234567",
-  "role": "cliente | tienda | repartidor"
+  "phone": "+584141234567"
 }
 ```
 
@@ -96,24 +95,24 @@ Headers: `Authorization: Bearer <token>`
 ```
 
 ## Behavior
-- **Roles válidos:** `cliente`, `tienda`, `repartidor` (admin se crea desde semilla)
+- **Roles válidos:** `cliente`, `admin` (admin se crea solo desde semilla)
+- **Registro público:** siempre crea rol `cliente` (no se envía role en el request)
 - **Password** mínimo 8 caracteres, 1 mayúscula, 1 número
 - **Email** único por usuario, validación de formato
 - **JWT** expira en 7 días, incluye `userId`, `role`, `email`
 - **Hash** de password con bcrypt (salt rounds 12)
-- **Registro de tienda** crea usuario + registro inicial pending en tabla Store
-- **Repartidor** requiere documento de identidad y foto (se agregan en PATCH)
 - **Rate limit:** 5 intentos de login por minuto por IP
+- No existe rol "tienda" ni "repartidor" — todos los usuarios registrados son clientes
 
 ## Acceptance Criteria
-- [ ] Un usuario puede registrarse con email, password, name, phone y role
+- [ ] Un usuario puede registrarse con email, password, name y phone
+- [ ] Usuario registrado siempre tiene rol `cliente`
 - [ ] Un usuario puede iniciar sesión con email y password y recibe un JWT
 - [ ] Un usuario puede obtener su perfil con un token válido
 - [ ] Un usuario puede actualizar su perfil con un token válido
 - [ ] Email duplicado devuelve error 400
 - [ ] Credenciales inválidas devuelven error 401
 - [ ] Token expirado o inválido devuelve error 401
-- [ ] Rol inválido devuelve error 400
 - [ ] Password débil devuelve error 400 con validaciones específicas
 - [ ] Rate limit de login funciona correctamente
 
@@ -121,7 +120,7 @@ Headers: `Authorization: Bearer <token>`
 
 ## Tareas Técnicas
 - [ ] Escribir tests (TDD)
-- [ ] Configurar Prisma con modelo User + Store
+- [ ] Configurar Prisma con modelo User (sin Store)
 - [ ] Implementar middleware auth con JWT
 - [ ] Implementar rutas register, login, me
 - [ ] Integrar con frontend web

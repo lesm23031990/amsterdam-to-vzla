@@ -31,7 +31,7 @@ User login (same as web).
   "email": "user@example.com",
   "password": "********",
   "name": "User Name",
-  "role": "cliente | tienda | repartidor"
+  "phone": "+584141234567"
 }
 ```
 
@@ -55,12 +55,12 @@ User login (same as web).
 - Auth token stored in SecureStore and attached to all requests
 - Screens to build:
 
-  1. **Home**: Product grid, search bar, horizontal category chips
-  2. **Login/Register**: Auth forms with role selector, validation, error display
-  3. **Store List**: Browse stores with search, category filter
-  4. **Store Detail**: Products by store, add to cart
-  5. **Product Detail**: Image carousel, price, description, quantity selector, add to cart
-  6. **Cart**: Items grouped by store, quantity controls, total, checkout button
+  1. **Home**: Product grid, search bar, horizontal category chips, brand logos
+  2. **Login/Register**: Auth forms (sin role selector), validation, error display
+  3. **Brands**: Browse brands/suppliers with logos (replaces Store List)
+  4. **Brand Detail**: Products by brand, add to cart (replaces Store Detail)
+  5. **Product Detail**: Image carousel, price, brand logo, description, quantity selector, add to cart
+  6. **Cart**: Simple item list, quantity controls, total, checkout button
   7. **Checkout**: Address form, payment method selector (Binance, cash, transfer), confirm
   8. **Orders**: List of orders with status badge
   9. **Order Detail**: Status step tracker, delivery map (WebView with Leaflet or react-native-maps)
@@ -90,10 +90,10 @@ User login (same as web).
 - [ ] Build shared API client with auth interceptor
 - [ ] Implement SecureStore token persistence
 - [ ] Build Home screen
-- [ ] Build Login/Register screens
-- [ ] Build Store List and Store Detail screens
+- [ ] Build Login/Register screens (no role selector)
+- [ ] Build Brands list and Brand Detail screens (replaces stores)
 - [ ] Build Product Detail screen
-- [ ] Build Cart screen with store grouping
+- [ ] Build Cart screen (simple list, no store grouping)
 - [ ] Build Checkout screen
 - [ ] Build Orders list and Order Detail screens
 - [ ] Build Driver view screen
@@ -101,6 +101,4 @@ User login (same as web).
 - [ ] Integrate delivery map (WebView or react-native-maps)
 - [ ] Set up push notifications (Expo)
 - [ ] Write tests (TDD)
-- [ ] Integrar con frontend
-- [ ] Integrar con mobile
 - [ ] PR a main

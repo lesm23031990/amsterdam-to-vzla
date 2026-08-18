@@ -6,26 +6,26 @@ assignees: []
 
 ## Endpoints
 
-### GET /api/v1/stores/:storeId/orders
-Returns orders for a specific store (new endpoint).
+### GET /api/v1/admin/orders
+Lista todas las órdenes de la plataforma (solo admin).
 
 ### GET /api/v1/admin/users
-Returns all users with role, email, name, stores count, orders count (new endpoint).
+Lista todos los usuarios con rol, email, nombre, orders count (admin).
 
 ### PATCH (fix) assistant endpoint
-Ensure `data.message` is returned (alias or rename from `data.reply`).
+Asegurar que `data.message` se retorna (alias o renombrar desde `data.reply`).
 
 ## Request
 
-### GET /api/v1/stores/:storeId/orders
-Headers: `Authorization: Bearer <token>` (tienda/admin)
+### GET /api/v1/admin/orders
+Headers: `Authorization: Bearer <token>` (admin)
 
 ### GET /api/v1/admin/users
 Headers: `Authorization: Bearer <token>` (admin)
 
 ## Response
 
-### Éxito — 200 (store orders)
+### Éxito — 200 (admin orders)
 ```json
 {
   "ok": true,
@@ -60,8 +60,7 @@ Headers: `Authorization: Bearer <token>` (admin)
         "id": "string",
         "email": "user@example.com",
         "name": "User Name",
-        "role": "tienda",
-        "storesCount": 1,
+        "role": "cliente",
         "ordersCount": 15,
         "createdAt": "2025-01-01T00:00:00Z"
       }
@@ -81,38 +80,36 @@ Headers: `Authorization: Bearer <token>` (admin)
 ## Behavior
 
 ### Bug 1 — Dashboard orders
-- Dashboard `/dashboard/orders` must call `GET /api/v1/stores/:storeId/orders` instead of non-existent `/delivery/orders`
-- Store ID obtained from auth context (authenticated store owner)
+- Dashboard `/admin/orders` debe llamar a `GET /api/v1/admin/orders`
+- Muestra todas las órdenes de Amsterdam Frozen Foods (no por tienda)
 
 ### Bug 2 — Assistant response
-- Backend assistant endpoint must return `data.message` (currently `data.reply`)
-- Either rename `reply` to `message` or add `message` as an alias
+- Backend assistant endpoint debe retornar `data.message` (actualmente `data.reply`)
+- Renombrar `reply` a `message` o agregar `message` como alias
 
 ### Bug 3 — Admin users page
-- Admin users page at `/admin/users` must call `GET /api/v1/admin/users`
-- Show table with columns: name, email, role, stores count, orders count, created date
-- Remove premature `setLoading(false)` before fetch completes
-- Add loading spinner while fetching
+- Admin users page en `/admin/users` debe llamar a `GET /api/v1/admin/users`
+- Tabla con columnas: name, email, role, orders count, created date
+- Eliminar `setLoading(false)` prematuro antes de que el fetch complete
+- Agregar loading spinner mientras se obtienen datos
 
 ### New endpoint rules
-- `GET /stores/:storeId/orders`: requires tienda or admin role, sorted by createdAt desc, includes items and delivery info
-- `GET /admin/users`: requires admin role, returns all users with computed storesCount and ordersCount
+- `GET /admin/orders`: requiere admin role, sorted by createdAt desc, includes items y delivery info
+- `GET /admin/users`: requiere admin role, retorna todos los usuarios con computed ordersCount
 
 ## Acceptance Criteria
-- [ ] Store owner sees their incoming orders in dashboard
-- [ ] AI assistant responses display correctly
-- [ ] Admin sees list of all users with store/order counts
-- [ ] All bugs confirmed fixed
+- [ ] Admin ve todas las órdenes en dashboard
+- [ ] AI assistant responses se muestran correctamente
+- [ ] Admin ve lista de usuarios con order counts
+- [ ] Todos los bugs confirmados como corregidos
 
 ---
 
 ## Tareas Técnicas
 - [ ] Write tests (TDD)
-- [ ] Create `GET /api/v1/stores/:storeId/orders` endpoint
-- [ ] Create `GET /api/v1/admin/users` endpoint
-- [ ] Fix assistant response to return `data.message`
-- [ ] Fix dashboard orders page to use correct endpoint
-- [ ] Fix admin users page with proper API call
-- [ ] Integrar con frontend
-- [ ] Integrar con mobile
+- [ ] Crear endpoint `GET /api/v1/admin/orders`
+- [ ] Crear endpoint `GET /api/v1/admin/users`
+- [ ] Fix assistant response para retornar `data.message`
+- [ ] Fix dashboard orders page para usar el endpoint correcto
+- [ ] Fix admin users page con API call correcto
 - [ ] PR a main

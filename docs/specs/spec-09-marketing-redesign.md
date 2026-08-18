@@ -6,15 +6,15 @@ assignees: []
 
 ## Objetivo
 
-Rediseñar la experiencia principal para que sea **product-first** en lugar de store-first. El usuario debe ver productos y ofertas desde el landing, como Amazon/ mercado libre. Las tiendas pasan a ser un filtro secundario.
+Rediseñar la experiencia principal para que sea **product-first**. El usuario debe ver productos y ofertas desde el landing, como Amazon/MercadoLibre.
 
 ## Principios de diseño
 
 - **Productos primero** — el homepage muestra productos destacados, ofertas y novedades
 - **Compra en 3 clics** — ver producto → agregar al carrito → checkout
 - **Navegación por categorías** visual (iconos grandes) como primer filtro
-- **Búsqueda potente** — busca por nombre de producto, tienda o categoría
-- **Tiendas como filtro** — se puede explorar por tienda pero no es el flujo principal
+- **Búsqueda potente** — busca por nombre de producto, marca o categoría
+- **Marcas como filtro** — se puede explorar por marca de proveedor pero no es el flujo principal
 - **Obsesión por conversión** — cada elemento visual impulsa a comprar
 
 ## Cambios en el frontend
@@ -25,24 +25,24 @@ Rediseñar la experiencia principal para que sea **product-first** en lugar de s
 - Categorías visuales con emojis
 - "Ofertas flash" con temporizador
 - Barra de búsqueda prominente
-- Sin tiendas visibles en homepage (excepto en detalle de producto)
+- Logos de marcas/proveedores en sección secundaria
 
 ### Página de producto (/products/[id]) — Mejorada
 - Galería de imágenes
 - Precio grande y llamativo
 - Botón "Agregar al carrito" flotante
-- Información de la tienda (nombre, enlace)
+- Información de la marca/proveedor (nombre, logo)
 - Valoraciones (mock inicial)
 - Productos relacionados
 
-### Página de tienda (/stores/[slug]) — Secundaria
-- Se mantiene pero es accesible desde el producto
-- Header con logo e información de la tienda
-- Grid de productos de esa tienda
+### Página de marca (/brands/[slug]) — Secundaria
+- Header con logo de la marca
+- Grid de productos de esa marca
+- Accesible desde el detalle de producto
 
 ### Barra de navegación — Simplificada
 - Logo + búsqueda + carrito + usuario
-- Sin links a tiendas en el nav principal
+- Sin links a marcas en el nav principal
 - Categorías en dropdown o sección aparte
 
 ### Checkout — Simplificado
@@ -53,11 +53,11 @@ Rediseñar la experiencia principal para que sea **product-first** en lugar de s
 ## Comportamiento
 - Productos visibles sin autenticación
 - Usuario puede agregar al carrito sin cuenta (se le pide login al checkout)
-- Búsqueda busca en productos y tiendas simultáneamente
+- Búsqueda busca en productos y marcas simultáneamente
 - Ofertas flash: productos con badge "Oferta" y precio tachado
 
 ## Acceptance Criteria
-- [ ] Landing muestra productos, no tiendas
+- [ ] Landing muestra productos como prioridad
 - [ ] Búsqueda encuentra productos por nombre
 - [ ] Compra en máximo 3 clics desde el landing
 - [ ] Diseño visualmente atractivo y orientado a conversión

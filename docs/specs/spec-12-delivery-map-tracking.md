@@ -49,7 +49,7 @@ Headers: `Authorization: Bearer <token>`
 
 ## Behavior
 - Map only renders when order status is "in_transit"
-- Default center is store location until driver location is available
+- Default center is Amsterdam Frozen Foods location (San Cristóbal) until driver location is available
 - Driver marker auto-centers on each location update
 - Re-center button appears when user pans away from driver
 - Fallback message "Esperando ubicación del repartidor..." when no coordinates

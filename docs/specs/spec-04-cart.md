@@ -1,5 +1,5 @@
 ---
-title: "Spec 04 — Carrito Universal: productos de múltiples tiendas"
+title: "Spec 04 — Carrito de Compras"
 labels: ["spec"]
 assignees: []
 ---
@@ -51,25 +51,16 @@ Headers: `Authorization: Bearer <token>`
       {
         "id": "uuid",
         "productId": "uuid",
-        "name": "Producto X",
-        "price": 25.00,
-        "currency": "USD",
+        "name": "Nuggets de Pollo x1kg",
+        "price": 12.50,
         "quantity": 2,
-        "subtotal": 50.00,
+        "subtotal": 25.00,
         "image": "https://...",
-        "storeId": "uuid",
-        "storeName": "Mi Tienda"
+        "brand": { "name": "Tiffany Foods", "logoImage": "https://..." }
       }
     ],
     "totalItems": 2,
-    "subtotal": 50.00,
-    "groupedByStore": {
-      "store-id-1": {
-        "storeName": "Mi Tienda",
-        "items": [...],
-        "subtotal": 50.00
-      }
-    }
+    "subtotal": 25.00
   }
 }
 ```
@@ -80,25 +71,26 @@ Headers: `Authorization: Bearer <token>`
 - Producto debe estar activo y tener stock suficiente
 - Al agregar producto ya existente en carrito, se incrementa cantidad
 - Cantidad no puede exceder stock disponible
-- Precio se congela al agregar al carrito (no cambia si el dueño actualiza precio después)
+- Precio se congela al agregar al carrito (no cambia si admin actualiza precio después)
 - Al hacer checkout, el carrito se convierte en orden y se limpia
-- Producto eliminado por el dueño se marca como no disponible en carrito
+- Producto eliminado por admin se marca como no disponible en carrito
+- Sin agrupación por tienda — todos los productos son de Amsterdam Frozen Foods
 
 ## Acceptance Criteria
-- [ ] Cliente puede agregar productos de distintas tiendas al carrito
-- [ ] Cliente puede ver su carrito agrupado por tienda
+- [ ] Cliente puede agregar productos al carrito
+- [ ] Cliente puede ver su carrito con lista de items
 - [ ] Cliente puede actualizar cantidades
 - [ ] Cliente puede eliminar items
 - [ ] Cliente puede vaciar carrito
 - [ ] Stock se valida al agregar
 - [ ] Precio se congela en el carrito
+- [ ] Producto eliminado se muestra como no disponible
 
 ---
 
 ## Tareas Técnicas
 - [ ] Escribir tests (TDD)
-- [ ] Agregar modelos Cart, CartItem a Prisma
+- [ ] Modelos Cart, CartItem en Prisma
 - [ ] Implementar rutas de carrito
-- [ ] Agrupar items por tienda en la respuesta
 - [ ] Validar stock contra producto actual
 - [ ] PR a main

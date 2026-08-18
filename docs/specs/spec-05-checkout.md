@@ -53,17 +53,9 @@ Headers: `Authorization: Bearer <token>`
     "status": "pending_payment",
     "total": 125.00,
     "currency": "USD",
+    "deliveryFee": 5.00,
     "items": [
-      { "productId": "uuid", "name": "Producto X", "quantity": 2, "price": 25.00, "storeId": "uuid" }
-    ],
-    "groupedByStore": [
-      {
-        "storeId": "uuid",
-        "storeName": "Mi Tienda",
-        "items": [...],
-        "subtotal": 50.00,
-        "deliveryFee": 5.00
-      }
+      { "productId": "uuid", "name": "Producto X", "quantity": 2, "price": 25.00 }
     ],
     "paymentMethod": "binance_pay",
     "paymentUrl": "https://p2p.binance.com/...",
@@ -84,7 +76,8 @@ Headers: `Authorization: Bearer <token>`
     "paymentMethod": "binance_pay",
     "paymentStatus": "pending | paid | failed",
     "items": [...],
-    "groupedByStore": [...],
+    "deliveryAddress": "Av. Principal, San Cristóbal",
+    "deliveryFee": 5.00,
     "createdAt": "2026-07-27T00:00:00.000Z"
   }
 }
@@ -95,13 +88,14 @@ Headers: `Authorization: Bearer <token>`
 - Al hacer checkout, carrito se convierte en orden y se vacía
 - **Binance Pay:** generar link de pago P2P (mock inicial)
 - **Efectivo/Transferencia:** cliente paga al repartidor o transfiere, marca como pagado después
-- Cada tienda ve sus propios items en la orden (multi-tenant)
 - Estado inicial: `pending_payment`
 - Si pago falla o expira (24h), orden pasa a `cancelled`
+- Orden pertenece a Amsterdam Frozen Foods (no multi-tenant)
+- Tarifa de delivery única para toda la orden (no por tienda)
 
 ## Acceptance Criteria
 - [ ] Cliente puede hacer checkout de su carrito
-- [ ] Orden se crea agrupada por tienda
+- [ ] Orden se crea con todos los items del carrito
 - [ ] Pago con Binance Pay genera link de pago
 - [ ] Pago en efectivo se registra con referencia
 - [ ] Cliente puede ver historial de órdenes
@@ -112,7 +106,7 @@ Headers: `Authorization: Bearer <token>`
 
 ## Tareas Técnicas
 - [ ] Escribir tests (TDD)
-- [ ] Agregar modelos Order, OrderItem a Prisma
+- [ ] Modelos Order, OrderItem en Prisma
 - [ ] Integrar carrito → orden al hacer checkout
 - [ ] Mock de Binance Pay (generar link)
 - [ ] Implementar rutas de orden y pago

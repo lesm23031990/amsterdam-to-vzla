@@ -1,19 +1,25 @@
 ---
-title: "Spec 16 — Repartidor Registration"
+title: "Spec 16 — Gestión de Repartidores y Deliveries"
 labels: ["spec"]
 assignees: []
 ---
 
 ## Endpoints
 
+### GET /api/v1/admin/deliveries
+Lista todos los deliveries activos (solo admin).
+
+### POST /api/v1/admin/deliveries
+Crear/assignar delivery a un repartidor (solo admin).
+
 ### GET /api/v1/delivery/my-deliveries
-Returns deliveries assigned to the authenticated driver.
+Lista deliveries asignados al repartidor autenticado.
 
 ### PATCH /api/v1/delivery/:id/location
-Updates driver's current location (already exists).
+Actualiza la ubicación del repartidor.
 
 ### PATCH /api/v1/delivery/:id/status
-Updates delivery status (accepted, picked_up, in_transit, delivered).
+Actualiza el estado del delivery.
 
 ## Request
 
@@ -48,7 +54,7 @@ Headers: `Authorization: Bearer <token>` (repartidor)
       {
         "id": "string",
         "orderId": "string",
-        "storeName": "Tienda Example",
+        "customerName": "Juan Pérez",
         "deliveryAddress": "Calle 123, San Cristóbal",
         "status": "pending",
         "total": 25.50,
@@ -80,32 +86,45 @@ Headers: `Authorization: Bearer <token>` (repartidor)
 ```
 
 ## Behavior
-- Register form includes "Repartidor" as a role option alongside "Cliente" and "Dueño de tienda"
-- After registration as repartidor, redirect to `/driver` page
-- Driver dashboard at `/driver` shows assigned deliveries list
-- Each delivery card displays: order ID, store name, delivery address, status, total
-- Status update buttons: "Aceptar", "Recogido", "En camino", "Entregado"
-- Only allowed transitions: pending→accepted→picked_up→in_transit→delivered
-- Location update button uses browser geolocation API and sends to `PATCH /delivery/:id/location`
-- Location sharing only active when a delivery is in "in_transit" status
-- Responsive layout for mobile use
+
+### Repartidores
+- Los repartidores **NO se registran públicamente**
+- Admin crea cuentas de repartidor desde el dashboard `/admin/drivers`
+- Un repartidor es un usuario con rol `cliente` + un registro en tabla `Driver` vinculado
+- El repartidor se loguea normalmente y ve su dashboard `/driver`
+
+### Driver Dashboard (`/driver`)
+- Lista de deliveries asignados al repartidor
+- Cada tarjeta muestra: order ID, nombre del cliente, dirección, estado, total
+- Botones de estado: "Aceptar", "Recogido", "En camino", "Entregado"
+- Transiciones válidas: pending → accepted → picked_up → in_transit → delivered
+- Botón de ubicación usa geolocalización del navegador → `PATCH /delivery/:id/location`
+- Compartir ubicación solo activo cuando delivery está "in_transit"
+- Layout responsive para uso en móvil
+
+### Admin Dashboard (`/admin/drivers`)
+- Admin puede crear cuentas de repartidor (nombre, email, phone, documento)
+- Admin puede asignar deliveries a repartidores disponibles
+- Admin ve lista de repartidores con estado (activo, en delivery, offline)
 
 ## Acceptance Criteria
-- [ ] New users can register as "repartidor"
-- [ ] Repartidor sees their assigned deliveries
-- [ ] Repartidor can update delivery status
-- [ ] Repartidor can share live location
+- [ ] Admin puede crear cuentas de repartidor
+- [ ] Admin puede asignar deliveries a repartidores
+- [ ] Repartidor ve sus deliveries asignados
+- [ ] Repartidor puede actualizar estado del delivery
+- [ ] Repartidor puede compartir ubicación en vivo
+- [ ] Transiciones de estado se validan correctamente
 
 ---
 
 ## Tareas Técnicas
 - [ ] Write tests (TDD)
-- [ ] Add "Repartidor" option to register form
-- [ ] Create driver dashboard page at `/driver`
-- [ ] Create DeliveryCard component
-- [ ] Implement status update buttons with validation
-- [ ] Implement location sharing with browser geolocation
-- [ ] Add `GET /api/v1/delivery/my-deliveries` backend endpoint
-- [ ] Integrar con frontend
-- [ ] Integrar con mobile
+- [ ] Crear modelo Driver vinculado a User
+- [ ] Crear página `/admin/drivers` para gestión de repartidores
+- [ ] Crear página `/driver` para dashboard del repartidor
+- [ ] Crear componente DeliveryCard
+- [ ] Implementar botones de estado con validación
+- [ ] Implementar geolocalización del navegador
+- [ ] Endpoint GET /api/v1/delivery/my-deliveries
+- [ ] Endpoint POST /api/v1/admin/deliveries
 - [ ] PR a main

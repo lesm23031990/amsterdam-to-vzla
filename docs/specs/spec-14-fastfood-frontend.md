@@ -6,27 +6,27 @@ assignees: []
 
 ## Endpoints
 
-### GET /api/v1/fastfood/stores/:storeId/menu
-Returns menu for a food store with option groups and choices.
+### GET /api/v1/menu-items
+Returns menu items with option groups and choices (público).
 
-### POST /api/v1/fastfood/stores/:storeId/menu
-Create a menu item (tienda role).
+### POST /api/v1/menu-items
+Create a menu item (admin only).
 
-### PUT /api/v1/fastfood/menu/:itemId
-Update a menu item.
+### PUT /api/v1/menu-items/:itemId
+Update a menu item (admin only).
 
-### DELETE /api/v1/fastfood/menu/:itemId
-Delete a menu item.
+### DELETE /api/v1/menu-items/:itemId
+Delete a menu item (admin only).
 
-### PATCH /api/v1/fastfood/menu/:itemId/toggle
-Toggle menu item availability.
+### PATCH /api/v1/menu-items/:itemId/toggle
+Toggle menu item availability (admin only).
 
 ## Request
 
-### GET /api/v1/fastfood/stores/:storeId/menu
-Headers: `Authorization: Bearer <token>` (optional for public)
+### GET /api/v1/menu-items
+Headers: `Authorization: Bearer <token>` (opcional, público)
 
-### POST /api/v1/fastfood/stores/:storeId/menu
+### POST /api/v1/menu-items
 ```json
 {
   "name": "string",
@@ -48,7 +48,7 @@ Headers: `Authorization: Bearer <token>` (optional for public)
 }
 ```
 
-Headers: `Authorization: Bearer <token>` (tienda)
+Headers: `Authorization: Bearer <token>` (admin)
 
 ## Response
 
@@ -93,36 +93,32 @@ Headers: `Authorization: Bearer <token>` (tienda)
 ```
 
 ## Behavior
-- Store detail page (`/stores/[slug]`) detects `category === "comida"` and renders menu layout
-- Menu item cards show: name, description, base price, prep time badge, image
-- Clicking item opens modal/drawer with full details and options
-- Option groups rendered as radio group (single) or checkboxes (multi)
-- Price modifiers shown inline next to each choice
-- Quantity selector with add-to-cart button
-- Dashboard menu management at `/dashboard/menu` for food stores only
-- Dashboard: list items with toggle availability switch
-- Dashboard create/edit form includes dynamic option builder (add/remove groups & choices)
-- Preparation time badge visible on store detail page
-- Cart addition follows same flow as regular products
+- Página `/menu` muestra items del menú con layout de comida rápida
+- Menu item cards muestran: nombre, descripción, precio base, badge de prep time, imagen
+- Click en item abre modal con detalles completos y opciones
+- Option groups se renderizan como radio group (single) o checkboxes (multi)
+- Price modifiers se muestran inline junto a cada choice
+- Selector de cantidad con botón de agregar al carrito
+- Admin gestiona menú desde `/admin/menu`
+- Admin: lista de items con toggle de disponibilidad
+- Admin: formulario de crear/editar con option builder dinámico
+- Badge de preparation time visible en la página de menú
+- Agregar al carrito sigue el mismo flujo que productos regulares
 
 ## Acceptance Criteria
-- [ ] Food stores show menu layout instead of product grid
-- [ ] Menu items display with options/choices and price modifiers
-- [ ] Can add menu items to cart (same as regular cart flow)
-- [ ] Store owner can manage menu items from dashboard
-- [ ] Store owner can create options with multiple choices
-- [ ] Preparation time displayed
+- [ ] Página de menú muestra items con opciones y price modifiers
+- [ ] Se pueden agregar items de menú al carrito (mismo flujo que productos)
+- [ ] Admin puede gestionar items de menú desde dashboard
+- [ ] Admin puede crear opciones con múltiples choices
+- [ ] Preparation time visible en la UI
 
 ---
 
 ## Tareas Técnicas
 - [ ] Write tests (TDD)
-- [ ] Implement rutas
-- [ ] Create MenuItemCard component
-- [ ] Build menu item modal with option selector
-- [ ] Build dashboard menu management page
-- [ ] Create option builder form component
-- [ ] Integrate cart with menu items (customizations as metadata)
-- [ ] Integrar con frontend
-- [ ] Integrar con mobile
+- [ ] Crear componente MenuItemCard
+- [ ] Build menu item modal con option selector
+- [ ] Build página de gestión de menú en admin
+- [ ] Crear componente option builder form
+- [ ] Integrar carrito con menu items (customizations como metadata)
 - [ ] PR a main

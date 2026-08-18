@@ -24,7 +24,6 @@ Evitar que el homepage sea interminable y generar urgencia de compra con una sec
 3. **Ofertas del día** — slider/grid horizontal con productos destacados (price < 8 o marcados como oferta). Máximo 4-6 productos.
 4. **Productos destacados** — grid de 8 productos máximo
 5. **Botón "Ver todos los productos"** → redirige a /products
-6. **CTA para dueños de tienda** (si no está logueado)
 
 ### Nueva página /offers
 

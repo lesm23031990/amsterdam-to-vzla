@@ -6,35 +6,31 @@ assignees: []
 
 ## Endpoints
 
-### POST /api/v1/stores/:id/menu-items
-Agregar item al menú de comida rápida (solo tienda con categoría `comida`).
+### POST /api/v1/menu-items
+Agregar item al menú de comida rápida (solo admin).
 
-### GET /api/v1/stores/:id/menu-items
-Listar menú de una tienda de comida.
+### GET /api/v1/menu-items
+Listar menú de comida rápida (público).
 
 ### PATCH /api/v1/menu-items/:id
-Actualizar item del menú.
+Actualizar item del menú (solo admin).
 
 ### DELETE /api/v1/menu-items/:id
-Eliminar item del menú.
+Eliminar item del menú (solo admin).
 
 ### POST /api/v1/menu-items/:id/options
-Agregar opciones personalizables (ej: tamaño, ingredientes extras).
-
-### POST /api/v1/orders/:id/preparation-time
-Estimación de tiempo de preparación.
+Agregar opciones personalizables (ej: tamaño, ingredientes extras) (solo admin).
 
 ## Request
 
-### POST /api/v1/stores/:id/menu-items
-Headers: `Authorization: Bearer <token>`
+### POST /api/v1/menu-items
+Headers: `Authorization: Bearer <token>` (admin)
 ```json
 {
   "name": "Hamburguesa Clásica",
   "description": "Carne 200g, queso, lechuga, tomate",
   "basePrice": 8.50,
-  "currency": "USD",
-  "category": "hamburguesa | pizza | pollo | bebida | postre | otros",
+  "category": "hamburguesa | pizza | pollo | bebida | postre | otro",
   "image": "https://...",
   "preparationTime": 15,
   "isAvailable": true
@@ -56,7 +52,7 @@ Headers: `Authorization: Bearer <token>`
 
 ## Response
 
-### GET /api/v1/stores/:id/menu-items — 200
+### GET /api/v1/menu-items — 200
 ```json
 {
   "ok": true,
@@ -65,7 +61,6 @@ Headers: `Authorization: Bearer <token>`
       "id": "uuid",
       "name": "Hamburguesa Clásica",
       "basePrice": 8.50,
-      "currency": "USD",
       "preparationTime": 15,
       "isAvailable": true,
       "options": [
@@ -85,17 +80,17 @@ Headers: `Authorization: Bearer <token>`
 ```
 
 ## Behavior
-- Solo tiendas con categoría `comida` pueden usar este módulo
+- Solo admin puede crear/editar/eliminar items de menú
 - Items de menú tienen tiempo de preparación en minutos
 - Opciones personalizables con modificador de precio
 - Al agregar al carrito, cliente selecciona opciones → precio final = basePrice + modifiers
 - Tiempo de preparación estimado se muestra al cliente al confirmar orden
 - Item no disponible (`isAvailable: false`) no se puede agregar al carrito
-- Categorías restringidas a comida rápida
+- Items de menú pertenecen a Amsterdam Frozen Foods (no multi-tenant)
 
 ## Acceptance Criteria
-- [ ] Tienda de comida puede crear items de menú
-- [ ] Tienda puede agregar opciones personalizables a un item
+- [ ] Admin puede crear items de menú
+- [ ] Admin puede agregar opciones personalizables a un item
 - [ ] Cliente ve opciones disponibles al agregar al carrito
 - [ ] Precio final incluye modificadores
 - [ ] Tiempo de preparación se muestra al confirmar orden
@@ -106,8 +101,7 @@ Headers: `Authorization: Bearer <token>`
 ## Tareas Técnicas
 - [ ] Escribir tests (TDD)
 - [ ] Agregar modelos MenuItem, MenuOption, MenuChoice a Prisma
-- [ ] Validar que tienda sea categoría `comida`
-- [ ] Implementar CRUD de menú
+- [ ] Implementar CRUD de menú (solo admin para write)
 - [ ] Integrar opciones con carrito (precio final)
 - [ ] Mostrar tiempo de preparación en checkout
 - [ ] PR a main

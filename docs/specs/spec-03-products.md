@@ -1,5 +1,5 @@
 ---
-title: "Spec 03 — Catálogo de Productos: CRUD por tienda"
+title: "Spec 03 — Catálogo de Productos: CRUD por admin"
 labels: ["spec"]
 assignees: []
 ---
@@ -7,34 +7,33 @@ assignees: []
 ## Endpoints
 
 ### POST /api/v1/products
-Crear producto (solo dueño de tienda con suscripción activa).
+Crear producto (solo admin).
 
 ### GET /api/v1/products
-Listar productos activos. Filtros: `?storeId=&category=&q=&minPrice=&maxPrice=`.
+Listar productos activos. Filtros: `?category=&brand=&q=&minPrice=&maxPrice=`.
 
 ### GET /api/v1/products/:id
 Ver detalle de producto.
 
 ### PATCH /api/v1/products/:id
-Actualizar producto (solo dueño de la tienda).
+Actualizar producto (solo admin).
 
 ### DELETE /api/v1/products/:id
-Eliminar producto (solo dueño de la tienda).
+Eliminar producto (solo admin).
 
 ## Request
 
 ### POST /api/v1/products
-Headers: `Authorization: Bearer <token>`
+Headers: `Authorization: Bearer <token>` (admin)
 ```json
 {
-  "storeId": "uuid-de-la-tienda",
-  "name": "Producto X",
-  "description": "Descripción del producto",
-  "price": 25.00,
-  "currency": "USD | Bs | COP",
-  "category": "comida | bebida | ropa | electronica | hogar | otros",
+  "name": "Nuggets de Pollo x1kg",
+  "description": "Nuggets congelados premium, listos para freír",
+  "price": 12.50,
+  "category": "congelados",
   "images": ["https://..."],
-  "stock": 100,
+  "stock": 200,
+  "brandId": "uuid-del-proveedor",
   "isActive": true
 }
 ```
@@ -42,8 +41,8 @@ Headers: `Authorization: Bearer <token>`
 ### PATCH /api/v1/products/:id
 ```json
 {
-  "price": 30.00,
-  "stock": 80
+  "price": 15.00,
+  "stock": 150
 }
 ```
 
@@ -55,11 +54,11 @@ Headers: `Authorization: Bearer <token>`
   "ok": true,
   "data": {
     "id": "uuid",
-    "storeId": "uuid",
-    "name": "Producto X",
-    "price": 25.00,
-    "currency": "USD",
-    "stock": 100,
+    "name": "Nuggets de Pollo x1kg",
+    "price": 12.50,
+    "category": "congelados",
+    "stock": 200,
+    "brandId": "uuid",
     "isActive": true,
     "createdAt": "2026-07-27T00:00:00.000Z"
   }
@@ -73,12 +72,13 @@ Headers: `Authorization: Bearer <token>`
   "data": [
     {
       "id": "uuid",
-      "storeId": "uuid",
-      "name": "Producto X",
-      "price": 25.00,
-      "currency": "USD",
+      "name": "Nuggets de Pollo x1kg",
+      "price": 12.50,
+      "category": "congelados",
       "images": ["https://..."],
-      "store": { "name": "Mi Tienda", "slug": "mi-tienda" }
+      "stock": 200,
+      "isActive": true,
+      "brand": { "name": "Tiffany Foods", "slug": "tiffany", "logoImage": "https://..." }
     }
   ],
   "meta": { "total": 50, "page": 1, "perPage": 20 }
@@ -86,27 +86,33 @@ Headers: `Authorization: Bearer <token>`
 ```
 
 ## Behavior
-- Solo dueño de la tienda puede crear/editar/eliminar productos
-- Store debe tener suscripción activa para crear productos
+- Solo admin puede crear/editar/eliminar productos
 - Producto eliminado es soft-delete (isActive = false)
 - Stock no puede ser negativo
 - Precio debe ser > 0
-- Categorías predefinidas (limitadas a la lista)
+- Categorías predefinidas: `congelados`, `insumos`, `bebidas`, `salsas`, `panaderia`, `postres`, `otros`
+- `brandId` es opcional — si no tiene marca, se muestra "Amsterdam Frozen Foods"
+- Productos visibles sin autenticación
+- No se requiere suscripción para crear productos
 
 ## Acceptance Criteria
-- [ ] Dueño de tienda puede crear un producto
-- [ ] Store sin suscripción activa no puede crear productos
+- [ ] Admin puede crear un producto
 - [ ] Productos se listan públicos (sin auth)
-- [ ] Dueño puede editar solo sus productos
-- [ ] Dueño puede eliminar (soft-delete) solo sus productos
+- [ ] Admin puede editar productos
+- [ ] Admin puede eliminar (soft-delete) productos
 - [ ] Stock y precio se validan (no negativos)
+- [ ] Productos con marca muestran logo de la marca
+- [ ] Productos sin marca muestran "Amsterdam Frozen Foods"
+- [ ] Filtrar por categoría funciona
+- [ ] Filtrar por marca funciona
+- [ ] Búsqueda por nombre funciona
 
 ---
 
 ## Tareas Técnicas
 - [ ] Escribir tests (TDD)
-- [ ] Agregar modelo Product a Prisma
-- [ ] Validar suscripción activa al crear producto
-- [ ] Implementar rutas CRUD
+- [ ] Modelo Product con brandId opcional
+- [ ] Implementar rutas CRUD (solo admin para write)
 - [ ] Soft-delete en lugar de borrado físico
+- [ ] Filtros: category, brand, q, minPrice, maxPrice
 - [ ] PR a main

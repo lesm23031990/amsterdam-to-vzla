@@ -12,7 +12,7 @@ Returns current exchange rates. Query: `?base=USD`.
 ### GET /api/v1/products
 Accept `?currency=Bs|COP|USD` to return prices in requested currency.
 
-### GET /api/v1/stores/:storeId/products
+### GET /api/v1/brands/:slug/products
 Accept `?currency=Bs|COP|USD` to return prices in requested currency.
 
 ## Request

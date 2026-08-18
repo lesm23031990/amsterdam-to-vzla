@@ -1,154 +1,183 @@
 ---
-title: "Spec 02 — Gestión de Tiendas: CRUD multi-tenant y suscripciones"
+title: "Spec 02 — Plataforma Única: Amsterdam Frozen Foods"
 labels: ["spec"]
 assignees: []
 ---
 
+## Objetivo
+
+Amsterdam Frozen Foods opera como una **única marca/plataforma**. No hay tiendas independientes, ni multi-tenant, ni suscripciones. Todos los usuarios son **clientes** o **admin**. Los proveedores/suplidores se muestran solo como **marca visual** en los productos (logo/nombre), sin acceso ni privilegios especiales.
+
+## Cambio de modelo
+
+| Antes (Multi-tenant) | Ahora (Plataforma única) |
+|---|---|
+| Cada usuario crea su tienda | Una sola plataforma: Amsterdam Frozen Foods |
+| Productos pertenecen a una Store | Productos pertenecen a la plataforma |
+| Roles: cliente, tienda, repartidor, admin | Roles: cliente, admin |
+| Suscripciones y planes | No hay suscripciones |
+| Store CRUD por usuarios | Admin gestiona todo desde dashboard |
+| Tienda tiene slug, logo, descripción | Proveedores tienen solo nombre + logo de marca |
+
 ## Endpoints
 
-### POST /api/v1/stores
-Crear tienda (solo usuario con rol `tienda`).
+### GET /api/v1/brands
+Listar marcas/proveedores disponibles (público). Se usa para filtrar productos por marca.
 
-### GET /api/v1/stores
-Listar tiendas activas (público). Filtros: `?q=nombre&category=comida`.
+### GET /api/v1/products
+Listar productos activos. Filtros: `?category=&q=&brand=&minPrice=&maxPrice=`.
+Se elimina `?storeId=` (no hay tiendas). Se agrega `?brand=`.
 
-### GET /api/v1/stores/:slug
-Ver detalle de una tienda por slug.
+### GET /api/v1/products/:id
+Ver detalle de producto (público).
 
-### PATCH /api/v1/stores/:id
-Actualizar tienda (solo dueño de la tienda).
+### POST /api/v1/products
+Crear producto (solo admin).
+Se elimina `storeId` del request. El producto pertenece a la plataforma.
 
-### GET /api/v1/stores/mine
-Obtener la tienda del dueño autenticado.
+### PATCH /api/v1/products/:id
+Actualizar producto (solo admin).
 
-### GET /api/v1/plans
-Listar planes de suscripción disponibles.
+### DELETE /api/v1/products/:id
+Eliminar producto (solo admin, soft-delete).
 
-### POST /api/v1/stores/:id/subscribe
-Suscribir tienda a un plan.
+### GET /api/v1/brands/:slug/products
+Listar productos de una marca específica.
 
 ## Request
 
-### POST /api/v1/stores
-Headers: `Authorization: Bearer <token>`
+### POST /api/v1/products
+Headers: `Authorization: Bearer <token>` (admin)
 ```json
 {
-  "name": "Mi Tienda",
-  "slug": "mi-tienda",
-  "description": "Vendemos productos artesanales",
-  "phone": "+584141234567",
-  "address": "Av. Principal, San Cristóbal",
-  "category": "artesania | comida | ropa | electronica | otros",
-  "coverImage": "https://...",
-  "logoImage": "https://..."
+  "name": "Nuggets de Pollo x1kg",
+  "description": "Nuggets congelados premium, listos para freír",
+  "price": 12.50,
+  "category": "congelados",
+  "images": ["https://..."],
+  "stock": 200,
+  "brandId": "uuid-del-proveedor",
+  "isActive": true
 }
 ```
 
-### PATCH /api/v1/stores/:id
-Headers: `Authorization: Bearer <token>`
-```json
-{
-  "name": "Nuevo Nombre",
-  "description": "Nueva descripción"
-}
+### GET /api/v1/products
 ```
-
-### POST /api/v1/stores/:id/subscribe
-Headers: `Authorization: Bearer <token>`
-```json
-{
-  "planId": "uuid-del-plan"
-}
+GET /api/v1/products?category=congelados&brand=tiffany&q=nuggets&minPrice=5&maxPrice=20
 ```
 
 ## Response
 
-### POST /api/v1/stores — 201
-```json
-{
-  "ok": true,
-  "data": {
-    "id": "uuid",
-    "name": "Mi Tienda",
-    "slug": "mi-tienda",
-    "description": "...",
-    "phone": "+584141234567",
-    "address": "Av. Principal, San Cristóbal",
-    "category": "artesania",
-    "status": "active",
-    "ownerId": "uuid-del-usuario",
-    "createdAt": "2026-07-27T00:00:00.000Z"
-  }
-}
-```
-
-### GET /api/v1/stores — 200
-```json
-{
-  "ok": true,
-  "data": [
-    { "id": "uuid", "name": "Mi Tienda", "slug": "mi-tienda", "category": "artesania", "logoImage": "...", "status": "active" }
-  ],
-  "meta": { "total": 10, "page": 1, "perPage": 20 }
-}
-```
-
-### GET /api/v1/plans — 200
+### GET /api/v1/brands — 200
 ```json
 {
   "ok": true,
   "data": [
     {
       "id": "uuid",
-      "name": "Plan Básico",
-      "price": 15.00,
-      "currency": "USD",
-      "interval": "monthly | yearly",
-      "features": ["Hasta 50 productos", "Soporte por email"]
+      "name": "Tiffany Foods",
+      "slug": "tiffany",
+      "logoImage": "https://...",
+      "productCount": 15
+    },
+    {
+      "id": "uuid",
+      "name": "Frisaba",
+      "slug": "frisaba",
+      "logoImage": "https://...",
+      "productCount": 8
     }
   ]
 }
 ```
 
-### Errores — 400 / 401 / 403
+### GET /api/v1/products — 200
 ```json
 {
-  "ok": false,
-  "error": "mensaje de error"
+  "ok": true,
+  "data": [
+    {
+      "id": "uuid",
+      "name": "Nuggets de Pollo x1kg",
+      "price": 12.50,
+      "category": "congelados",
+      "images": ["https://..."],
+      "stock": 200,
+      "isActive": true,
+      "brand": { "name": "Tiffany Foods", "slug": "tiffany", "logoImage": "https://..." }
+    }
+  ],
+  "meta": { "total": 50, "page": 1, "perPage": 20 }
 }
 ```
 
+### POST /api/v1/products — 201
+```json
+{
+  "ok": true,
+  "data": {
+    "id": "uuid",
+    "name": "Nuggets de Pollo x1kg",
+    "price": 12.50,
+    "category": "congelados",
+    "stock": 200,
+    "brandId": "uuid",
+    "isActive": true,
+    "createdAt": "2026-07-27T00:00:00.000Z"
+  }
+}
+```
+
+## Brand (Proveedor/Marca)
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `name` | string | Nombre del proveedor/marca |
+| `slug` | string | Identificador URL-safe |
+| `logoImage` | string | URL del logo de la marca |
+| `isActive` | boolean | Si la marca está activa |
+
+Las marcas **NO tienen**:
+- Usuarios asociados
+- Logins ni credenciales
+- Dashboards ni paneles
+- Suscripciones
+- Permisos de ningún tipo
+
+Una marca es puramente un **campo visual** en los productos. Un producto puede o no tener una marca asignada.
+
 ## Behavior
-- **Slug** único, autogenerado desde el nombre (slugify), permitir override
-- **Status** de tienda: `active` por defecto al crear
-- **Dueño** solo puede tener UNA tienda (role `tienda` → 1 store)
-- Solo el dueño puede editar su tienda
-- **Planes** precargados desde semilla (Básico, Premium, Ilimitado)
-- Suscripción activa requerida para ciertas features (API valida al crear producto)
-- Al subscribirse, se crea/actualiza `StoreSubscription` con fecha de expiración
-- Store sin suscripción activa > 30 días → status `suspended`
+- Todos los productos pertenecen a la plataforma Amsterdam Frozen Foods
+- Un producto puede tener una `brandId` opcional (mostrar logo de marca)
+- Los productos sin marca se muestran como "Amsterdam Frozen Foods"
+- Las marcas se gestionan solo desde el admin dashboard
+- No hay suscripciones, planes ni límites de productos
+- No hay rol "tienda" — solo `cliente` y `admin`
+- El rol "repartidor" se maneja como tipo de usuario especial del admin (no rol JWT)
+- Cualquier persona que se registre es automáticamente un `cliente`
+- Los productos son visibles sin autenticación
 
 ## Acceptance Criteria
-- [ ] Usuario con rol `tienda` puede crear su tienda
-- [ ] Usuario con rol `tienda` solo puede crear UNA tienda
-- [ ] Slug se genera automáticamente del nombre
-- [ ] Slug duplicado devuelve error 400
-- [ ] Tiendas activas son públicas (GET sin auth)
-- [ ] Dueño puede actualizar su tienda
-- [ ] Otro usuario no puede actualizar tienda ajena (403)
-- [ ] Listar planes de suscripción
-- [ ] Dueño puede suscribir su tienda a un plan
-- [ ] Store sin suscripción activa no puede crear productos
+- [ ] Cualquier usuario registrado tiene rol `cliente` por defecto
+- [ ] Admin puede crear/editar/eliminar productos
+- [ ] Admin puede gestionar marcas (crear, editar, eliminar)
+- [ ] Productos muestran marca/logo si tienen `brandId`
+- [ ] Productos sin marca muestran "Amsterdam Frozen Foods"
+- [ ] Filtrar productos por marca funciona
+- [ ] No existen endpoints de tienda ni suscripciones
+- [ ] No hay rol `tienda` en el sistema
+- [ ] Seed incluye marcas de ejemplo y productos iniciales
 
 ---
 
 ## Tareas Técnicas
-- [ ] Escribir tests (TDD)
-- [ ] Agregar modelos Store, SubscriptionPlan, StoreSubscription a Prisma
-- [ ] Implementar rutas CRUD de tiendas
-- [ ] Implementar rutas de planes y suscripción
-- [ ] Seed de planes iniciales
-- [ ] Validar que store con suscripción vencida no cree productos
-- [ ] Integrar con frontend web
-- [ ] Integrar con mobile
+- [ ] Eliminar modelo StoreSubscription, SubscriptionPlan
+- [ ] Simplificar modelo Store → Brand (sin ownerId, sin categoría)
+- [ ] Producto: `storeId` → `brandId` (optional)
+- [ ] Eliminar rutas de stores CRUD y suscripciones
+- [ ] Crear rutas GET /brands y GET /brands/:slug/products
+- [ ] Ajustar rutas de productos (eliminar storeId, agregar brandId)
+- [ ] Ajustar rol "tienda" → solo cliente/admin
+- [ ] Actualizar seed con marcas y productos
+- [ ] Integrar con frontend
 - [ ] PR a main
