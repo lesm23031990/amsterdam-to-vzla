@@ -65,7 +65,9 @@ export default function ProductsPage() {
             {products.map(p => (
               <div key={p.id} className={styles.card}>
                 <Link href={`/products/${p.id}`} className={styles.imgWrap}>
-                  <div className={styles.img} style={{ backgroundImage: `url(${p.images?.[0] || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400'})` }} />
+                  <div className={styles.img} style={p.images?.[0] ? { backgroundImage: `url(${p.images[0]})` } : { backgroundColor: '#E8EDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px' }}>
+                    {!p.images?.[0] && '❄️'}
+                  </div>
                   {p.stock <= 5 && p.stock > 0 && <span className={styles.badgeLow}>Quedan {p.stock}</span>}
                   {p.price < 8 && <span className={styles.badgeOffer}>🔥 Oferta</span>}
                 </Link>

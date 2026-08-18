@@ -71,7 +71,9 @@ export default function OffersPage() {
               return (
                 <div key={p.id} className={styles.card}>
                   <Link href={`/products/${p.id}`} className={styles.imgWrap}>
-                    <div className={styles.img} style={{ backgroundImage: `url(${p.images?.[0] || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400'})` }} />
+                    <div className={styles.img} style={p.images?.[0] ? { backgroundImage: `url(${p.images[0]})` } : { backgroundColor: '#FFF3DB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px' }}>
+                      {!p.images?.[0] && '🔥'}
+                    </div>
                     <span className={styles.discountBadge}>-{discount}%</span>
                   </Link>
                   <div className={styles.info}>

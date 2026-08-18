@@ -5,8 +5,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "amsterdamToVzla & asociados",
-  description: "Plataforma multi-tenant de comercio electrónico",
+  title: "Amsterdam Frozen Foods",
+  description: "Productos congelados e insumos de comida rápida con delivery en San Cristóbal, Venezuela",
 };
 
 export default function RootLayout({
