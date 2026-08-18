@@ -6,10 +6,10 @@ const router = Router()
 
 router.post('/', authMiddleware, requireRole('admin'), async (req: Request, res: Response) => {
   try {
-    const { storeId, name, description, price, currency, category, images, stock } = req.body
+    const { name, description, price, currency, category, images, stock, brandId } = req.body
 
-    if (!name || price === undefined || !storeId) {
-      res.status(400).json({ ok: false, error: 'Nombre, precio y tienda son requeridos' })
+    if (!name || price === undefined) {
+      res.status(400).json({ ok: false, error: 'Nombre y precio son requeridos' })
       return
     }
 
@@ -23,15 +23,17 @@ router.post('/', authMiddleware, requireRole('admin'), async (req: Request, res:
       return
     }
 
-    const store = await db.store.findUnique({ where: { id: storeId } })
-    if (!store) {
-      res.status(404).json({ ok: false, error: 'Tienda no encontrada' })
-      return
+    if (brandId) {
+      const brand = await db.brand.findUnique({ where: { id: brandId } })
+      if (!brand) {
+        res.status(404).json({ ok: false, error: 'Marca no encontrada' })
+        return
+      }
     }
 
     const product = await db.product.create({
       data: {
-        storeId,
+        brandId: brandId || null,
         name,
         description: description || null,
         price,
@@ -51,13 +53,14 @@ router.post('/', authMiddleware, requireRole('admin'), async (req: Request, res:
 
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { storeId, category, q, minPrice, maxPrice } = req.query
+    const { brandId, brand, category, q, minPrice, maxPrice } = req.query
     const page = Math.max(1, parseInt(String(req.query.page)) || 1)
     const perPage = Math.min(50, Math.max(1, parseInt(String(req.query.perPage)) || 20))
 
     const where: Record<string, unknown> = { isActive: true }
 
-    if (storeId) where.storeId = storeId as string
+    if (brandId) where.brandId = brandId as string
+    if (brand) where.brand = { slug: brand as string }
     if (category) where.category = category as string
     if (q) where.name = { contains: q as string, mode: 'insensitive' }
     if (minPrice || maxPrice) {
@@ -73,7 +76,7 @@ router.get('/', async (req: Request, res: Response) => {
         take: perPage,
         orderBy: { createdAt: 'desc' },
         include: {
-          store: { select: { name: true, slug: true } },
+          brand: { select: { name: true, slug: true, logoImage: true } },
         },
       }),
       db.product.count({ where }),
@@ -100,7 +103,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     const product = await db.product.findUnique({
       where: { id: String(req.params.id) },
       include: {
-        store: { select: { id: true, name: true, slug: true } },
+        brand: { select: { id: true, name: true, slug: true, logoImage: true } },
       },
     })
 
@@ -116,18 +119,12 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 })
 
-router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
+router.patch('/:id', authMiddleware, requireRole('admin'), async (req: Request, res: Response) => {
   try {
     const product = await db.product.findUnique({ where: { id: req.params.id as string } })
 
     if (!product) {
       res.status(404).json({ ok: false, error: 'Producto no encontrado' })
-      return
-    }
-
-    const store = await db.store.findUnique({ where: { id: product.storeId } })
-    if (!store || (store.ownerId !== req.user!.userId && req.user!.role !== 'admin')) {
-      res.status(403).json({ ok: false, error: 'No autorizado para modificar este producto' })
       return
     }
 
@@ -151,6 +148,7 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
         ...(req.body.category !== undefined && { category: req.body.category }),
         ...(req.body.images !== undefined && { images: req.body.images }),
         ...(req.body.stock !== undefined && { stock: req.body.stock }),
+        ...(req.body.brandId !== undefined && { brandId: req.body.brandId || null }),
       },
     })
 
@@ -161,18 +159,12 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
   }
 })
 
-router.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
+router.delete('/:id', authMiddleware, requireRole('admin'), async (req: Request, res: Response) => {
   try {
     const product = await db.product.findUnique({ where: { id: req.params.id as string } })
 
     if (!product) {
       res.status(404).json({ ok: false, error: 'Producto no encontrado' })
-      return
-    }
-
-    const store = await db.store.findUnique({ where: { id: product.storeId } })
-    if (!store || (store.ownerId !== req.user!.userId && req.user!.role !== 'admin')) {
-      res.status(403).json({ ok: false, error: 'No autorizado para eliminar este producto' })
       return
     }
 

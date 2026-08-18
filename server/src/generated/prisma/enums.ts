@@ -17,15 +17,6 @@ export const Role = {
 export type Role = (typeof Role)[keyof typeof Role]
 
 
-export const StoreStatus = {
-  active: 'active',
-  suspended: 'suspended',
-  closed: 'closed'
-} as const
-
-export type StoreStatus = (typeof StoreStatus)[keyof typeof StoreStatus]
-
-
 export const OrderStatus = {
   pending_payment: 'pending_payment',
   confirmed: 'confirmed',

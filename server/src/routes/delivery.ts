@@ -15,7 +15,7 @@ const validTransitions: Record<string, string[]> = {
   cancelled: [],
 }
 
-router.patch('/orders/:id/status', authMiddleware, async (req: Request, res: Response) => {
+router.patch('/orders/:id/status', authMiddleware, requireRole('admin'), async (req: Request, res: Response) => {
   try {
     const { status } = req.body
 
@@ -30,14 +30,6 @@ router.patch('/orders/:id/status', authMiddleware, async (req: Request, res: Res
 
     if (!order) {
       res.status(404).json({ ok: false, error: 'Pedido no encontrado' })
-      return
-    }
-
-    const store = await db.store.findUnique({ where: { id: order.storeId } })
-    const allowed = store?.ownerId === req.user!.userId || req.user!.role === 'admin'
-
-    if (!allowed) {
-      res.status(403).json({ ok: false, error: 'No autorizado para actualizar este pedido' })
       return
     }
 
@@ -61,7 +53,7 @@ router.patch('/orders/:id/status', authMiddleware, async (req: Request, res: Res
   }
 })
 
-router.post('/orders/:id/assign', authMiddleware, requireRole('tienda', 'admin'), async (req: Request, res: Response) => {
+router.post('/orders/:id/assign', authMiddleware, requireRole('admin'), async (req: Request, res: Response) => {
   try {
     const { driverId } = req.body
 
@@ -76,12 +68,6 @@ router.post('/orders/:id/assign', authMiddleware, requireRole('tienda', 'admin')
 
     if (!order) {
       res.status(404).json({ ok: false, error: 'Pedido no encontrado' })
-      return
-    }
-
-    const store = await db.store.findUnique({ where: { id: order.storeId } })
-    if (store?.ownerId !== req.user!.userId && req.user!.role !== 'admin') {
-      res.status(403).json({ ok: false, error: 'No autorizado para asignar repartidor a este pedido' })
       return
     }
 
@@ -124,7 +110,6 @@ router.get('/orders/:id/tracking', authMiddleware, async (req: Request, res: Res
     const order = await db.order.findUnique({
       where: { id: req.params.id as string },
       include: {
-        store: { select: { ownerId: true } },
         delivery: {
           include: {
             driver: { select: { id: true, name: true, phone: true } },
@@ -139,7 +124,7 @@ router.get('/orders/:id/tracking', authMiddleware, async (req: Request, res: Res
       return
     }
 
-    if (order.userId !== req.user!.userId && order.store?.ownerId !== req.user!.userId && req.user!.role !== 'admin') {
+    if (order.userId !== req.user!.userId && req.user!.role !== 'admin') {
       res.status(403).json({ ok: false, error: 'No autorizado para ver el tracking de este pedido' })
       return
     }

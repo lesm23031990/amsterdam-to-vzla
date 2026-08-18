@@ -4,12 +4,13 @@ import cors from 'cors'
 import { createServer } from 'http'
 import { Server as SocketIOServer } from 'socket.io'
 import authRoutes from './routes/auth'
-import storeRoutes from './routes/stores'
+import brandRoutes from './routes/brands'
 import productRoutes from './routes/products'
 import cartRoutes from './routes/cart'
 import checkoutRoutes from './routes/checkout'
 import deliveryRoutes from './routes/delivery'
 import fastfoodRoutes from './routes/fastfood'
+import adminRoutes from './routes/admin'
 import assistantRoutes from './routes/assistant'
 
 const app = express()
@@ -27,13 +28,14 @@ app.get('/api/v1/health', (_req, res) => {
 })
 
 app.use('/api/v1/auth', authRoutes)
-app.use('/api/v1/stores', storeRoutes)
+app.use('/api/v1/brands', brandRoutes)
 app.use('/api/v1/products', productRoutes)
 app.use('/api/v1/cart', cartRoutes)
 app.use('/api/v1/checkout', checkoutRoutes)
 app.use('/api/v1/delivery', deliveryRoutes)
 app.use('/api/v1/fastfood', fastfoodRoutes)
 app.use('/api/v1/assistant', assistantRoutes)
+app.use('/api/v1/admin', adminRoutes)
 
 io.on('connection', (socket) => {
   console.log('Cliente conectado:', socket.id)

@@ -4,10 +4,11 @@ import { authMiddleware, requireRole } from '../middleware/auth'
 
 const router = Router()
 
-router.get('/stores/:storeId/menu', async (req: Request, res: Response) => {
+// GET /api/v1/fastfood/menu — Listar menú (público)
+router.get('/menu', async (_req: Request, res: Response) => {
   try {
     const items = await db.menuItem.findMany({
-      where: { storeId: String(req.params.storeId), isAvailable: true },
+      where: { isAvailable: true },
       orderBy: { createdAt: 'desc' },
       include: {
         options: {
@@ -23,14 +24,9 @@ router.get('/stores/:storeId/menu', async (req: Request, res: Response) => {
   }
 })
 
-router.post('/stores/:storeId/menu', authMiddleware, requireRole('admin'), async (req: Request, res: Response) => {
+// POST /api/v1/fastfood/menu — Crear item de menú (solo admin)
+router.post('/menu', authMiddleware, requireRole('admin'), async (req: Request, res: Response) => {
   try {
-    const store = await db.store.findUnique({ where: { id: String(req.params.storeId) } })
-    if (!store) {
-      res.status(404).json({ ok: false, error: 'Tienda no encontrada' })
-      return
-    }
-
     const { name, description, basePrice, currency, category, image, preparationTime } = req.body
     if (!name || basePrice === undefined) {
       res.status(400).json({ ok: false, error: 'Nombre y precio son requeridos' })
@@ -39,7 +35,6 @@ router.post('/stores/:storeId/menu', authMiddleware, requireRole('admin'), async
 
     const item = await db.menuItem.create({
       data: {
-        storeId: store.id,
         name,
         description: description || null,
         basePrice,
@@ -56,17 +51,12 @@ router.post('/stores/:storeId/menu', authMiddleware, requireRole('admin'), async
   }
 })
 
-router.patch('/menu/:id', authMiddleware, async (req: Request, res: Response) => {
+// PATCH /api/v1/fastfood/menu/:id — Actualizar item (solo admin)
+router.patch('/menu/:id', authMiddleware, requireRole('admin'), async (req: Request, res: Response) => {
   try {
     const item = await db.menuItem.findUnique({ where: { id: req.params.id as string } })
     if (!item) {
       res.status(404).json({ ok: false, error: 'Elemento del menú no encontrado' })
-      return
-    }
-
-    const store = await db.store.findUnique({ where: { id: item.storeId } })
-    if (!store || (store.ownerId !== req.user!.userId && req.user!.role !== 'admin')) {
-      res.status(403).json({ ok: false, error: 'No autorizado para modificar este elemento' })
       return
     }
 
@@ -90,17 +80,12 @@ router.patch('/menu/:id', authMiddleware, async (req: Request, res: Response) =>
   }
 })
 
-router.delete('/menu/:id', authMiddleware, async (req: Request, res: Response) => {
+// DELETE /api/v1/fastfood/menu/:id — Eliminar item (solo admin)
+router.delete('/menu/:id', authMiddleware, requireRole('admin'), async (req: Request, res: Response) => {
   try {
     const item = await db.menuItem.findUnique({ where: { id: req.params.id as string } })
     if (!item) {
       res.status(404).json({ ok: false, error: 'Elemento del menú no encontrado' })
-      return
-    }
-
-    const store = await db.store.findUnique({ where: { id: item.storeId } })
-    if (!store || (store.ownerId !== req.user!.userId && req.user!.role !== 'admin')) {
-      res.status(403).json({ ok: false, error: 'No autorizado para eliminar este elemento' })
       return
     }
 
@@ -112,17 +97,12 @@ router.delete('/menu/:id', authMiddleware, async (req: Request, res: Response) =
   }
 })
 
-router.post('/menu/:id/options', authMiddleware, async (req: Request, res: Response) => {
+// POST /api/v1/fastfood/menu/:id/options — Agregar opciones (solo admin)
+router.post('/menu/:id/options', authMiddleware, requireRole('admin'), async (req: Request, res: Response) => {
   try {
     const item = await db.menuItem.findUnique({ where: { id: req.params.id as string } })
     if (!item) {
       res.status(404).json({ ok: false, error: 'Elemento del menú no encontrado' })
-      return
-    }
-
-    const store = await db.store.findUnique({ where: { id: item.storeId } })
-    if (!store || (store.ownerId !== req.user!.userId && req.user!.role !== 'admin')) {
-      res.status(403).json({ ok: false, error: 'No autorizado para modificar este elemento' })
       return
     }
 
@@ -160,10 +140,11 @@ router.post('/menu/:id/options', authMiddleware, async (req: Request, res: Respo
   }
 })
 
-router.get('/stores/:storeId/preparation-time', async (req: Request, res: Response) => {
+// GET /api/v1/fastfood/preparation-time — Tiempo promedio de preparación
+router.get('/preparation-time', async (_req: Request, res: Response) => {
   try {
     const result = await db.menuItem.aggregate({
-      where: { storeId: String(req.params.storeId), isAvailable: true },
+      where: { isAvailable: true },
       _avg: { preparationTime: true },
     })
     res.json({ ok: true, data: { averagePreparationTime: Math.round(result._avg?.preparationTime ?? 0) } })

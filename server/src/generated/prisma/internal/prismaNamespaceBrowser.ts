@@ -52,9 +52,7 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
-  Store: 'Store',
-  SubscriptionPlan: 'SubscriptionPlan',
-  StoreSubscription: 'StoreSubscription',
+  Brand: 'Brand',
   Product: 'Product',
   Cart: 'Cart',
   CartItem: 'CartItem',
@@ -99,54 +97,24 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
-export const StoreScalarFieldEnum = {
+export const BrandScalarFieldEnum = {
   id: 'id',
   name: 'name',
   slug: 'slug',
   description: 'description',
   phone: 'phone',
-  address: 'address',
-  category: 'category',
-  coverImage: 'coverImage',
   logoImage: 'logoImage',
-  status: 'status',
-  ownerId: 'ownerId',
+  isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
-export type StoreScalarFieldEnum = (typeof StoreScalarFieldEnum)[keyof typeof StoreScalarFieldEnum]
-
-
-export const SubscriptionPlanScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  price: 'price',
-  currency: 'currency',
-  interval: 'interval',
-  features: 'features',
-  createdAt: 'createdAt'
-} as const
-
-export type SubscriptionPlanScalarFieldEnum = (typeof SubscriptionPlanScalarFieldEnum)[keyof typeof SubscriptionPlanScalarFieldEnum]
-
-
-export const StoreSubscriptionScalarFieldEnum = {
-  id: 'id',
-  storeId: 'storeId',
-  planId: 'planId',
-  status: 'status',
-  startsAt: 'startsAt',
-  expiresAt: 'expiresAt',
-  createdAt: 'createdAt'
-} as const
-
-export type StoreSubscriptionScalarFieldEnum = (typeof StoreSubscriptionScalarFieldEnum)[keyof typeof StoreSubscriptionScalarFieldEnum]
+export type BrandScalarFieldEnum = (typeof BrandScalarFieldEnum)[keyof typeof BrandScalarFieldEnum]
 
 
 export const ProductScalarFieldEnum = {
   id: 'id',
-  storeId: 'storeId',
+  brandId: 'brandId',
   name: 'name',
   description: 'description',
   price: 'price',
@@ -187,9 +155,9 @@ export type CartItemScalarFieldEnum = (typeof CartItemScalarFieldEnum)[keyof typ
 export const OrderScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
-  storeId: 'storeId',
   status: 'status',
   total: 'total',
+  deliveryFee: 'deliveryFee',
   currency: 'currency',
   paymentMethod: 'paymentMethod',
   paymentStatus: 'paymentStatus',
@@ -242,7 +210,6 @@ export type DeliveryLocationScalarFieldEnum = (typeof DeliveryLocationScalarFiel
 
 export const MenuItemScalarFieldEnum = {
   id: 'id',
-  storeId: 'storeId',
   name: 'name',
   description: 'description',
   basePrice: 'basePrice',

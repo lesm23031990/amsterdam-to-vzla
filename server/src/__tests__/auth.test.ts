@@ -119,15 +119,16 @@ describe('Auth - Register', () => {
     expect(res.body.error).toContain('Password')
   })
 
-  it('rechaza rol inválido', async () => {
+  it('ignora role enviado y siempre crea cliente', async () => {
     const res = await request('POST', '/api/v1/auth/register', {
       email: 'bad@ejemplo.com',
       password: 'Str0ngPass1',
       name: 'Test',
       role: 'superadmin',
     })
-    expect(res.status).toBe(400)
-    expect(res.body.error).toContain('Rol inválido')
+    expect(res.status).toBe(201)
+    expect(res.body.ok).toBe(true)
+    expect(res.body.data.user.role).toBe('cliente')
   })
 
   it('rechaza email inválido', async () => {

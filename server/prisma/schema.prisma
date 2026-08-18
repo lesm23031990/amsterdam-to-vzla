@@ -12,12 +12,6 @@ enum Role {
   admin
 }
 
-enum StoreStatus {
-  active
-  suspended
-  closed
-}
-
 enum OrderStatus {
   pending_payment
   confirmed
@@ -43,7 +37,6 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  stores         Store[]
   cart           Cart?
   orders         Order[]
   conversations  Conversation[]
@@ -52,62 +45,25 @@ model User {
   @@map("users")
 }
 
-model Store {
-  id          String      @id @default(uuid()) @db.Uuid
+model Brand {
+  id          String   @id @default(uuid()) @db.Uuid
   name        String
-  slug        String      @unique
+  slug        String   @unique
   description String?
   phone       String?
-  address     String?
-  category    String?
-  coverImage  String?
   logoImage   String?
-  status      StoreStatus @default(active)
-  ownerId     String      @db.Uuid
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  owner         User                @relation(fields: [ownerId], references: [id])
-  subscriptions StoreSubscription[]
-  products      Product[]
-  menuItems     MenuItem[]
-  orders        Order[]
+  products Product[]
 
-  @@map("stores")
-}
-
-model SubscriptionPlan {
-  id        String   @id
-  name      String
-  price     Float
-  currency  String   @default("USD")
-  interval  String   @default("monthly")
-  features  String[]
-  createdAt DateTime @default(now()) @map("created_at")
-
-  subscriptions StoreSubscription[]
-
-  @@map("subscription_plans")
-}
-
-model StoreSubscription {
-  id        String   @id @default(uuid()) @db.Uuid
-  storeId   String   @db.Uuid
-  planId    String
-  status    String   @default("active")
-  startsAt  DateTime @default(now()) @map("starts_at")
-  expiresAt DateTime @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  store Store            @relation(fields: [storeId], references: [id])
-  plan  SubscriptionPlan @relation(fields: [planId], references: [id])
-
-  @@map("store_subscriptions")
+  @@map("brands")
 }
 
 model Product {
   id          String   @id @default(uuid()) @db.Uuid
-  storeId     String   @db.Uuid
+  brandId     String?  @db.Uuid
   name        String
   description String?
   price       Float
@@ -119,7 +75,7 @@ model Product {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  store       Store      @relation(fields: [storeId], references: [id])
+  brand       Brand?     @relation(fields: [brandId], references: [id], onDelete: SetNull)
   cartItems   CartItem[]
   orderItems  OrderItem[]
 
@@ -155,9 +111,9 @@ model CartItem {
 model Order {
   id              String        @id @default(uuid()) @db.Uuid
   userId          String        @db.Uuid
-  storeId         String        @db.Uuid
   status          OrderStatus   @default(pending_payment)
   total           Float
+  deliveryFee     Float         @default(0)
   currency        String        @default("USD")
   paymentMethod   PaymentMethod
   paymentStatus   String        @default("pending")
@@ -170,7 +126,6 @@ model Order {
   updatedAt       DateTime      @updatedAt @map("updated_at")
 
   user      User          @relation(fields: [userId], references: [id])
-  store     Store         @relation(fields: [storeId], references: [id])
   items     OrderItem[]
   delivery  Delivery?
 
@@ -220,7 +175,6 @@ model DeliveryLocation {
 
 model MenuItem {
   id              String   @id @default(uuid()) @db.Uuid
-  storeId         String   @db.Uuid
   name            String
   description     String?
   basePrice       Float
@@ -232,7 +186,6 @@ model MenuItem {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  store   Store       @relation(fields: [storeId], references: [id])
   options MenuOption[]
 
   @@map("menu_items")

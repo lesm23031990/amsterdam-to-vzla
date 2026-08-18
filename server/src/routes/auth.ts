@@ -7,16 +7,10 @@ const router = Router()
 
 router.post('/register', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password, name, phone, role } = req.body
+    const { email, password, name, phone } = req.body
 
-    const validRoles = ['cliente']
-    if (!email || !password || !name || !role) {
-      res.status(400).json({ ok: false, error: 'Faltan campos requeridos: email, password, name, role' })
-      return
-    }
-
-    if (!validRoles.includes(role)) {
-      res.status(400).json({ ok: false, error: `Rol inválido. Válidos: ${validRoles.join(', ')}` })
+    if (!email || !password || !name) {
+      res.status(400).json({ ok: false, error: 'Faltan campos requeridos: email, password, name' })
       return
     }
 
@@ -44,7 +38,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
         password: hashedPassword,
         name,
         phone: phone || null,
-        role: role || 'cliente',
+        role: 'cliente',
       },
       select: { id: true, email: true, name: true, phone: true, role: true, createdAt: true },
     })

@@ -82,7 +82,7 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
           include: {
             product: {
               include: {
-                store: { select: { id: true, name: true, slug: true } },
+                brand: { select: { id: true, name: true, slug: true, logoImage: true } },
               },
             },
           },
@@ -91,35 +91,20 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
     })
 
     if (!cart) {
-      res.json({ ok: true, data: { id: null, items: [], stores: [], total: 0 } })
+      res.json({ ok: true, data: { id: null, items: [], total: 0, totalItems: 0 } })
       return
     }
 
-    const grouped: Record<string, { store: { id: string; name: string; slug: string }; items: typeof cart.items; subtotal: number }> = {}
-
-    for (const item of cart.items) {
-      const storeId = item.product.store.id
-      if (!grouped[storeId]) {
-        grouped[storeId] = {
-          store: item.product.store,
-          items: [],
-          subtotal: 0,
-        }
-      }
-      grouped[storeId].items.push(item)
-      grouped[storeId].subtotal += item.price * item.quantity
-    }
-
-    const stores = Object.values(grouped)
-    const total = stores.reduce((sum, s) => sum + s.subtotal, 0)
+    const total = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+    const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0)
 
     res.json({
       ok: true,
       data: {
         id: cart.id,
         items: cart.items,
-        stores,
         total,
+        totalItems,
       },
     })
   } catch (error) {
