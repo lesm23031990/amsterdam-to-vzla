@@ -7,6 +7,9 @@ import Footer from "@/components/Footer";
 export const metadata: Metadata = {
   title: "Amsterdam Frozen Foods",
   description: "Productos congelados e insumos de comida rápida con delivery en San Cristóbal, Venezuela",
+  icons: {
+    icon: "/logo-dark.png",
+  },
 };
 
 export default function RootLayout({
