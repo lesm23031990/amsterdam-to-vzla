@@ -12,6 +12,8 @@ import deliveryRoutes from './routes/delivery'
 import fastfoodRoutes from './routes/fastfood'
 import adminRoutes from './routes/admin'
 import assistantRoutes from './routes/assistant'
+import ratesRoutes from './routes/rates'
+import notificationRoutes from './routes/notifications'
 
 const app = express()
 const httpServer = createServer(app)
@@ -36,9 +38,17 @@ app.use('/api/v1/delivery', deliveryRoutes)
 app.use('/api/v1/fastfood', fastfoodRoutes)
 app.use('/api/v1/assistant', assistantRoutes)
 app.use('/api/v1/admin', adminRoutes)
+app.use('/api/v1/rates', ratesRoutes)
+app.use('/api/v1/notifications', notificationRoutes)
 
 io.on('connection', (socket) => {
   console.log('Cliente conectado:', socket.id)
+
+  socket.on('join', (userId: string) => {
+    socket.join(userId)
+    console.log(`Usuario ${userId} unido a su room`)
+  })
+
   socket.on('disconnect', () => console.log('Cliente desconectado:', socket.id))
 })
 

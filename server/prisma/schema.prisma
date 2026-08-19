@@ -7,6 +7,15 @@ datasource db {
   provider = "postgresql"
 }
 
+enum NotificationType {
+  order_status
+  payment_confirmed
+  driver_assigned
+  delivery_update
+  promo
+  system
+}
+
 enum Role {
   cliente
   admin
@@ -41,6 +50,7 @@ model User {
   orders         Order[]
   conversations  Conversation[]
   deliveries     Delivery[]
+  notifications  Notification[]
 
   @@map("users")
 }
@@ -66,6 +76,7 @@ model Product {
   brandId     String?  @db.Uuid
   name        String
   description String?
+  priceCop    Float    @default(0) @map("price_cop")
   price       Float
   currency    String   @default("USD")
   category    String?
@@ -113,12 +124,14 @@ model Order {
   userId          String        @db.Uuid
   status          OrderStatus   @default(pending_payment)
   total           Float
+  totalCop        Float         @default(0) @map("total_cop")
   deliveryFee     Float         @default(0)
   currency        String        @default("USD")
   paymentMethod   PaymentMethod
   paymentStatus   String        @default("pending")
   paymentRef      String?
   paymentUrl      String?
+  paymentProof    String?       @map("payment_proof")
   deliveryAddress String?
   notes           String?
   contactPhone    String?
@@ -128,6 +141,7 @@ model Order {
   user      User          @relation(fields: [userId], references: [id])
   items     OrderItem[]
   delivery  Delivery?
+  notifications Notification[]
 
   @@map("orders")
 }
@@ -238,4 +252,30 @@ model Message {
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@map("messages")
+}
+
+model ExchangeRate {
+  id        String   @id @default(uuid()) @db.Uuid
+  currency  String   @unique
+  rate      Float
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("exchange_rates")
+}
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @db.Uuid
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  data      Json?
+  orderId   String?          @db.Uuid
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user  User  @relation(fields: [userId], references: [id])
+  order Order? @relation(fields: [orderId], references: [id])
+
+  @@map("notifications")
 }

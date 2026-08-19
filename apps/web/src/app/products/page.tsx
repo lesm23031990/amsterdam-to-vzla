@@ -3,17 +3,19 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { useCurrency } from '@/context/CurrencyContext';
 import { api } from '@/lib/api';
 import styles from './page.module.css';
 
 interface Product {
-  id: string; name: string; price: number; currency: string;
+  id: string; name: string; price: number; priceCop: number; currency: string; displayPrice: string;
   description?: string; category?: string; images: string[]; stock: number;
-  store?: { name: string; slug: string };
+  brand?: { name: string; slug: string };
 }
 
 export default function ProductsPage() {
   const { user } = useAuth();
+  const { currency, formatPrice } = useCurrency();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -23,7 +25,7 @@ export default function ProductsPage() {
 
   useEffect(() => {
     setLoading(true);
-    api.get<Product[]>(`/products?page=${page}&perPage=${pageSize}`).then((res) => {
+    api.get<Product[]>(`/products?page=${page}&perPage=${pageSize}&currency=${currency}`).then((res) => {
       if (res.ok && res.data) {
         const items = res.data;
         setProducts(prev => page === 1 ? items : [...prev, ...items]);
@@ -31,7 +33,7 @@ export default function ProductsPage() {
       }
       setLoading(false);
     });
-  }, [page]);
+  }, [page, currency]);
 
   const handleQuickAdd = async (productId: string) => {
     if (!user) { window.location.href = '/login'; return; }
@@ -69,14 +71,14 @@ export default function ProductsPage() {
                     {!p.images?.[0] && '❄️'}
                   </div>
                   {p.stock <= 5 && p.stock > 0 && <span className={styles.badgeLow}>Quedan {p.stock}</span>}
-                  {p.price < 8 && <span className={styles.badgeOffer}>🔥 Oferta</span>}
+                  {p.priceCop < 8000 && <span className={styles.badgeOffer}>🔥 Oferta</span>}
                 </Link>
                 <div className={styles.info}>
-                  {p.store && <Link href={`/stores/${p.store.slug}`} className={styles.storeLink}>{p.store.name}</Link>}
+                  {p.brand && <Link href={`/brands/${p.brand.slug}`} className={styles.storeLink}>{p.brand.name}</Link>}
                   <Link href={`/products/${p.id}`} className={styles.name}>{p.name}</Link>
                   <div className={styles.priceRow}>
-                    <span className={styles.price}>${p.price.toFixed(2)}</span>
-                    {p.price < 8 && <span className={styles.oldPrice}>${(p.price * 1.4).toFixed(2)}</span>}
+                    <span className={styles.price}>{p.displayPrice || formatPrice(p.priceCop)}</span>
+                    {p.priceCop < 8000 && <span className={styles.oldPrice}>{formatPrice(p.priceCop * 1.4)}</span>}
                   </div>
                   <button
                     onClick={() => handleQuickAdd(p.id)}

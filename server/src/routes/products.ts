@@ -6,14 +6,14 @@ const router = Router()
 
 router.post('/', authMiddleware, requireRole('admin'), async (req: Request, res: Response) => {
   try {
-    const { name, description, price, currency, category, images, stock, brandId } = req.body
+    const { name, description, priceCop, currency, category, images, stock, brandId } = req.body
 
-    if (!name || price === undefined) {
-      res.status(400).json({ ok: false, error: 'Nombre y precio son requeridos' })
+    if (!name || priceCop === undefined) {
+      res.status(400).json({ ok: false, error: 'Nombre y precio en COP son requeridos' })
       return
     }
 
-    if (price <= 0) {
+    if (priceCop <= 0) {
       res.status(400).json({ ok: false, error: 'El precio debe ser mayor a 0' })
       return
     }
@@ -36,8 +36,8 @@ router.post('/', authMiddleware, requireRole('admin'), async (req: Request, res:
         brandId: brandId || null,
         name,
         description: description || null,
-        price,
-        currency: currency || 'USD',
+        priceCop,
+        currency: currency || 'COP',
         category: category || null,
         images: images || [],
         stock: stock ?? 0,
@@ -53,9 +53,10 @@ router.post('/', authMiddleware, requireRole('admin'), async (req: Request, res:
 
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { brandId, brand, category, q, minPrice, maxPrice } = req.query
+    const { brandId, brand, category, q, minPrice, maxPrice, currency } = req.query
     const page = Math.max(1, parseInt(String(req.query.page)) || 1)
     const perPage = Math.min(50, Math.max(1, parseInt(String(req.query.perPage)) || 20))
+    const targetCurrency = (currency as string) || 'COP'
 
     const where: Record<string, unknown> = { isActive: true }
 
@@ -64,10 +65,18 @@ router.get('/', async (req: Request, res: Response) => {
     if (category) where.category = category as string
     if (q) where.name = { contains: q as string, mode: 'insensitive' }
     if (minPrice || maxPrice) {
-      where.price = {}
-      if (minPrice) (where.price as Record<string, unknown>).gte = parseFloat(minPrice as string)
-      if (maxPrice) (where.price as Record<string, unknown>).lte = parseFloat(maxPrice as string)
+      where.priceCop = {}
+      if (minPrice) (where.priceCop as Record<string, unknown>).gte = parseFloat(minPrice as string)
+      if (maxPrice) (where.priceCop as Record<string, unknown>).lte = parseFloat(maxPrice as string)
     }
+
+    const rates = await db.exchangeRate.findMany()
+    const rateMap: Record<string, number> = { COP: 1 }
+    for (const r of rates) {
+      rateMap[r.currency] = r.rate
+    }
+    if (!rateMap['Bs']) rateMap['Bs'] = 36.50
+    if (!rateMap['USD']) rateMap['USD'] = 0.024
 
     const [products, total] = await Promise.all([
       db.product.findMany({
@@ -82,9 +91,23 @@ router.get('/', async (req: Request, res: Response) => {
       db.product.count({ where }),
     ])
 
+    const convertedProducts = products.map((p) => {
+      const priceCop = p.priceCop || 0
+      const rate = rateMap[targetCurrency] || 1
+      const convertedPrice = targetCurrency === 'COP' ? priceCop : priceCop / rate
+
+      return {
+        ...p,
+        price: Math.round(convertedPrice * 100) / 100,
+        priceCop,
+        currency: targetCurrency,
+        displayPrice: formatPrice(convertedPrice, targetCurrency as string),
+      }
+    })
+
     res.json({
       ok: true,
-      data: products,
+      data: convertedProducts,
       pagination: {
         page,
         perPage,
@@ -97,6 +120,16 @@ router.get('/', async (req: Request, res: Response) => {
     res.status(500).json({ ok: false, error: 'Error al listar productos' })
   }
 })
+
+function formatPrice(price: number, currency: string): string {
+  if (currency === 'Bs') {
+    return `Bs. ${price.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+  if (currency === 'USD') {
+    return `USD $${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+  return `COP $${Math.round(price).toLocaleString('es-CO')}`
+}
 
 router.get('/:id', async (req: Request, res: Response) => {
   try {
@@ -112,7 +145,29 @@ router.get('/:id', async (req: Request, res: Response) => {
       return
     }
 
-    res.json({ ok: true, data: product })
+    const targetCurrency = (req.query.currency as string) || 'COP'
+
+    const rates = await db.exchangeRate.findMany()
+    const rateMap: Record<string, number> = { COP: 1 }
+    for (const r of rates) {
+      rateMap[r.currency] = r.rate
+    }
+    if (!rateMap['Bs']) rateMap['Bs'] = 36.50
+    if (!rateMap['USD']) rateMap['USD'] = 0.024
+
+    const priceCop = product.priceCop || 0
+    const rate = rateMap[targetCurrency] || 1
+    const convertedPrice = targetCurrency === 'COP' ? priceCop : priceCop / rate
+
+    const convertedProduct = {
+      ...product,
+      price: Math.round(convertedPrice * 100) / 100,
+      priceCop,
+      currency: targetCurrency,
+      displayPrice: formatPrice(convertedPrice, targetCurrency),
+    }
+
+    res.json({ ok: true, data: convertedProduct })
   } catch (error) {
     console.error('Get product error:', error)
     res.status(500).json({ ok: false, error: 'Error al obtener producto' })
@@ -128,7 +183,7 @@ router.patch('/:id', authMiddleware, requireRole('admin'), async (req: Request, 
       return
     }
 
-    if (req.body.price !== undefined && req.body.price <= 0) {
+    if (req.body.priceCop !== undefined && req.body.priceCop <= 0) {
       res.status(400).json({ ok: false, error: 'El precio debe ser mayor a 0' })
       return
     }
@@ -143,7 +198,7 @@ router.patch('/:id', authMiddleware, requireRole('admin'), async (req: Request, 
       data: {
         ...(req.body.name && { name: req.body.name }),
         ...(req.body.description !== undefined && { description: req.body.description }),
-        ...(req.body.price !== undefined && { price: req.body.price }),
+        ...(req.body.priceCop !== undefined && { priceCop: req.body.priceCop }),
         ...(req.body.currency && { currency: req.body.currency }),
         ...(req.body.category !== undefined && { category: req.body.category }),
         ...(req.body.images !== undefined && { images: req.body.images }),

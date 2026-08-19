@@ -1,10 +1,18 @@
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useAuthStore } from '@/store/authStore';
+import { useCurrencyStore } from '@/store/currencyStore';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
+const currencies: { value: 'COP' | 'Bs' | 'USD'; label: string }[] = [
+  { value: 'COP', label: 'COP ($)' },
+  { value: 'Bs', label: 'Bs (Bolívares)' },
+  { value: 'USD', label: 'USD ($)' },
+];
+
 export default function ProfileScreen() {
   const { user, logout } = useAuthStore();
+  const { currency, setCurrency } = useCurrencyStore();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -46,6 +54,31 @@ export default function ProfileScreen() {
         </View>
         <Text style={styles.name}>{user.name}</Text>
         <Text style={styles.email}>{user.email}</Text>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Moneda</Text>
+        <View style={styles.currencyRow}>
+          {currencies.map((c) => (
+            <TouchableOpacity
+              key={c.value}
+              style={[
+                styles.currencyBtn,
+                currency === c.value && styles.currencyBtnActive,
+              ]}
+              onPress={() => setCurrency(c.value)}
+            >
+              <Text
+                style={[
+                  styles.currencyText,
+                  currency === c.value && styles.currencyTextActive,
+                ]}
+              >
+                {c.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
       <View style={styles.menu}>
@@ -92,7 +125,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
   },
   avatar: {
     width: 80,
@@ -117,6 +150,40 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6B7280',
     marginTop: 4,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 12,
+  },
+  currencyRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  currencyBtn: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  currencyBtnActive: {
+    borderColor: '#1E40AF',
+    backgroundColor: '#EFF6FF',
+  },
+  currencyText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  currencyTextActive: {
+    color: '#1E40AF',
   },
   menu: {
     backgroundColor: '#FFFFFF',
