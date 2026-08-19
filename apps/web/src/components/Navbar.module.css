@@ -166,6 +166,193 @@
 
 .navLink:hover::after { width: 60%; }
 
+/* Currency Selector */
+.currencySelector { position: relative; }
+
+.currencyBtn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.currencyBtn:hover { background: rgba(255, 255, 255, 0.15); }
+
+.currencyDropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  padding: 6px;
+  z-index: 200;
+  min-width: 80px;
+  animation: dropdownSlide 0.2s ease;
+}
+
+.currencyOption {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.currencyOption:hover { background: var(--bg); }
+.currencyActive { background: var(--secondary); color: #fff; }
+
+/* Notification Dropdown */
+.notifDropdown { position: relative; }
+
+.notifBtn {
+  position: relative;
+  padding: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 18px;
+}
+
+.notifBtn:hover { background: rgba(255, 255, 255, 0.15); }
+
+.notifBadge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: #EF4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notifDropdownMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: -40px;
+  background: #fff;
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  width: 320px;
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 200;
+  animation: dropdownSlide 0.2s ease;
+}
+
+.notifHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-light);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.markAllBtn {
+  background: none;
+  border: none;
+  color: var(--secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.markAllBtn:hover { text-decoration: underline; }
+
+.notifEmpty {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.notifItem {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.notifItem:hover { background: var(--bg); }
+.notifUnread { background: rgba(30, 64, 175, 0.04); }
+
+.notifTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.notifMessage {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.notifSeeAll {
+  display: block;
+  padding: 12px;
+  text-align: center;
+  color: var(--secondary);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  border-top: 1px solid var(--border-light);
+}
+
+.notifSeeAll:hover { background: var(--bg); }
+
+/* Mobile Currency */
+.mobileCurrency {
+  display: flex;
+  gap: 8px;
+  padding: 8px 0;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mobileCurrencyBtn {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.mobileCurrencyBtn:hover { background: rgba(255, 255, 255, 0.12); }
+.mobileCurrencyActive { background: var(--accent); color: #fff; }
+
 /* Actions */
 .actions {
   display: flex;

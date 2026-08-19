@@ -3,6 +3,7 @@ import { db } from '../lib/db'
 import { authMiddleware, requireRole } from '../middleware/auth'
 import { io } from '../index'
 import { OrderStatus } from '../generated/prisma/enums'
+import { createNotification } from '../services/notifications'
 
 const router = Router()
 
@@ -42,6 +43,31 @@ router.patch('/orders/:id/status', authMiddleware, requireRole('admin'), async (
     const updated = await db.order.update({
       where: { id: req.params.id as string },
       data: { status },
+    })
+
+    const statusLabels: Record<string, string> = {
+      pending_payment: 'Pendiente de pago',
+      confirmed: 'Confirmado',
+      preparing: 'Preparando',
+      in_transit: 'En camino',
+      delivered: 'Entregado',
+      cancelled: 'Cancelado',
+    }
+
+    await createNotification(
+      order.userId,
+      'order_status',
+      `Pedido ${statusLabels[status] || status}`,
+      `Tu pedido #${updated.id.slice(-6)} ahora está: ${statusLabels[status] || status}`,
+      { orderId: updated.id, status: updated.status },
+      updated.id
+    )
+
+    io.to(order.userId).emit('notification:new', {
+      type: 'order_status',
+      title: `Pedido ${statusLabels[status] || status}`,
+      message: `Tu pedido #${updated.id.slice(-6)} ahora está: ${statusLabels[status] || status}`,
+      orderId: updated.id,
     })
 
     io.emit('order:status', { orderId: updated.id, status: updated.status })
@@ -97,6 +123,38 @@ router.post('/orders/:id/assign', authMiddleware, requireRole('admin'), async (r
         data: { status: OrderStatus.preparing },
       })
     }
+
+    await createNotification(
+      order.userId,
+      'driver_assigned',
+      'Conductor asignado',
+      `Tu pedido #${order.id.slice(-6)} tiene un conductor asignado: ${driver.name}`,
+      { orderId: order.id, driverId, driverName: driver.name },
+      order.id
+    )
+
+    await createNotification(
+      driverId,
+      'delivery_update',
+      'Nueva entrega asignada',
+      `Te han asignado la entrega del pedido #${order.id.slice(-6)}`,
+      { orderId: order.id },
+      order.id
+    )
+
+    io.to(order.userId).emit('notification:new', {
+      type: 'driver_assigned',
+      title: 'Conductor asignado',
+      message: `Tu pedido #${order.id.slice(-6)} tiene un conductor: ${driver.name}`,
+      orderId: order.id,
+    })
+
+    io.to(driverId).emit('notification:new', {
+      type: 'delivery_update',
+      title: 'Nueva entrega',
+      message: `Te han asignado la entrega del pedido #${order.id.slice(-6)}`,
+      orderId: order.id,
+    })
 
     res.status(201).json({ ok: true, data: delivery })
   } catch (error) {

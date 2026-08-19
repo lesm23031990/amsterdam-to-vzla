@@ -2,12 +2,14 @@ import { Router, Request, Response } from 'express'
 import { db } from '../lib/db'
 import { authMiddleware } from '../middleware/auth'
 import { OrderStatus, PaymentMethod } from '../generated/prisma/enums'
+import { createNotification } from '../services/notifications'
+import { io } from '../index'
 
 const router = Router()
 
 router.post('/', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { paymentMethod, deliveryAddress, notes, contactPhone, currency, deliveryFee } = req.body
+    const { paymentMethod, deliveryAddress, notes, contactPhone, currency, deliveryFee, paymentProof } = req.body
     const userId = req.user!.userId
 
     const cart = await db.cart.findUnique({
@@ -16,7 +18,7 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
         items: {
           include: {
             product: {
-              select: { id: true, name: true, price: true },
+              select: { id: true, name: true, priceCop: true },
             },
           },
         },
@@ -34,17 +36,31 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       return
     }
 
-    const total = cart.items.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0)
+    const totalCop = cart.items.reduce((sum: number, item: any) => sum + (item.product.priceCop || 0) * item.quantity, 0)
     const fee = deliveryFee ?? 0
-    const grandTotal = total + fee
+    const grandTotalCop = totalCop + fee
+
+    const rates = await db.exchangeRate.findMany()
+    const rateMap: Record<string, number> = { COP: 1 }
+    for (const r of rates) {
+      rateMap[r.currency] = r.rate
+    }
+    if (!rateMap['Bs']) rateMap['Bs'] = 36.50
+    if (!rateMap['USD']) rateMap['USD'] = 0.024
+
+    const targetCurrency = currency || 'COP'
+    const rate = rateMap[targetCurrency] || 1
+    const grandTotal = targetCurrency === 'COP' ? grandTotalCop : grandTotalCop / rate
 
     const orderData: any = {
       userId,
-      total: grandTotal,
+      total: Math.round(grandTotal * 100) / 100,
+      totalCop: grandTotalCop,
       deliveryFee: fee,
-      currency: currency || 'USD',
+      currency: targetCurrency,
       paymentMethod,
-      paymentStatus: 'pending',
+      paymentStatus: paymentMethod === 'binance_pay' ? 'pending' : (paymentProof ? 'pending_review' : 'pending'),
+      paymentProof: paymentProof || null,
       deliveryAddress: deliveryAddress || null,
       notes: notes || null,
       contactPhone: contactPhone || null,
@@ -53,9 +69,9 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
         create: cart.items.map((item: any) => ({
           productId: item.productId,
           name: item.product.name,
-          price: item.price,
+          price: Math.round(((item.product.priceCop || 0) / rate) * 100) / 100,
           quantity: item.quantity,
-          subtotal: item.price * item.quantity,
+          subtotal: Math.round(((item.product.priceCop || 0) * item.quantity / rate) * 100) / 100,
         })),
       },
     }
@@ -68,6 +84,22 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
     const order = await db.order.create({ data: orderData })
 
     await db.cartItem.deleteMany({ where: { cartId: cart.id } })
+
+    await createNotification(
+      userId,
+      'order_status',
+      'Pedido creado',
+      `Tu pedido #${order.id.slice(-6)} ha sido creado exitosamente`,
+      { orderId: order.id, status: order.status },
+      order.id
+    )
+
+    io.to(userId).emit('notification:new', {
+      type: 'order_status',
+      title: 'Pedido creado',
+      message: `Tu pedido #${order.id.slice(-6)} ha sido creado`,
+      orderId: order.id,
+    })
 
     res.status(201).json({ ok: true, data: order })
   } catch (error) {
@@ -165,10 +197,19 @@ router.post('/orders/:id/pay', authMiddleware, async (req: Request, res: Respons
       where: { id: req.params.id as string },
       data: {
         paymentRef,
-        paymentStatus: 'paid',
-        status: OrderStatus.confirmed,
+        paymentStatus: 'pending_review',
+        paymentProof: paymentProof || null,
       },
     })
+
+    await createNotification(
+      userId,
+      'payment_confirmed',
+      'Comprobante de pago enviado',
+      `Tu comprobante para el pedido #${updated.id.slice(-6)} ha sido recibido y está en revisión`,
+      { orderId: updated.id, paymentRef },
+      updated.id
+    )
 
     res.json({ ok: true, data: updated })
   } catch (error) {

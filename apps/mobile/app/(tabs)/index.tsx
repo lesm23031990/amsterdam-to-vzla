@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
+import { useCurrencyStore } from '@/store/currencyStore';
 import { useRouter } from 'expo-router';
 import { apiClient } from '@/api/client';
 
@@ -8,6 +9,8 @@ interface Product {
   id: string;
   name: string;
   price: number;
+  priceCop: number;
+  displayPrice: string;
   image: string;
   brand: string;
 }
@@ -17,15 +20,18 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const { isAuthenticated } = useAuthStore();
+  const { currency, formatPrice, loadCurrency, loadRates } = useCurrencyStore();
   const router = useRouter();
 
   useEffect(() => {
+    loadCurrency();
+    loadRates();
     fetchProducts();
-  }, []);
+  }, [currency]);
 
   const fetchProducts = async () => {
     try {
-      const response = await apiClient.get('/api/v1/products');
+      const response = await apiClient.get(`/api/v1/products?currency=${currency}`);
       setProducts(response.data.data || []);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -66,7 +72,9 @@ export default function HomeScreen() {
             <Text style={styles.productName} numberOfLines={2}>
               {item.name}
             </Text>
-            <Text style={styles.productPrice}>Bs {item.price.toFixed(2)}</Text>
+            <Text style={styles.productPrice}>
+              {item.displayPrice || formatPrice(item.priceCop)}
+            </Text>
           </View>
         )}
       />
