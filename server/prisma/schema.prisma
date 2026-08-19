@@ -78,11 +78,14 @@ model Product {
   description String?
   priceCop    Float    @default(0) @map("price_cop")
   price       Float
-  currency    String   @default("USD")
+  currency    String   @default("COP")
   category    String?
   images      String[]
   stock       Int      @default(0)
   isActive    Boolean  @default(true)
+  isFeatured  Boolean  @default(false) @map("is_featured")
+  hasDiscount Boolean  @default(false) @map("has_discount")
+  discountPercent Float @default(0) @map("discount_percent")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 

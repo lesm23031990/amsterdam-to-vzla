@@ -97,16 +97,20 @@ async function main() {
 
     await db.product.deleteMany({ where: { brandId: brand.id } })
     await db.product.createMany({
-      data: bd.products.map(p => ({
+      data: bd.products.map((p, i) => ({
         brandId: brand.id,
         name: p.name,
         description: p.desc,
+        priceCop: p.price * 4200,
         price: p.price,
-        currency: 'USD',
+        currency: 'COP',
         category: p.category,
         images: [bd.logoImage],
         stock: p.stock,
         isActive: true,
+        isFeatured: i === 0 || i === 2,
+        hasDiscount: i % 3 === 0,
+        discountPercent: i % 3 === 0 ? (i === 0 ? 15 : 25) : 0,
       })),
     })
   }
@@ -114,16 +118,20 @@ async function main() {
   // Create unbranded products
   const defaultImage = 'https://images.unsplash.com/photo-1627485937980-221c88ac04f9?w=200'
   await db.product.createMany({
-    data: unbrandedProducts.map(p => ({
+    data: unbrandedProducts.map((p, i) => ({
       brandId: null,
       name: p.name,
       description: p.desc,
+      priceCop: p.price * 4200,
       price: p.price,
-      currency: 'USD',
+      currency: 'COP',
       category: p.category,
       images: [defaultImage],
       stock: p.stock,
       isActive: true,
+      isFeatured: i === 0,
+      hasDiscount: i === 2,
+      discountPercent: i === 2 ? 20 : 0,
     })),
   })
 

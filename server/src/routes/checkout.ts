@@ -164,7 +164,8 @@ router.get('/orders/:id', authMiddleware, async (req: Request, res: Response) =>
 
 router.post('/orders/:id/pay', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { paymentRef } = req.body
+    const { paymentRef, paymentProof } = req.body
+    const userId = req.user!.userId
 
     if (!paymentRef) {
       res.status(400).json({ ok: false, error: 'Número de referencia es requerido' })

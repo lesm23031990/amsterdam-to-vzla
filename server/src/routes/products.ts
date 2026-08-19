@@ -53,16 +53,23 @@ router.post('/', authMiddleware, requireRole('admin'), async (req: Request, res:
 
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { brandId, brand, category, q, minPrice, maxPrice, currency } = req.query
+    const { brandId, brand, category, q, minPrice, maxPrice, currency, orderBy, featured, discount, inStock, brandIds } = req.query
     const page = Math.max(1, parseInt(String(req.query.page)) || 1)
-    const perPage = Math.min(50, Math.max(1, parseInt(String(req.query.perPage)) || 20))
+    const perPage = Math.min(100, Math.max(1, parseInt(String(req.query.perPage)) || 24))
     const targetCurrency = (currency as string) || 'COP'
 
     const where: Record<string, unknown> = { isActive: true }
 
+    if (featured === 'true') where.isFeatured = true
+    if (discount === 'true') where.hasDiscount = true
+    if (inStock === 'true') where.stock = { gt: 0 }
     if (brandId) where.brandId = brandId as string
     if (brand) where.brand = { slug: brand as string }
     if (category) where.category = category as string
+    if (brandIds) {
+      const ids = (brandIds as string).split(',').filter(Boolean)
+      if (ids.length > 0) where.brandId = { in: ids }
+    }
     if (q) where.name = { contains: q as string, mode: 'insensitive' }
     if (minPrice || maxPrice) {
       where.priceCop = {}
@@ -78,12 +85,22 @@ router.get('/', async (req: Request, res: Response) => {
     if (!rateMap['Bs']) rateMap['Bs'] = 36.50
     if (!rateMap['USD']) rateMap['USD'] = 0.024
 
+    const orderMap: Record<string, Record<string, 'asc' | 'desc'>> = {
+      relevance: { createdAt: 'desc' },
+      price_asc: { priceCop: 'asc' },
+      price_desc: { priceCop: 'desc' },
+      newest: { createdAt: 'desc' },
+      name_asc: { name: 'asc' },
+    }
+    const orderByParam = (orderBy as string) || 'relevance'
+    const orderByClause = orderMap[orderByParam] || orderMap.relevance
+
     const [products, total] = await Promise.all([
       db.product.findMany({
         where,
         skip: (page - 1) * perPage,
         take: perPage,
-        orderBy: { createdAt: 'desc' },
+        orderBy: orderByClause,
         include: {
           brand: { select: { name: true, slug: true, logoImage: true } },
         },
@@ -95,6 +112,9 @@ router.get('/', async (req: Request, res: Response) => {
       const priceCop = p.priceCop || 0
       const rate = rateMap[targetCurrency] || 1
       const convertedPrice = targetCurrency === 'COP' ? priceCop : priceCop / rate
+      const discountPrice = p.hasDiscount && p.discountPercent > 0
+        ? convertedPrice * (1 - p.discountPercent / 100)
+        : null
 
       return {
         ...p,
@@ -102,6 +122,8 @@ router.get('/', async (req: Request, res: Response) => {
         priceCop,
         currency: targetCurrency,
         displayPrice: formatPrice(convertedPrice, targetCurrency as string),
+        discountPrice: discountPrice ? Math.round(discountPrice * 100) / 100 : null,
+        displayDiscountPrice: discountPrice ? formatPrice(discountPrice, targetCurrency as string) : null,
       }
     })
 
@@ -118,6 +140,29 @@ router.get('/', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('List products error:', error)
     res.status(500).json({ ok: false, error: 'Error al listar productos' })
+  }
+})
+
+router.get('/categories', async (req: Request, res: Response) => {
+  try {
+    const categories = await db.product.groupBy({
+      by: ['category'],
+      where: { isActive: true, category: { not: null } },
+      _count: { category: true },
+      orderBy: { _count: { category: 'desc' } },
+    })
+
+    const result = categories
+      .filter((c) => c.category)
+      .map((c) => ({
+        name: c.category,
+        count: c._count.category,
+      }))
+
+    res.json({ ok: true, data: { categories: result } })
+  } catch (error) {
+    console.error('Get categories error:', error)
+    res.status(500).json({ ok: false, error: 'Error al obtener categorías' })
   }
 })
 

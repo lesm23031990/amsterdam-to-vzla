@@ -7,7 +7,7 @@ vi.mock('../lib/db', () => ({
   db: {
     user: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), findMany: vi.fn() },
     brand: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
-    product: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn(), count: vi.fn(), deleteMany: vi.fn() },
+    product: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn(), count: vi.fn(), deleteMany: vi.fn(), delete: vi.fn(), groupBy: vi.fn() },
     cart: { findUnique: vi.fn(), upsert: vi.fn() },
     cartItem: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), deleteMany: vi.fn() },
     order: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn() },
@@ -17,6 +17,8 @@ vi.mock('../lib/db', () => ({
     menuOption: { create: vi.fn() },
     conversation: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), delete: vi.fn() },
     message: { findMany: vi.fn(), create: vi.fn(), deleteMany: vi.fn() },
+    exchangeRate: { findMany: vi.fn(), upsert: vi.fn() },
+    notification: { create: vi.fn(), findMany: vi.fn(), count: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
   },
 }))
 
@@ -74,7 +76,8 @@ const mockBrand = {
 
 const mockProduct = {
   id: 'product-1', brandId: 'brand-1', name: 'Producto Test', description: 'Descripción',
-  price: 25.50, currency: 'USD', category: 'congelados', images: [], stock: 100, isActive: true,
+  priceCop: 107100, price: 25.50, currency: 'COP', category: 'congelados', images: [], stock: 100,
+  isActive: true, isFeatured: false, hasDiscount: false, discountPercent: 0,
   createdAt: new Date('2024-01-01'), updatedAt: new Date('2024-01-01'),
 }
 
@@ -131,6 +134,11 @@ const adminToken = token({ userId: 'user-admin', role: 'admin', email: 'admin@te
 
 beforeEach(() => {
   vi.clearAllMocks()
+  ;(mockDb.exchangeRate.findMany as MockFn).mockResolvedValue([
+    { id: 'r1', currency: 'Bs', rate: 36.50, updatedAt: new Date() },
+    { id: 'r2', currency: 'USD', rate: 0.024, updatedAt: new Date() },
+  ])
+  ;(mockDb.notification.create as MockFn).mockResolvedValue({ id: 'n1' })
 })
 
 describe('Auth', () => {
@@ -285,7 +293,7 @@ describe('Products', () => {
     ;(mockDb.product.create as MockFn).mockResolvedValue(mockProduct)
 
     const res = await request('POST', '/api/v1/products', {
-      name: 'Producto Test', price: 25.50, category: 'congelados', stock: 100, brandId: 'brand-1',
+      name: 'Producto Test', priceCop: 107100, category: 'congelados', stock: 100, brandId: 'brand-1',
     }, adminToken)
 
     expect(res.status).toBe(201)
@@ -447,7 +455,7 @@ describe('Checkout', () => {
       items: [{
         ...mockCartItem,
         product: {
-          id: 'product-1', name: 'Producto Test', price: 25.50,
+          id: 'product-1', name: 'Producto Test', priceCop: 107100, price: 25.50,
         },
       }],
     }
