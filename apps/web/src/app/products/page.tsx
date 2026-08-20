@@ -255,10 +255,12 @@ export default function ProductsPage() {
                       <div className={styles.img} style={p.images?.[0] ? { backgroundImage: `url(${p.images[0]})` } : { backgroundColor: '#E8EDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px' }}>
                         {!p.images?.[0] && '❄️'}
                       </div>
-                      {p.isFeatured && <span className={styles.badgeFeatured}>⭐ Destacado</span>}
-                      {p.hasDiscount && p.discountPercent > 0 && (
-                        <span className={styles.badgeOffer}>-{p.discountPercent}%</span>
-                      )}
+                      <div className={styles.badges}>
+                        {p.isFeatured && <span className={styles.badgeFeatured}>⭐ Destacado</span>}
+                        {p.hasDiscount && p.discountPercent > 0 && (
+                          <span className={styles.badgeOffer}>-{p.discountPercent}%</span>
+                        )}
+                      </div>
                       {p.stock <= 5 && p.stock > 0 && <span className={styles.badgeLow}>Quedan {p.stock}</span>}
                     </Link>
                     <div className={styles.info}>

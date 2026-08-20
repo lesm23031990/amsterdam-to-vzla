@@ -123,16 +123,18 @@ export default function HomeScreen() {
           >
             <View style={styles.imagePlaceholder}>
               <Text style={styles.imageText}>{item.name.charAt(0)}</Text>
-              {item.isFeatured && (
-                <View style={styles.badgeFeatured}>
-                  <Text style={styles.badgeText}>⭐</Text>
-                </View>
-              )}
-              {item.hasDiscount && item.discountPercent > 0 && (
-                <View style={styles.badgeOffer}>
-                  <Text style={styles.badgeText}>-{item.discountPercent}%</Text>
-                </View>
-              )}
+              <View style={styles.badgesContainer}>
+                {item.isFeatured && (
+                  <View style={styles.badgeFeatured}>
+                    <Text style={styles.badgeText}>⭐ Destacado</Text>
+                  </View>
+                )}
+                {item.hasDiscount && item.discountPercent > 0 && (
+                  <View style={styles.badgeOffer}>
+                    <Text style={styles.badgeText}>-{item.discountPercent}%</Text>
+                  </View>
+                )}
+              </View>
             </View>
             <Text style={styles.productName} numberOfLines={2}>
               {item.name}
@@ -237,28 +239,31 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     position: 'relative',
   },
+  badgesContainer: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    flexDirection: 'column',
+    gap: 4,
+  },
   imageText: {
     fontSize: 32,
     fontWeight: 'bold',
     color: '#6B7280',
   },
   badgeFeatured: {
-    position: 'absolute',
-    top: 4,
-    left: 4,
     backgroundColor: '#F59E0B',
     borderRadius: 12,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    alignSelf: 'flex-start',
   },
   badgeOffer: {
-    position: 'absolute',
-    top: 4,
-    left: 4,
     backgroundColor: '#EF4444',
     borderRadius: 12,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    alignSelf: 'flex-start',
   },
   badgeText: {
     fontSize: 10,
