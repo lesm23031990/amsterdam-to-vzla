@@ -4,6 +4,7 @@ interface ApiResponse<T = unknown> {
   ok: boolean;
   data?: T;
   error?: string;
+  pagination?: { page: number; perPage: number; total: number; totalPages: number };
 }
 
 async function request<T>(
@@ -27,7 +28,7 @@ async function request<T>(
     if (!res.ok) {
       return { ok: false, error: json.error || json.message || 'Error en la solicitud' };
     }
-    return { ok: true, data: json.data ?? json };
+    return { ok: true, data: json.data ?? json, pagination: json.pagination };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión' };
   }
