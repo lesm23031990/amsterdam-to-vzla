@@ -14,6 +14,10 @@ enum NotificationType {
   delivery_update
   promo
   system
+  comment_reply
+  question_resolved
+  product_report
+  stock_available
 }
 
 enum Role {
@@ -51,6 +55,10 @@ model User {
   conversations  Conversation[]
   deliveries     Delivery[]
   notifications  Notification[]
+  productComments ProductComment[]
+  productReports  ProductReport[]
+  stockNotifications StockNotification[]
+  menuItemComments MenuItemComment[]
 
   @@map("users")
 }
@@ -86,12 +94,18 @@ model Product {
   isFeatured  Boolean  @default(false) @map("is_featured")
   hasDiscount Boolean  @default(false) @map("has_discount")
   discountPercent Float @default(0) @map("discount_percent")
+  soldCount   Int      @default(0) @map("sold_count")
+  specifications Json?
+  badges      Json?
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   brand       Brand?     @relation(fields: [brandId], references: [id], onDelete: SetNull)
   cartItems   CartItem[]
   orderItems  OrderItem[]
+  comments    ProductComment[]
+  reports     ProductReport[]
+  stockNotifications StockNotification[]
 
   @@map("products")
 }
@@ -204,6 +218,7 @@ model MenuItem {
   updatedAt       DateTime @updatedAt @map("updated_at")
 
   options MenuOption[]
+  comments MenuItemComment[]
 
   @@map("menu_items")
 }
@@ -281,4 +296,76 @@ model Notification {
   order Order? @relation(fields: [orderId], references: [id])
 
   @@map("notifications")
+}
+
+model ProductComment {
+  id         String   @id @default(uuid()) @db.Uuid
+  productId  String   @db.Uuid @map("product_id")
+  userId     String   @db.Uuid @map("user_id")
+  type       String   @default("comment")
+  content    String
+  images     String[]
+  rating     Int?
+  parentId   String?  @db.Uuid @map("parent_id")
+  resolved   Boolean  @default(false)
+  reactions  Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  product  Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent   ProductComment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  ProductComment[] @relation("CommentReplies")
+
+  @@index([productId, type])
+  @@index([parentId])
+  @@map("product_comments")
+}
+
+model ProductReport {
+  id        String   @id @default(uuid()) @db.Uuid
+  productId String   @db.Uuid @map("product_id")
+  userId    String   @db.Uuid @map("user_id")
+  reason    String
+  details   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, userId])
+  @@map("product_reports")
+}
+
+model StockNotification {
+  id        String   @id @default(uuid()) @db.Uuid
+  productId String   @db.Uuid @map("product_id")
+  userId    String   @db.Uuid @map("user_id")
+  notified  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, userId])
+  @@map("stock_notifications")
+}
+
+model MenuItemComment {
+  id         String   @id @default(uuid()) @db.Uuid
+  menuItemId String   @db.Uuid @map("menu_item_id")
+  userId     String   @db.Uuid @map("user_id")
+  content    String
+  images     String[]
+  parentId   String?  @db.Uuid @map("parent_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  menuItem MenuItem          @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent   MenuItemComment?  @relation("MenuItemCommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  MenuItemComment[] @relation("MenuItemCommentReplies")
+
+  @@index([menuItemId])
+  @@index([parentId])
+  @@map("menu_item_comments")
 }

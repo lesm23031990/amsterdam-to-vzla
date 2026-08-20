@@ -15,7 +15,11 @@ export const NotificationType = {
   driver_assigned: 'driver_assigned',
   delivery_update: 'delivery_update',
   promo: 'promo',
-  system: 'system'
+  system: 'system',
+  comment_reply: 'comment_reply',
+  question_resolved: 'question_resolved',
+  product_report: 'product_report',
+  stock_available: 'stock_available'
 } as const
 
 export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType]

@@ -5,12 +5,17 @@ import jwt from 'jsonwebtoken'
 
 vi.mock('../lib/db', () => ({
   db: {
-    user: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), findMany: vi.fn() },
+    user: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn() },
     brand: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
     product: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn(), count: vi.fn(), deleteMany: vi.fn(), delete: vi.fn(), groupBy: vi.fn() },
+    productComment: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), count: vi.fn(), aggregate: vi.fn() },
+    productReport: { findUnique: vi.fn(), create: vi.fn() },
+    stockNotification: { findUnique: vi.fn(), create: vi.fn(), findMany: vi.fn(), updateMany: vi.fn() },
+    menuItemComment: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), count: vi.fn() },
     cart: { findUnique: vi.fn(), upsert: vi.fn() },
     cartItem: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), deleteMany: vi.fn() },
     order: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn() },
+    orderItem: { findMany: vi.fn() },
     delivery: { findUnique: vi.fn(), create: vi.fn() },
     deliveryLocation: { create: vi.fn() },
     menuItem: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), aggregate: vi.fn() },
@@ -337,6 +342,8 @@ describe('Products', () => {
     ;(mockDb.product.findUnique as MockFn).mockResolvedValue({
       ...mockProduct, brand: { id: 'brand-1', name: 'Tiffany Foods', slug: 'tiffany-foods' },
     })
+    ;(mockDb.productComment.count as MockFn).mockResolvedValue(0)
+    ;(mockDb.productComment.aggregate as MockFn).mockResolvedValue({ _avg: { rating: 0 }, _count: { rating: 0 } })
 
     const res = await request('GET', '/api/v1/products/product-1')
 

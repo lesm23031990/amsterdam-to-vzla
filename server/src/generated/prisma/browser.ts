@@ -97,3 +97,23 @@ export type ExchangeRate = Prisma.ExchangeRateModel
  * 
  */
 export type Notification = Prisma.NotificationModel
+/**
+ * Model ProductComment
+ * 
+ */
+export type ProductComment = Prisma.ProductCommentModel
+/**
+ * Model ProductReport
+ * 
+ */
+export type ProductReport = Prisma.ProductReportModel
+/**
+ * Model StockNotification
+ * 
+ */
+export type StockNotification = Prisma.StockNotificationModel
+/**
+ * Model MenuItemComment
+ * 
+ */
+export type MenuItemComment = Prisma.MenuItemCommentModel

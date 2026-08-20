@@ -66,7 +66,11 @@ export const ModelName = {
   Conversation: 'Conversation',
   Message: 'Message',
   ExchangeRate: 'ExchangeRate',
-  Notification: 'Notification'
+  Notification: 'Notification',
+  ProductComment: 'ProductComment',
+  ProductReport: 'ProductReport',
+  StockNotification: 'StockNotification',
+  MenuItemComment: 'MenuItemComment'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -129,6 +133,9 @@ export const ProductScalarFieldEnum = {
   isFeatured: 'isFeatured',
   hasDiscount: 'hasDiscount',
   discountPercent: 'discountPercent',
+  soldCount: 'soldCount',
+  specifications: 'specifications',
+  badges: 'badges',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -299,6 +306,60 @@ export const NotificationScalarFieldEnum = {
 } as const
 
 export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
+
+
+export const ProductCommentScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  userId: 'userId',
+  type: 'type',
+  content: 'content',
+  images: 'images',
+  rating: 'rating',
+  parentId: 'parentId',
+  resolved: 'resolved',
+  reactions: 'reactions',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProductCommentScalarFieldEnum = (typeof ProductCommentScalarFieldEnum)[keyof typeof ProductCommentScalarFieldEnum]
+
+
+export const ProductReportScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  userId: 'userId',
+  reason: 'reason',
+  details: 'details',
+  createdAt: 'createdAt'
+} as const
+
+export type ProductReportScalarFieldEnum = (typeof ProductReportScalarFieldEnum)[keyof typeof ProductReportScalarFieldEnum]
+
+
+export const StockNotificationScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  userId: 'userId',
+  notified: 'notified',
+  createdAt: 'createdAt'
+} as const
+
+export type StockNotificationScalarFieldEnum = (typeof StockNotificationScalarFieldEnum)[keyof typeof StockNotificationScalarFieldEnum]
+
+
+export const MenuItemCommentScalarFieldEnum = {
+  id: 'id',
+  menuItemId: 'menuItemId',
+  userId: 'userId',
+  content: 'content',
+  images: 'images',
+  parentId: 'parentId',
+  createdAt: 'createdAt'
+} as const
+
+export type MenuItemCommentScalarFieldEnum = (typeof MenuItemCommentScalarFieldEnum)[keyof typeof MenuItemCommentScalarFieldEnum]
 
 
 export const SortOrder = {
