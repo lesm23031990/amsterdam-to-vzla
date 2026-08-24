@@ -43,6 +43,7 @@ router.post('/', authMiddleware, requireRole('admin'), async (req: Request, res:
         name,
         description: description || null,
         priceCop,
+        price: priceCop,
         currency: currency || 'COP',
         category: category || null,
         images: images || [],

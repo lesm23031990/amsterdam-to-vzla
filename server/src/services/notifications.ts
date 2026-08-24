@@ -1,4 +1,5 @@
 import { db } from '../lib/db'
+import { Prisma } from '../generated/prisma/client'
 
 export async function createNotification(
   userId: string,
@@ -14,7 +15,7 @@ export async function createNotification(
       type: type as any,
       title,
       message,
-      data: data || null,
+      data: data ? (data as Prisma.InputJsonValue) : Prisma.DbNull,
       orderId: orderId || null,
     },
   })

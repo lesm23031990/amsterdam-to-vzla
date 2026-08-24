@@ -42,9 +42,9 @@ router.patch('/:currency', async (req: Request, res: Response) => {
     }
 
     const updated = await db.exchangeRate.upsert({
-      where: { currency },
+      where: { currency: String(currency) },
       update: { rate },
-      create: { currency, rate },
+      create: { currency: String(currency), rate },
     })
 
     res.json({ ok: true, data: updated })

@@ -48,7 +48,7 @@ router.patch('/:id/read', authMiddleware, async (req: Request, res: Response) =>
   try {
     const userId = (req as any).userId
     const notification = await db.notification.findUnique({
-      where: { id: req.params.id },
+      where: { id: String(req.params.id) },
     })
 
     if (!notification || notification.userId !== userId) {
@@ -57,7 +57,7 @@ router.patch('/:id/read', authMiddleware, async (req: Request, res: Response) =>
     }
 
     await db.notification.update({
-      where: { id: req.params.id },
+      where: { id: String(req.params.id) },
       data: { read: true },
     })
 
