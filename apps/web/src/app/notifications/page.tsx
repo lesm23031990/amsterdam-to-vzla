@@ -35,7 +35,7 @@ export default function NotificationsPage() {
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/notifications?page=${page}&limit=20`,
+        `/api/v1/notifications?page=${page}&limit=20`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await res.json();
@@ -54,7 +54,7 @@ export default function NotificationsPage() {
     try {
       const token = localStorage.getItem('token');
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/notifications/${id}/read`,
+        `/api/v1/notifications/${id}/read`,
         { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } }
       );
       fetchNotifications();
@@ -65,7 +65,7 @@ export default function NotificationsPage() {
     try {
       const token = localStorage.getItem('token');
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/notifications/read-all`,
+        `/api/v1/notifications/read-all`,
         { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } }
       );
       fetchNotifications();

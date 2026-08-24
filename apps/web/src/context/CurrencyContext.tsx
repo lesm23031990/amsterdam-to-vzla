@@ -32,7 +32,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/rates`)
+    fetch(`/api/v1/rates`)
       .then((res) => res.json())
       .then((data) => {
         if (data.ok && data.data?.rates) {

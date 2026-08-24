@@ -48,7 +48,7 @@ export default function Navbar() {
   const fetchNotifications = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/notifications?limit=10`, {
+      const res = await fetch(`/api/v1/notifications?limit=10`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -62,7 +62,7 @@ export default function Navbar() {
   const markAsRead = async (id: string) => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/notifications/${id}/read`, {
+      await fetch(`/api/v1/notifications/${id}/read`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -73,7 +73,7 @@ export default function Navbar() {
   const markAllRead = async () => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/notifications/read-all`, {
+      await fetch(`/api/v1/notifications/read-all`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` },
       });
