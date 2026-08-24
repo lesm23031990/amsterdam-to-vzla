@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
@@ -25,7 +25,7 @@ const tabs = [
   { key: 'offers', label: 'Ofertas' },
 ];
 
-export default function ProductsPage() {
+function ProductsContent() {
   const { user } = useAuth();
   const { currency, formatPrice } = useCurrency();
   const searchParams = useSearchParams();
@@ -101,7 +101,6 @@ export default function ProductsPage() {
 
   return (
     <div className={styles.page}>
-      {/* Mobile filter toggle */}
       <div className={styles.mobileFilterBar}>
         <button className={styles.filterToggle} onClick={() => setFiltersOpen(true)}>
           ⚙️ Filtros
@@ -120,14 +119,12 @@ export default function ProductsPage() {
       </div>
 
       <div className={styles.layout}>
-        {/* Sidebar Filters */}
         <aside className={`${styles.sidebar} ${filtersOpen ? styles.sidebarOpen : ''}`}>
           <div className={styles.sidebarHeader}>
             <h3>Filtros</h3>
             <button className={styles.closeSidebar} onClick={() => setFiltersOpen(false)}>✕</button>
           </div>
 
-          {/* Categories */}
           <div className={styles.filterSection}>
             <h4>Categorías</h4>
             <button
@@ -147,7 +144,6 @@ export default function ProductsPage() {
             ))}
           </div>
 
-          {/* Brands */}
           <div className={styles.filterSection}>
             <h4>Marca</h4>
             <button
@@ -167,7 +163,6 @@ export default function ProductsPage() {
             ))}
           </div>
 
-          {/* Order */}
           <div className={styles.filterSection}>
             <h4>Ordenar por</h4>
             <select
@@ -183,7 +178,6 @@ export default function ProductsPage() {
             </select>
           </div>
 
-          {/* Stock */}
           <div className={styles.filterSection}>
             <label className={styles.stockToggle}>
               <input
@@ -195,7 +189,6 @@ export default function ProductsPage() {
             </label>
           </div>
 
-          {/* Clear */}
           <button
             className={styles.clearFilters}
             onClick={() => { updateParams({ category: '', brand: '', orderBy: '', inStock: '', tab: 'all' }); }}
@@ -204,12 +197,9 @@ export default function ProductsPage() {
           </button>
         </aside>
 
-        {/* Overlay for mobile */}
         {filtersOpen && <div className={styles.sidebarOverlay} onClick={() => setFiltersOpen(false)} />}
 
-        {/* Main Content */}
         <main className={styles.main}>
-          {/* Desktop tabs */}
           <div className={styles.desktopTabs}>
             {tabs.map(t => (
               <button
@@ -306,5 +296,13 @@ export default function ProductsPage() {
         </main>
       </div>
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<div className={styles.page}><p className={styles.loading}>Cargando productos...</p></div>}>
+      <ProductsContent />
+    </Suspense>
   );
 }
