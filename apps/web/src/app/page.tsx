@@ -163,7 +163,7 @@ function DeliveryStatusModule() {
 function QuickAccessModule() {
   const quickLinks = [
     { icon: '📍', label: 'Tracking en vivo', desc: 'Rastrea tu pedido en el mapa', href: '/orders' },
-    { icon: '🕐', label: 'Horario de delivery', desc: 'Lun-Sáb: 8am - 8pm', href: '/stores' },
+    { icon: '🕐', label: 'Horario de delivery', desc: 'Lun-Sáb: 8am - 8pm', href: '/brands' },
     { icon: '💳', label: 'Métodos de pago', desc: 'Bs, USD, transferencia, Binance', href: '/checkout' },
     { icon: '📦', label: 'Pedido mínimo', desc: 'Desde $10 para delivery gratis', href: '/products' },
   ];
@@ -383,7 +383,7 @@ export default function Home() {
           </div>
           <div className={styles.footerLinks}>
             <Link href="/products">Catálogo</Link>
-            <Link href="/stores">Logística</Link>
+            <Link href="/brands">Marcas</Link>
             <Link href="/orders">Pedidos</Link>
             <Link href="/assistant">Contacto</Link>
           </div>

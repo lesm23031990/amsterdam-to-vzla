@@ -7,37 +7,37 @@ import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import styles from './page.module.css';
 
-interface Store {
+interface Brand {
   id: string;
   name: string;
   slug: string;
   description?: string;
 }
 
-export default function AdminStoresPage() {
+export default function AdminBrandsPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [stores, setStores] = useState<Store[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) { router.push('/login'); return; }
     if (user.role !== 'admin') { router.push('/'); return; }
-    api.get<Store[]>('/stores').then((res) => {
-      if (res.ok && res.data) setStores(res.data);
+    api.get<Brand[]>('/brands').then((res) => {
+      if (res.ok && res.data) setBrands(res.data);
       setLoading(false);
     });
   }, [user]);
 
-  if (loading) return <p className={styles.loading}>Cargando tiendas...</p>;
+  if (loading) return <p className={styles.loading}>Cargando marcas...</p>;
 
   return (
     <div className={styles.page}>
       <div className={styles.container}>
-        <h1 className={styles.title}>Tiendas</h1>
+        <h1 className={styles.title}>Marcas</h1>
 
-        {stores.length === 0 ? (
-          <p className={styles.empty}>No hay tiendas registradas</p>
+        {brands.length === 0 ? (
+          <p className={styles.empty}>No hay marcas registradas</p>
         ) : (
           <div className={styles.table}>
             <div className={styles.tableHeader}>
@@ -45,14 +45,14 @@ export default function AdminStoresPage() {
               <span>Slug</span>
               <span>Acciones</span>
             </div>
-            {stores.map((store) => (
-              <div key={store.id} className={styles.tableRow}>
+            {brands.map((brand) => (
+              <div key={brand.id} className={styles.tableRow}>
                 <span className={styles.storeName}>
-                  <Link href={`/stores/${store.slug}`}>{store.name}</Link>
+                  <Link href={`/brands/${brand.slug}`}>{brand.name}</Link>
                 </span>
-                <span className={styles.slug}>{store.slug}</span>
+                <span className={styles.slug}>{brand.slug}</span>
                 <span className={styles.actions}>
-                  <Link href={`/stores/${store.slug}`} className={styles.viewBtn}>Ver</Link>
+                  <Link href={`/brands/${brand.slug}`} className={styles.viewBtn}>Ver</Link>
                 </span>
               </div>
             ))}

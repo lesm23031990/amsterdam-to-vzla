@@ -7,35 +7,38 @@ import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import styles from './page.module.css';
 
-interface Store {
+interface Brand {
   id: string;
   name: string;
   slug: string;
-  description: string;
-  category: string;
-  phone?: string;
-  address?: string;
-  coverImage?: string;
-  logoImage?: string;
+  description: string | null;
+  phone: string | null;
+  logoImage: string | null;
+  isActive: boolean;
 }
 
 interface Product {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
   price: number;
+  priceCop: number;
   currency: string;
-  category: string;
+  category: string | null;
   images: string[];
   stock: number;
-  storeId: string;
+  brandId: string | null;
+  isFeatured: boolean;
+  hasDiscount: boolean;
+  discountPercent: number;
+  brand?: Brand | null;
 }
 
-export default function StoreDetailPage() {
+export default function BrandDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
-  const [store, setStore] = useState<Store | null>(null);
+  const [brand, setBrand] = useState<Brand | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [addingId, setAddingId] = useState<string | null>(null);
@@ -43,14 +46,14 @@ export default function StoreDetailPage() {
   useEffect(() => {
     const slug = params.slug as string;
     Promise.all([
-      api.get<Store>(`/stores/${slug}`),
-      api.get<Product[]>('/products'),
-    ]).then(([storeRes]) => {
-      if (storeRes.ok && storeRes.data) {
-        setStore(storeRes.data);
-        api.get<Product[]>(`/products?storeId=${storeRes.data.id}`).then((prodRes) => {
-          if (prodRes.ok && prodRes.data) setProducts(prodRes.data);
-        });
+      api.get<Brand>(`/brands/${slug}`),
+      api.get<Product[]>(`/products?brand=${slug}`),
+    ]).then(([brandRes, productsRes]) => {
+      if (brandRes.ok && brandRes.data) {
+        setBrand(brandRes.data);
+      }
+      if (productsRes.ok && productsRes.data) {
+        setProducts(productsRes.data);
       }
       setLoading(false);
     });
@@ -66,24 +69,19 @@ export default function StoreDetailPage() {
     setAddingId(null);
   };
 
-  if (loading) return <p className={styles.loading}>Cargando tienda...</p>;
-  if (!store) return <p className={styles.loading}>Tienda no encontrada</p>;
+  if (loading) return <p className={styles.loading}>Cargando marca...</p>;
+  if (!brand) return <p className={styles.loading}>Marca no encontrada</p>;
 
   return (
     <div className={styles.page}>
       <div className={styles.hero}>
-        <div
-          className={styles.coverBg}
-          style={{ backgroundImage: store.coverImage ? `url(${store.coverImage})` : undefined }}
-        />
+        <div className={styles.coverBg} />
         <div className={styles.heroContent}>
-          {store.logoImage && <img src={store.logoImage} alt="" className={styles.logo} />}
-          <h1>{store.name}</h1>
-          <p className={styles.description}>{store.description}</p>
+          {brand.logoImage && <img src={brand.logoImage} alt="" className={styles.logo} />}
+          <h1>{brand.name}</h1>
+          <p className={styles.description}>{brand.description || ''}</p>
           <div className={styles.meta}>
-            <span className={styles.category}>{store.category}</span>
-            {store.address && <span className={styles.address}>{store.address}</span>}
-            {store.phone && <span className={styles.phone}>{store.phone}</span>}
+            {brand.phone && <span className={styles.phone}>{brand.phone}</span>}
           </div>
         </div>
       </div>
@@ -91,7 +89,7 @@ export default function StoreDetailPage() {
       <div className={styles.container}>
         <h2 className={styles.sectionTitle}>Productos</h2>
         {products.length === 0 ? (
-          <p className={styles.empty}>Esta tienda no tiene productos disponibles</p>
+          <p className={styles.empty}>Esta marca no tiene productos disponibles</p>
         ) : (
           <div className={styles.grid}>
             {products.map((product) => (
@@ -103,7 +101,7 @@ export default function StoreDetailPage() {
                   />
                   <div className={styles.productInfo}>
                     <h3>{product.name}</h3>
-                    <p className={styles.productDesc}>{product.description?.slice(0, 60)}</p>
+                    <p className={styles.productDesc}>{product.description?.slice(0, 60) || ''}</p>
                     <div className={styles.productMeta}>
                       <span className={styles.price}>
                         {product.currency} {Number(product.price).toLocaleString()}

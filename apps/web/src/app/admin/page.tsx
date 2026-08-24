@@ -18,14 +18,14 @@ export default function AdminPage() {
     if (user.role !== 'admin') { router.push('/'); return; }
 
     Promise.all([
-      api.get('/stores'),
+      api.get('/brands'),
       api.get('/products'),
-    ]).then(([storesRes, productsRes]) => {
-      const stores = (storesRes.ok && Array.isArray(storesRes.data)) ? storesRes.data : [];
+    ]).then(([brandsRes, productsRes]) => {
+      const brands = (brandsRes.ok && Array.isArray(brandsRes.data)) ? brandsRes.data : [];
       const products = (productsRes.ok && Array.isArray(productsRes.data)) ? productsRes.data : [];
       setStats({
         users: 0,
-        stores: stores.length,
+        stores: brands.length,
         products: products.length,
         orders: 0,
       });
@@ -74,7 +74,7 @@ export default function AdminPage() {
               <h3>Usuarios</h3>
               <p>Ver lista de usuarios registrados</p>
             </Link>
-            <Link href="/admin/stores" className={styles.actionCard}>
+            <Link href="/admin/brands" className={styles.actionCard}>
               <span className={styles.actionEmoji}>🏪</span>
               <h3>Tiendas</h3>
               <p>Gestionar tiendas del sistema</p>

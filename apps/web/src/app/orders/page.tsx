@@ -49,7 +49,7 @@ export default function OrdersPage() {
         {orders.length === 0 ? (
           <div className={styles.empty}>
             <p>No tienes pedidos aún</p>
-            <Link href="/stores" className={styles.shopBtn}>Ir a tiendas</Link>
+            <Link href="/brands" className={styles.shopBtn}>Ver marcas</Link>
           </div>
         ) : (
           <div className={styles.list}>

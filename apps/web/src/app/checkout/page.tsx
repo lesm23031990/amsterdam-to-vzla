@@ -53,7 +53,7 @@ export default function CheckoutPage() {
         <div className={styles.container}>
           <div className={styles.empty}>
             <p>Tu carrito está vacío</p>
-            <Link href="/stores" className={styles.shopBtn}>Ir a tiendas</Link>
+            <Link href="/brands" className={styles.shopBtn}>Ver marcas</Link>
           </div>
         </div>
       </div>

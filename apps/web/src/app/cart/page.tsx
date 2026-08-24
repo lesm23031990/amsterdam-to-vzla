@@ -17,14 +17,14 @@ interface CartItem {
     price: number;
     currency: string;
     images: string[];
-    store: { id: string; name: string; slug: string };
+    brand: { id: string; name: string; slug: string };
   };
 }
 
-interface GroupedStore {
-  storeId: string;
-  storeName: string;
-  storeSlug: string;
+interface GroupedBrand {
+  brandId: string;
+  brandName: string;
+  brandSlug: string;
   items: CartItem[];
 }
 
@@ -61,20 +61,21 @@ export default function CartPage() {
     loadCart();
   };
 
-  const grouped: GroupedStore[] = [];
-  const storeMap = new Map<string, CartItem[]>();
+  const grouped: GroupedBrand[] = [];
+  const brandMap = new Map<string, CartItem[]>();
   items.forEach((item) => {
-    const storeId = item.product.store.id;
-    if (!storeMap.has(storeId)) storeMap.set(storeId, []);
-    storeMap.get(storeId)!.push(item);
+    const brandId = item.product.brand?.id;
+    if (!brandId) return;
+    if (!brandMap.has(brandId)) brandMap.set(brandId, []);
+    brandMap.get(brandId)!.push(item);
   });
-  storeMap.forEach((storeItems, storeId) => {
-    const first = storeItems[0];
+  brandMap.forEach((brandItems, brandId) => {
+    const first = brandItems[0];
     grouped.push({
-      storeId,
-      storeName: first.product.store.name,
-      storeSlug: first.product.store.slug,
-      items: storeItems,
+      brandId,
+      brandName: first.product.brand?.name || 'Sin marca',
+      brandSlug: first.product.brand?.slug || '',
+      items: brandItems,
     });
   });
 
@@ -95,14 +96,14 @@ export default function CartPage() {
         {items.length === 0 ? (
           <div className={styles.empty}>
             <p>Tu carrito está vacío</p>
-            <Link href="/stores" className={styles.shopBtn}>Ir a tiendas</Link>
+            <Link href="/brands" className={styles.shopBtn}>Ver marcas</Link>
           </div>
         ) : (
           <>
             {grouped.map((group) => (
-              <div key={group.storeId} className={styles.group}>
-                <Link href={`/stores/${group.storeSlug}`} className={styles.storeHeader}>
-                  {group.storeName}
+              <div key={group.brandId} className={styles.group}>
+                <Link href={`/brands/${group.brandSlug}`} className={styles.storeHeader}>
+                  {group.brandName}
                 </Link>
                 {group.items.map((item) => (
                   <div key={item.id} className={styles.item}>
