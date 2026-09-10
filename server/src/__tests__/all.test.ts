@@ -621,6 +621,9 @@ describe('Assistant', () => {
     expect(res.body.ok).toBe(true)
     expect(res.body.data.conversationId).toBeDefined()
     expect(res.body.data.reply).toBeDefined()
+    expect(res.body.data.message).toBeDefined()
+    expect(res.body.data.message.role).toBe('assistant')
+    expect(res.body.data.message.content).toBe(res.body.data.reply)
     expect(Array.isArray(res.body.data.suggestedActions)).toBe(true)
   })
 

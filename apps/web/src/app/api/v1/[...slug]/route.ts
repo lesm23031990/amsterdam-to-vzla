@@ -478,7 +478,8 @@ async function handleAssistant(body: any) {
   else if (msg.includes('track') || msg.includes('rastrear') || msg.includes('mapa')) response = AI_RESPONSES.tracking
   else if (msg.includes('producto') || msg.includes('catalogo') || msg.includes('oferta') || msg.includes('precio')) response = AI_RESPONSES.productos
   else if (msg.includes('ubicacion') || msg.includes('donde') || msg.includes('dirección')) response = AI_RESPONSES.ubicacion
-  return json({ ok: true, data: { conversationId: conversationId || `conv-${Date.now()}`, message: response, timestamp: new Date().toISOString() } })
+  const convId = conversationId || `conv-${Date.now()}`
+  return json({ ok: true, data: { conversationId: convId, message: { id: `msg-${Date.now()}`, role: 'assistant', content: response, createdAt: new Date().toISOString() }, reply: response, suggestedActions: ['Ver mis pedidos', 'Rastrear entrega', 'Buscar productos', 'Ayuda con pago'], timestamp: new Date().toISOString() } })
 }
 
 function handleAdminStats() {
@@ -487,7 +488,7 @@ function handleAdminStats() {
 
 function handleAdminOrders() { return json({ ok: true, data: orders }) }
 
-function handleAdminUsers() { return json({ ok: true, data: [...seedUsers, ...registeredUsers].map(u => ({ id: u.id, email: u.email, name: u.name, phone: u.phone, role: u.role, createdAt: u.createdAt })) }) }
+function handleAdminUsers() { return json({ ok: true, data: [...seedUsers, ...registeredUsers].map(u => ({ id: u.id, email: u.email, name: u.name, phone: u.phone, role: u.role, ordersCount: orders.filter((o: any) => o.userId === u.id).length, createdAt: u.createdAt })) }) }
 
 function handleAdminProducts() { return json({ ok: true, data: products }) }
 

@@ -98,18 +98,18 @@ Headers: `Authorization: Bearer <token>` (admin)
 - `GET /admin/users`: requiere admin role, retorna todos los usuarios con computed ordersCount
 
 ## Acceptance Criteria
-- [ ] Admin ve todas las órdenes en dashboard
-- [ ] AI assistant responses se muestran correctamente
-- [ ] Admin ve lista de usuarios con order counts
-- [ ] Todos los bugs confirmados como corregidos
+- [x] Admin ve todas las órdenes en dashboard
+- [x] AI assistant responses se muestran correctamente
+- [x] Admin ve lista de usuarios con order counts
+- [x] Todos los bugs confirmados como corregidos
 
 ---
 
 ## Tareas Técnicas
-- [ ] Write tests (TDD)
-- [ ] Crear endpoint `GET /api/v1/admin/orders`
-- [ ] Crear endpoint `GET /api/v1/admin/users`
-- [ ] Fix assistant response para retornar `data.message`
-- [ ] Fix dashboard orders page para usar el endpoint correcto
-- [ ] Fix admin users page con API call correcto
+- [x] Write tests (TDD)
+- [x] Crear endpoint `GET /api/v1/admin/orders`
+- [x] Crear endpoint `GET /api/v1/admin/users`
+- [x] Fix assistant response para retornar `data.message`
+- [x] Fix dashboard orders page para usar el endpoint correcto
+- [x] Fix admin users page con API call correcto
 - [ ] PR a main

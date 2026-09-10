@@ -6,6 +6,13 @@
 .info { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
 .info p { margin: 8px 0; color: #6b7280; }
 .info strong { color: #f97316; }
+.tableWrap { background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table th { text-align: left; padding: 12px 16px; border-bottom: 2px solid #f3f4f6; color: #6b7280; font-weight: 600; white-space: nowrap; }
+.table td { padding: 12px 16px; border-bottom: 1px solid #f3f4f6; }
+.table tr:last-child td { border-bottom: none; }
+.roleBadge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #fff7ed; color: #f97316; text-transform: capitalize; }
+.empty { text-align: center; color: #6b7280; padding: 32px 16px; }
 
 @media (max-width: 600px) {
   .container { padding: 20px 12px; }

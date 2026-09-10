@@ -1,0 +1,32 @@
+.page { flex: 1; }
+.container { max-width: 1000px; margin: 0 auto; padding: 32px 16px; }
+.title { font-size: 24px; font-weight: 700; margin: 0 0 8px; }
+.description { font-size: 14px; color: #6b7280; margin: 0 0 24px; }
+.loading { text-align: center; padding: 60px; color: #6b7280; }
+.info { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.info p { margin: 8px 0; color: #6b7280; }
+.list { display: flex; flex-direction: column; gap: 12px; }
+.card { background: #fff; border-radius: 12px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.cardHeader { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.orderId { font-weight: 700; font-size: 15px; }
+.status { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #f3f4f6; color: #6b7280; }
+.pending_payment { background: #fef3c7; color: #b45309; }
+.confirmed { background: #dbeafe; color: #1d4ed8; }
+.preparing { background: #ede9fe; color: #6d28d9; }
+.in_transit { background: #ffedd5; color: #c2410c; }
+.delivered { background: #dcfce7; color: #15803d; }
+.cancelled { background: #fee2e2; color: #b91c1c; }
+.cardMeta { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-size: 13px; color: #6b7280; }
+.customer { font-weight: 600; color: #111827; }
+.items { margin-top: 10px; font-size: 13px; color: #374151; }
+.itemLine { padding: 2px 0; }
+.cardFooter { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f3f4f6; }
+.total { font-weight: 700; font-size: 16px; color: #f97316; }
+.paymentMethod { font-size: 12px; color: #6b7280; text-transform: capitalize; }
+.delivery { font-size: 12px; color: #6b7280; margin-top: 6px; }
+.empty { background: #fff; border-radius: 12px; padding: 48px 16px; text-align: center; color: #6b7280; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+
+@media (max-width: 600px) {
+  .container { padding: 20px 12px; }
+  .title { font-size: 20px; }
+}
