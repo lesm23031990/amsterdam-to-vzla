@@ -88,7 +88,11 @@ function DeliveryStatusModule({ orders }: { orders: OrderSummary[] | null }) {
         <Link href="/orders" className={styles.logisticsLink}>Ver todos →</Link>
       </div>
       {orders && orders.length === 0 && (
-        <p className={styles.deliveryItems}>Aún no tienes pedidos. ¡Explora el catálogo y haz el primero!</p>
+        <div className={styles.logisticsEmpty}>
+          <span className={styles.logisticsEmptyIcon}>🧾</span>
+          <p>Aún no tienes pedidos.<br />¡Explora el catálogo y haz el primero!</p>
+          <Link href="/products" className={styles.logisticsEmptyCta}>Ver catálogo →</Link>
+        </div>
       )}
       {orders?.map(o => {
         const label = ORDER_LABELS[o.status] || o.status;
@@ -398,16 +402,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA */}
-      {!user && (
-        <section className={styles.ctaBanner}>
-          <div className={styles.ctaInner}>
-            <h2 className={styles.ctaTitle}>¿Listo para disfrutar los mejores productos congelados?</h2>
-            <p className={styles.ctaText}>Regístrate y accede a ofertas exclusivas con delivery hasta tu puerta.</p>
-            <Link href="/register" className={styles.ctaBtn}>Crear cuenta →</Link>
-          </div>
-        </section>
-      )}
+      {/* CTA — banner fijo del prototipo: siempre visible, solo cambia el texto */}
+      <section className={styles.ctaBanner}>
+        <div className={styles.ctaInner}>
+          <h2 className={styles.ctaTitle}>¿Listo para disfrutar los mejores productos congelados?</h2>
+          <p className={styles.ctaText}>
+            {user
+              ? 'Aprovecha las ofertas del día con delivery hasta tu puerta.'
+              : 'Regístrate y accede a ofertas exclusivas con delivery hasta tu puerta.'}
+          </p>
+          <Link href={user ? '/products' : '/register'} className={styles.ctaBtn}>
+            {user ? 'Ver catálogo →' : 'Crear cuenta →'}
+          </Link>
+        </div>
+      </section>
 
       {/* FOOTER */}
       <footer className={styles.footer}>

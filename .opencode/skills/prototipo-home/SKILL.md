@@ -41,7 +41,11 @@ Un bug de datos se arregla en la fuente o con estados vacíos, nunca eliminando 
   Con sesión → `POST /cart/items`; sin sesión → `/login`.
 - Derecha `.logisticsSection`: `DeliveryStatusModule` (SOLO si hay sesión:
   3 pedidos de `/checkout/orders`, `statusPill` con clase del estado en español
-  vía `ORDER_LABELS`, enlace al detalle, empty "Aún no tienes pedidos")
+  vía `ORDER_LABELS`, enlace al detalle). **Empty state contractual**: bloque
+  `.logisticsEmpty` (flex column, centrado, padding 28/20) con icono
+  `.logisticsEmptyIcon` 🧾, párrafo "Aún no tienes pedidos. ¡Explora el catálogo
+  y haz el primero!" y CTA `.logisticsEmptyCta` "Ver catálogo →" a `/products`.
+  Jamás un `<p>` suelto sin padding dentro de `.logisticsCard` (tiene padding 0).
   + `QuickAccessModule` (4 accesos con icono: tracking, horario, pagos, mínimo).
 
 ### 4. Ofertas del Día (`.offersSection`)
@@ -53,9 +57,13 @@ Un bug de datos se arregla en la fuente o con estados vacíos, nunca eliminando 
   `offerPriceRow` (`margin-top: auto`: `offerPrice` naranja grande = precio con
   descuento + `offerOld` tachado = precio original), `offerBtn` "Comprar".
 
-### 5. CTA (`.ctaBanner`) — solo sin sesión
+### 5. CTA (`.ctaBanner`) — SIEMPRE VISIBLE (contrato)
 - Fondo azul marino con partículas, título blanco centrado, texto gris,
-  botón naranja `Crear cuenta →` a `/register`.
+  botón naranja. **No envolver en `{!user && ...}`**: el prototipo exige que la
+  sección exista siempre; lo único que cambia con sesión es el copy:
+  - Sin sesión: "Regístrate y accede a ofertas exclusivas…" + botón
+    `Crear cuenta →` a `/register`.
+  - Con sesión: "Aprovecha las ofertas del día…" + botón `Ver catálogo →` a `/products`.
 
 ### 6. Footer (`.footer`)
 - Marca + tagline a la izquierda; 4 enlaces (Catálogo, Marcas, Pedidos, Contacto).
