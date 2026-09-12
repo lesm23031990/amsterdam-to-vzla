@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCurrency } from '@/context/CurrencyContext';
+import { api } from '@/lib/api';
 import styles from './Navbar.module.css';
 
 const navLinks = [
@@ -48,36 +49,24 @@ export default function Navbar() {
 
   const fetchNotifications = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`/api/v1/notifications?limit=10`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (data.ok) {
-        setNotifications(data.data.notifications);
-        setUnreadCount(data.data.unreadCount);
+      const res = await api.get<{ notifications: any[]; unreadCount: number }>('/notifications?limit=10');
+      if (res.ok && res.data) {
+        setNotifications(res.data.notifications);
+        setUnreadCount(res.data.unreadCount);
       }
     } catch {}
   };
 
   const markAsRead = async (id: string) => {
     try {
-      const token = localStorage.getItem('token');
-      await fetch(`/api/v1/notifications/${id}/read`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.patch(`/notifications/${id}/read`);
       fetchNotifications();
     } catch {}
   };
 
   const markAllRead = async () => {
     try {
-      const token = localStorage.getItem('token');
-      await fetch(`/api/v1/notifications/read-all`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.patch('/notifications/read-all');
       fetchNotifications();
     } catch {}
   };
