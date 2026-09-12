@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express'
+import type { Prisma } from '../generated/prisma/client'
 import { db } from '../lib/db'
 import { authMiddleware } from '../middleware/auth'
 
@@ -12,18 +13,142 @@ async function getOrCreateCart(userId: string) {
   })
 }
 
+interface CustomizationInput {
+  optionId?: string
+  choiceId?: string
+}
+
+interface ResolvedCustomization {
+  optionId: string
+  choiceId: string
+  optionName: string
+  choiceName: string
+  priceModifier: number
+}
+
+function choiceIdsOf(customizations: unknown): string[] {
+  if (!Array.isArray(customizations)) return []
+  return customizations
+    .map((c: any) => String(c?.choiceId ?? ''))
+    .filter(Boolean)
+    .sort()
+}
+
+async function addMenuItemToCart(
+  req: Request,
+  res: Response,
+  menuItemId: string,
+  qty: number,
+  customizationsInput: unknown
+) {
+  const menu = await db.menuItem.findUnique({
+    where: { id: menuItemId },
+    include: { options: { include: { choices: true } } },
+  })
+
+  if (!menu || !menu.isAvailable) {
+    res.status(404).json({ ok: false, error: 'Elemento del menú no encontrado o no disponible' })
+    return
+  }
+
+  const inputs: CustomizationInput[] = Array.isArray(customizationsInput)
+    ? (customizationsInput as CustomizationInput[])
+    : []
+
+  if (!Array.isArray(customizationsInput) && customizationsInput !== undefined && customizationsInput !== null) {
+    res.status(400).json({ ok: false, error: 'customizations debe ser un arreglo' })
+    return
+  }
+
+  const resolved: ResolvedCustomization[] = []
+  const seenChoiceIds = new Set<string>()
+
+  for (const input of inputs) {
+    const option = menu.options.find((o) => o.id === input.optionId)
+    if (!option) {
+      res.status(400).json({ ok: false, error: 'Opción de personalización no válida' })
+      return
+    }
+    const choice = option.choices.find((c) => c.id === input.choiceId)
+    if (!choice) {
+      res.status(400).json({ ok: false, error: 'La elección no pertenece a la opción seleccionada' })
+      return
+    }
+    if (seenChoiceIds.has(choice.id)) continue
+    seenChoiceIds.add(choice.id)
+    resolved.push({
+      optionId: option.id,
+      choiceId: choice.id,
+      optionName: option.name,
+      choiceName: choice.name,
+      priceModifier: choice.priceModifier,
+    })
+  }
+
+  for (const option of menu.options) {
+    const selected = resolved.filter((r) => r.optionId === option.id)
+    if (option.type === 'single' && selected.length > 1) {
+      res.status(400).json({ ok: false, error: `La opción "${option.name}" solo permite una elección` })
+      return
+    }
+    if (option.required && selected.length < 1) {
+      res.status(400).json({ ok: false, error: `Debes elegir una opción para "${option.name}"` })
+      return
+    }
+  }
+
+  const unitPrice =
+    Math.round((menu.basePrice + resolved.reduce((sum, r) => sum + r.priceModifier, 0)) * 100) / 100
+
+  const cart = await getOrCreateCart(req.user!.userId)
+
+  const existingLines = await db.cartItem.findMany({
+    where: { cartId: cart.id, menuItemId },
+  })
+
+  const wantedIds = choiceIdsOf(resolved)
+  const match = existingLines.find(
+    (line) => JSON.stringify(choiceIdsOf(line.customizations)) === JSON.stringify(wantedIds)
+  )
+
+  let cartItem
+  if (match) {
+    cartItem = await db.cartItem.update({
+      where: { id: match.id },
+      data: { quantity: match.quantity + qty },
+    })
+  } else {
+    cartItem = await db.cartItem.create({
+      data: {
+        cartId: cart.id,
+        menuItemId,
+        quantity: qty,
+        price: unitPrice,
+        customizations: resolved as unknown as Prisma.InputJsonValue,
+      },
+    })
+  }
+
+  res.status(201).json({ ok: true, data: cartItem })
+}
+
 router.post('/items', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { productId, quantity } = req.body
+    const { productId, menuItemId, quantity, customizations } = req.body
     const qty = quantity || 1
 
-    if (!productId) {
-      res.status(400).json({ ok: false, error: 'productId es requerido' })
+    if (!productId && !menuItemId) {
+      res.status(400).json({ ok: false, error: 'productId o menuItemId es requerido' })
       return
     }
 
     if (qty < 1) {
       res.status(400).json({ ok: false, error: 'La cantidad debe ser mayor a 0' })
+      return
+    }
+
+    if (menuItemId) {
+      await addMenuItemToCart(req, res, String(menuItemId), qty, customizations)
       return
     }
 
@@ -85,6 +210,15 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
                 brand: { select: { id: true, name: true, slug: true, logoImage: true } },
               },
             },
+            menuItem: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+                preparationTime: true,
+                category: true,
+              },
+            },
           },
         },
       },
@@ -95,14 +229,27 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
       return
     }
 
-    const total = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0)
-    const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0)
+    const items = cart.items.map((item: any) => {
+      if (item.productId) {
+        const { menuItem: _omit, ...productItem } = item
+        return { ...productItem, type: 'product' as const }
+      }
+      return {
+        ...item,
+        type: 'menu' as const,
+        menuItem: item.menuItem ?? null,
+        customizations: item.customizations ?? [],
+      }
+    })
+
+    const total = items.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0)
+    const totalItems = items.reduce((sum: number, item: any) => sum + item.quantity, 0)
 
     res.json({
       ok: true,
       data: {
         id: cart.id,
-        items: cart.items,
+        items,
         total,
         totalItems,
       },
@@ -137,7 +284,7 @@ router.patch('/items/:id', authMiddleware, async (req: Request, res: Response) =
       return
     }
 
-    if (quantity > cartItem.product.stock) {
+    if (cartItem.productId && quantity > cartItem.product.stock) {
       res.status(400).json({ ok: false, error: 'Stock insuficiente' })
       return
     }

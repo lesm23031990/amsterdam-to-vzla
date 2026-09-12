@@ -43,6 +43,10 @@ export default function RootLayout() {
         <Stack.Screen name="orders/[id]" />
         <Stack.Screen name="ai-assistant" />
         <Stack.Screen name="driver" />
+        <Stack.Screen name="products/[id]" />
+        <Stack.Screen name="menu" />
+        <Stack.Screen name="menu/[id]" />
+        <Stack.Screen name="notifications" />
       </Stack>
     </SafeAreaProvider>
   );

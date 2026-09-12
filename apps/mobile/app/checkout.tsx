@@ -1,41 +1,73 @@
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'expo-router';
-import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
+import { useCurrencyStore } from '@/store/currencyStore';
 import { apiClient } from '@/api/client';
+
+interface CheckoutItem {
+  id: string;
+  quantity: number;
+  price: number;
+  product?: { id: string; name: string } | null;
+  menuItem?: { id: string; name: string } | null;
+}
+
+interface CheckoutCart {
+  items: CheckoutItem[];
+  total: number;
+}
 
 export default function CheckoutScreen() {
   const [address, setAddress] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'binance' | 'cash' | 'transfer'>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<'binance_pay' | 'cash' | 'transfer'>('cash');
   const [loading, setLoading] = useState(false);
+  const [cart, setCart] = useState<CheckoutCart | null>(null);
+  const [cartLoading, setCartLoading] = useState(true);
   const router = useRouter();
-  const { items, getTotal, clearCart } = useCartStore();
   const { user } = useAuthStore();
+  const { currency, formatPrice, loadCurrency } = useCurrencyStore();
+
+  useEffect(() => {
+    loadCurrency();
+  }, []);
+
+  const fetchCart = useCallback(async () => {
+    try {
+      const response = await apiClient.get('/api/v1/cart');
+      setCart(response.data.data);
+    } catch (error) {
+      console.error('Error fetching cart:', error);
+      Alert.alert('Error', 'No pudimos cargar tu carrito');
+    } finally {
+      setCartLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
 
   const handleCheckout = async () => {
     if (!address) {
       Alert.alert('Error', 'Por favor ingresa tu dirección');
       return;
     }
+    if (!cart || cart.items.length === 0) {
+      Alert.alert('Carrito vacío', 'Agrega productos antes de continuar');
+      return;
+    }
 
     setLoading(true);
     try {
-      const orderData = {
-        items: items.map((item) => ({
-          productId: item.id,
-          quantity: item.quantity,
-          price: item.price,
-        })),
-        total: getTotal(),
-        address,
+      const response = await apiClient.post('/api/v1/checkout', {
         paymentMethod,
-      };
-
-      const response = await apiClient.post('/api/v1/orders', orderData);
+        deliveryAddress: address,
+        contactPhone: (user as { phone?: string } | null)?.phone,
+        currency,
+      });
 
       if (response.data.ok) {
-        clearCart();
         Alert.alert(
           'Pedido Confirmado',
           'Tu pedido ha sido procesado exitosamente',
@@ -47,11 +79,11 @@ export default function CheckoutScreen() {
           ]
         );
       }
-    } catch (error: any) {
-      Alert.alert(
-        'Error',
-        error.response?.data?.error || 'No se pudo procesar el pedido'
-      );
+    } catch (error: unknown) {
+      const message =
+        (error as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        'No se pudo procesar el pedido';
+      Alert.alert('Error', message);
     } finally {
       setLoading(false);
     }
@@ -98,9 +130,9 @@ export default function CheckoutScreen() {
           <TouchableOpacity
             style={[
               styles.paymentOption,
-              paymentMethod === 'binance' && styles.paymentOptionSelected,
+              paymentMethod === 'binance_pay' && styles.paymentOptionSelected,
             ]}
-            onPress={() => setPaymentMethod('binance')}
+            onPress={() => setPaymentMethod('binance_pay')}
           >
             <Text style={styles.paymentText}>Binance Pay</Text>
           </TouchableOpacity>
@@ -109,19 +141,23 @@ export default function CheckoutScreen() {
 
       <View style={styles.summary}>
         <Text style={styles.summaryTitle}>Resumen del Pedido</Text>
-        {items.map((item) => (
-          <View key={item.id} style={styles.summaryItem}>
-            <Text style={styles.summaryItemName}>
-              {item.name} x{item.quantity}
-            </Text>
-            <Text style={styles.summaryItemPrice}>
-              Bs {(item.price * item.quantity).toFixed(2)}
-            </Text>
-          </View>
-        ))}
+        {cartLoading ? (
+          <ActivityIndicator color="#1E40AF" />
+        ) : (
+          (cart?.items || []).map((item) => (
+            <View key={item.id} style={styles.summaryItem}>
+              <Text style={styles.summaryItemName}>
+                {(item.product?.name || item.menuItem?.name || 'Producto')} x{item.quantity}
+              </Text>
+              <Text style={styles.summaryItemPrice}>
+                {formatPrice(item.price * item.quantity)}
+              </Text>
+            </View>
+          ))
+        )}
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total:</Text>
-          <Text style={styles.totalValue}>Bs {getTotal().toFixed(2)}</Text>
+          <Text style={styles.totalValue}>{formatPrice(cart?.total || 0)}</Text>
         </View>
       </View>
 

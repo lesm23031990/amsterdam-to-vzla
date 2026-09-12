@@ -9,6 +9,7 @@ import styles from './Navbar.module.css';
 
 const navLinks = [
   { href: '/products', label: 'Catálogo' },
+  { href: '/menu', label: 'Menú' },
   { href: '/offers', label: 'Ofertas' },
   { href: '/orders', label: 'Pedidos' },
 ];

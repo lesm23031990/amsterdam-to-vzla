@@ -88,6 +88,11 @@ export default function AdminPage() {
               <h3>Productos</h3>
               <p>Ver catálogo completo</p>
             </Link>
+            <Link href="/admin/menu" className={styles.actionCard}>
+              <span className={styles.actionEmoji}>🍔</span>
+              <h3>Menú Fast Food</h3>
+              <p>Gestionar elementos y opciones del menú</p>
+            </Link>
             <Link href="/admin/orders" className={styles.actionCard}>
               <span className={styles.actionEmoji}>📋</span>
               <h3>Pedidos</h3>
