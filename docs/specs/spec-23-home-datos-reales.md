@@ -62,4 +62,4 @@ Mis Pedidos: últimas 3 órdenes del usuario logueado. Sin sesión, el módulo s
 - [x] Fila de precio a prueba de cifras COP largas (nowrap + `flex-shrink:0`)
 - [x] `db:seed:home`: asegurar >=3 destacados y 4 ofertas (idempotente)
 - [x] Reglas de protección del diseño: `docs/rules.md` + skill `.opencode/skills/prototipo-home`
-- [ ] PR a main
+- [x] PR a main

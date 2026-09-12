@@ -2,7 +2,7 @@
 title: "Spec 15 — Bugfixes MVP"
 labels: ["spec"]
 assignees: []
-status: in-progress
+status: done
 ---
 
 ## Endpoints
@@ -113,4 +113,4 @@ Headers: `Authorization: Bearer <token>` (admin)
 - [x] Fix assistant response para retornar `data.message`
 - [x] Fix dashboard orders page para usar el endpoint correcto
 - [x] Fix admin users page con API call correcto
-- [ ] PR a main
+- [x] PR a main
