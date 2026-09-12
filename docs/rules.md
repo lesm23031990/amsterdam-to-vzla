@@ -93,6 +93,40 @@ Comandos:
 - `npm run plane:push` — Sube cambios locales a Plane.so
 - `npm run plane:status` — Compara estado local vs remoto
 
+## Protección del Diseño Prototipado
+
+El diseño de la home (y de las secciones ya maquetadas) es **contrato visual**.
+Arreglar bugs de datos o lógica NUNCA debe degradar ni eliminar una sección.
+Ver `.opencode/skills/prototipo-home/SKILL.md` para la anatomía exacta por sección.
+
+Reglas no negociables:
+
+1. **No borrar ni reestructurar secciones** al "limpiar" código. Una sección
+   data-driven se conserva aunque la consulta devuelva vacía.
+2. **Toda sección que consume la API define su empty state**: bloque `.emptySection`
+   con icono + mensaje honesto (no un grid en blanco ni la sección eliminada).
+3. **No cambiar etiquetas de HTML sin ajustar el CSS** que apunta a ellas: p. ej.
+   convertir un `<div>` contenedor en `<Link>` (`<a>` inline) rompe `width/aspect-ratio/overflow`
+   → hay que devolverle `display: block`.
+4. **No tocar clases del prototipo** (`bentoCard`, `productCard`, `offerCard`,
+   `productImgWrap`, `productPriceRow`, `statusPill`, etc.) sin verificar el
+   render visual después: las tarjetas viven de `flex` + `margin-top:auto` para
+   alinear precio/botón al fondo por fila.
+5. **Filas de precio preparadas para cifras largas (COP)**: `nowrap` en el precio,
+   `flex-shrink: 0` en el badge de stock, ellipsis si desborda.
+6. **Fotos de producto salen de `images[0]` real**; si no hay imagen, placeholder
+   con gradiente + icono (nunca una URL inventada que genere "productos huérfanos").
+
+Antes de comitear un cambio que toque `page.tsx` o `*.module.css` de la home:
+
+- [ ] `npm run build -w apps/web` sin errores y `npx tsc --noEmit` en apps/web
+- [ ] Revisar las 6 secciones: Hero, Bento Destacados, Catálogo Express,
+      Mis Pedidos/Info, Ofertas del Día, CTA — todas presentes
+- [ ] Provocar el estado vacío (filtrar por un criterio sin resultados) y
+      confirmar que aparece `.emptySection`, no una sección borrada
+- [ ] Comparar contra las capturas del prototipo (Ofertas con pill de %, precio
+      grande + tachado, botón "Comprar" alineado al fondo)
+
 ## Convenciones de Código
 
 | Aspecto | Regla |

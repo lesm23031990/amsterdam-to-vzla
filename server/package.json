@@ -12,6 +12,7 @@
     "db:resolve:demo": "cross-env NODE_ENV=production prisma migrate resolve --applied",
     "db:studio": "cross-env NODE_ENV=development prisma studio",
     "db:seed": "cross-env NODE_ENV=development tsx src/seed.ts",
+    "db:seed:home": "cross-env NODE_ENV=development tsx src/seed-offers.ts",
     "db:seed:demo": "cross-env NODE_ENV=production tsx src/seed.ts"
   },
   "dependencies": {

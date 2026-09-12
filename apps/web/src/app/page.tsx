@@ -282,6 +282,12 @@ export default function Home() {
                 </Link>
               );
             })}
+            {!loading && featuredProducts.length === 0 && (
+              <div className={styles.emptySection}>
+                <span className={styles.emptySectionIcon}>⭐</span>
+                <span>Próximamente: nuestros productos destacados. ¡Vuelve pronto!</span>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -325,6 +331,12 @@ export default function Home() {
                   </div>
                 </div>
               ))}
+              {!loading && catalogProducts.length === 0 && (
+                <div className={styles.emptySection}>
+                  <span className={styles.emptySectionIcon}>📦</span>
+                  <span>Estamos cargando el catálogo. ¡Vuelve en un momento!</span>
+                </div>
+              )}
             </div>
           </div>
           <div className={styles.logisticsSection}>
@@ -376,6 +388,12 @@ export default function Home() {
                 </div>
               </div>
             ))}
+            {!loading && offerProducts.length === 0 && (
+              <div className={styles.emptySection}>
+                <span className={styles.emptySectionIcon}>🔥</span>
+                <span>Muy pronto: nuevas ofertas del día con precios especiales</span>
+              </div>
+            )}
           </div>
         </div>
       </section>

@@ -56,4 +56,10 @@ Mis Pedidos: últimas 3 órdenes del usuario logueado. Sin sesión, el módulo s
 - [x] Mis Pedidos con /checkout/orders
 - [x] Demo: deduplicar seeds de route.ts usando `initial*` de mock-data y corregir referencias
 - [x] Integrar con frontend
+- [x] Empty states con `.emptySection` para destacados/express/ofertas
+- [x] `display:block` en `productImgWrap`/`offerImgWrap` al convertirlos en `<Link>`
+- [x] Alinear botones al fondo (flex column + `margin-top:auto`) y clamp de descripción a 2 líneas
+- [x] Fila de precio a prueba de cifras COP largas (nowrap + `flex-shrink:0`)
+- [x] `db:seed:home`: asegurar >=3 destacados y 4 ofertas (idempotente)
+- [x] Reglas de protección del diseño: `docs/rules.md` + skill `.opencode/skills/prototipo-home`
 - [ ] PR a main
