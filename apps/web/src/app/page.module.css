@@ -1,5 +1,10 @@
 .page { width: 100%; background: var(--bg); }
 
+.productNameLink { display: block; text-decoration: none; color: inherit; }
+.statusPill.pago-pendiente { background: rgba(120, 120, 130, 0.15); color: var(--text-muted, #6b7280); }
+.statusPill.confirmado { background: rgba(74, 126, 193, 0.12); color: var(--secondary); }
+.statusPill.cancelado { background: rgba(229, 62, 62, 0.12); color: var(--danger, #e53e3e); }
+
 /* ============================================================
    HERO BANNER
    ============================================================ */

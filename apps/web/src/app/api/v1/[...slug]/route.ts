@@ -46,6 +46,7 @@ interface Notification {
 
 import {
   brands, products, menuItems, users as seedUsers,
+  initialOrders, initialComments, initialNotifications,
   exchangeRates, AI_RESPONSES, getBrandById, getRateMap, formatPrice,
 } from '@/lib/mock-data'
 
@@ -53,50 +54,11 @@ let carts: Cart[] = []
 let cartItemCounter = 1
 let cartsCounter = 1
 
-let orders: Order[] = [
-  {
-    id: 'order-1', userId: 'user-1', status: 'in_transit', total: 18.70, totalCop: 18.70, deliveryFee: 2.50, currency: 'USD', paymentMethod: 'transfer', paymentStatus: 'pending_review', paymentRef: 'REF-2024-001', paymentUrl: null, paymentProof: null,
-    deliveryAddress: 'Av. Principal, Barrio Obrero, San Cristóbal', notes: 'Entregar en la esquina de la panadería', contactPhone: '+58 414-1234567',
-    createdAt: '2024-03-20T14:30:00Z', updatedAt: '2024-03-20T15:00:00Z',
-    items: [
-      { id: 'oi-1', orderId: 'order-1', productId: '1', name: 'Tequeños de Queso', price: 5.50, quantity: 2, subtotal: 11.00 },
-      { id: 'oi-2', orderId: 'order-1', productId: '8', name: 'Papas Fritas Congeladas', price: 3.20, quantity: 1, subtotal: 3.20 },
-      { id: 'oi-3', orderId: 'order-1', productId: '10', name: 'Palitos de Mozzarella', price: 5.00, quantity: 1, subtotal: 5.00 },
-    ],
-    delivery: { id: 'del-1', orderId: 'order-1', driverId: 'user-3', status: 'in_transit', driver: { id: 'user-3', name: 'Carlos M.', phone: '+58 414-1234567' }, locations: [{ id: 'loc-1', deliveryId: 'del-1', lat: 7.8135, lng: -72.2210, createdAt: '2024-03-20T15:00:00Z' }] },
-  },
-  {
-    id: 'order-2', userId: 'user-1', status: 'preparing', total: 21.00, totalCop: 21.00, deliveryFee: 0, currency: 'USD', paymentMethod: 'binance_pay', paymentStatus: 'pending', paymentRef: null, paymentUrl: 'https://mock.binance.com/pay/temp-user-1-123', paymentProof: null,
-    deliveryAddress: 'Calle 5, Sector La Concordia, San Cristóbal', notes: '', contactPhone: '+58 414-1234567',
-    createdAt: '2024-03-20T16:00:00Z', updatedAt: '2024-03-20T16:00:00Z',
-    items: [{ id: 'oi-4', orderId: 'order-2', productId: '3', name: 'Mini Pizzas', price: 7.00, quantity: 3, subtotal: 21.00 }],
-    delivery: null,
-  },
-  {
-    id: 'order-3', userId: 'user-1', status: 'delivered', total: 10.70, totalCop: 10.70, deliveryFee: 2.50, currency: 'USD', paymentMethod: 'cash', paymentStatus: 'paid', paymentRef: 'EF-2024-003', paymentUrl: null, paymentProof: null,
-    deliveryAddress: 'Av. Principal, Barrio Obrero, San Cristóbal', notes: '', contactPhone: '+58 414-1234567',
-    createdAt: '2024-03-19T15:00:00Z', updatedAt: '2024-03-19T16:30:00Z',
-    items: [
-      { id: 'oi-5', orderId: 'order-3', productId: '6', name: 'Empanadas de Carne', price: 6.20, quantity: 1, subtotal: 6.20 },
-      { id: 'oi-6', orderId: 'order-3', productId: '7', name: 'Deditos de Queso', price: 4.50, quantity: 1, subtotal: 4.50 },
-    ],
-    delivery: { id: 'del-2', orderId: 'order-3', driverId: 'user-3', status: 'delivered', driver: { id: 'user-3', name: 'Carlos M.', phone: '+58 414-1234567' }, locations: [] },
-  },
-]
+const clone = <T>(x: T): T => JSON.parse(JSON.stringify(x))
+const orders: Order[] = clone(initialOrders)
+const comments: Comment[] = clone(initialComments)
+const notifications: Notification[] = clone(initialNotifications)
 let orderCounter = 4
-
-let comments: Comment[] = [
-  { id: 'comment-1', productId: '1', userId: 'user-3', type: 'comment', content: 'Los mejores tequeños de San Cristóbal! Siempre frescos y crujientes.', images: [], rating: 5, parentId: null, resolved: false, reactions: { helpful: 3 }, createdAt: '2024-03-18T10:00:00Z', updatedAt: '2024-03-18T10:00:00Z' },
-  { id: 'comment-2', productId: '1', userId: 'user-1', type: 'question', content: '¿Hacen delivery los domingos?', images: [], rating: null, parentId: null, resolved: true, reactions: {}, createdAt: '2024-03-17T09:00:00Z', updatedAt: '2024-03-17T10:00:00Z' },
-  { id: 'comment-3', productId: '3', userId: 'user-3', type: 'comment', content: 'Las mini pizzas son perfectas para fiestas, rinden mucho.', images: [], rating: 4, parentId: null, resolved: false, reactions: { helpful: 2 }, createdAt: '2024-03-16T14:00:00Z', updatedAt: '2024-03-16T14:00:00Z' },
-]
-
-let notifications: Notification[] = [
-  { id: 'notif-1', userId: 'user-1', type: 'order_status', title: 'Pedido en camino', message: 'Tu pedido #order-1 ha salido hacia tu dirección', read: false, data: { orderId: 'order-1', status: 'in_transit' }, orderId: 'order-1', createdAt: '2024-03-20T15:00:00Z' },
-  { id: 'notif-2', userId: 'user-1', type: 'promo', title: 'Oferta especial', message: '30% de descuento en Papas Fritas Congeladas solo hoy', read: false, data: { productId: '8' }, orderId: null, createdAt: '2024-03-20T10:00:00Z' },
-  { id: 'notif-3', userId: 'user-1', type: 'order_status', title: 'Pedido entregado', message: 'Tu pedido #order-3 ha sido entregado exitosamente', read: true, data: { orderId: 'order-3', status: 'delivered' }, orderId: 'order-3', createdAt: '2024-03-19T16:30:00Z' },
-]
-
 let registeredUsers: User[] = []
 let notifCounter = 3
 

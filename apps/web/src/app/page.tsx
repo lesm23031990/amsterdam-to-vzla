@@ -1,19 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useCurrency } from '@/context/CurrencyContext';
+import { api } from '@/lib/api';
 import styles from './page.module.css';
 
-function ProductImageBox({ emoji, label, className, variant = 'light' }: { emoji: string; label: string; className: string; variant?: 'light' | 'warm' }) {
-  return (
-    <div className={`${className} ${styles.imgPlaceholder}`} style={{
-      backgroundColor: variant === 'warm' ? '#FFF3DB' : '#E8EDF5',
-    }}>
-      <span className={styles.imgEmoji}>{emoji}</span>
-      <span className={styles.imgLabel}>{label}</span>
-    </div>
-  );
+interface Product {
+  id: string; name: string; description: string | null;
+  price: number; displayPrice: string;
+  discountPrice: number | null; displayDiscountPrice: string | null;
+  images: string[]; stock: number;
+  isFeatured: boolean; hasDiscount: boolean; discountPercent: number;
+  badges?: unknown;
+}
+
+interface OrderSummary {
+  id: string; status: string; total: number; currency: string;
+  createdAt: string;
+  items: { name: string; quantity: number }[];
 }
 
 function makeFoodImg(w: number, h: number, emoji: string, bg1: string, bg2: string, accent: string) {
@@ -37,125 +44,71 @@ const THEMES = {
   light: { bg1: '#1A3660', bg2: '#4A7EC1', accent: '#E8EDF5' },
 };
 
-const FOOD_PHOTOS: Record<string, string> = {
-  tequenos: '1504674900247-0877df9cc836',
-  pastelitos: '1509440159596-0249088772ff',
-  minipizza: '1565299624946-b28f40a0ae38',
-  croquetas: '1544025162-d76694265947',
-  empanadas: '1607532941433-304659e8198a',
-  deditos: '1504674900247-0877df9cc836',
-  papas: '1573080496219-bb080dd4f877',
-  burgers: '1568901346375-23c9450c58cd',
-  mozzarella: '1504674900247-0877df9cc836',
-  aros: '1639024471283-03518883512d',
-  alitas: '1504674900247-0877df9cc836',
-  tequenos2: '1504674900247-0877df9cc836',
-  papas2: '1573080496219-bb080dd4f877',
-  nuggets: '1618413409033-68c4ac6b4e95',
-};
-
-function ProductImg({ emoji, className, variant = 'light', photoKey }: { emoji: string; className: string; variant?: 'light' | 'warm'; photoKey: string }) {
+function ProductImg({ product, className, variant = 'light', dims = [400, 300] }: {
+  product: Product; className: string; variant?: 'light' | 'warm'; dims?: [number, number];
+}) {
   const theme = THEMES[variant];
-  const dims = className.includes('offerImg') ? [400, 400] : className.includes('bentoImg') ? [600, 400] : [400, 300];
-  const photoId = FOOD_PHOTOS[photoKey];
-  const fallback = makeFoodImg(dims[0], dims[1], emoji, theme.bg1, theme.bg2, theme.accent);
-  const src = photoId
-    ? `https://images.unsplash.com/photo-${photoId}?w=${dims[0]}&h=${dims[1]}&fit=crop`
-    : fallback;
-
+  const fallback = makeFoodImg(dims[0], dims[1], '🧊', theme.bg1, theme.bg2, theme.accent);
+  const src = product.images[0] || fallback;
   return (
     <img
       src={src}
-      alt=""
+      alt={product.name}
       className={className}
       onError={(e) => { (e.target as HTMLImageElement).src = fallback; }}
     />
   );
 }
 
-const featuredProducts = [
-  { id: '1', name: 'Tequeños de Queso', price: 5.50, emoji: '🧀', variant: 'warm' as const, stock: 120, tag: 'Más vendido', photoKey: 'tequenos' },
-  { id: '2', name: 'Pastelitos de Pollo', price: 4.80, emoji: '🥟', variant: 'light' as const, stock: 85, photoKey: 'pastelitos' },
-  { id: '3', name: 'Mini Pizzas', price: 7.00, emoji: '🍕', variant: 'warm' as const, stock: 60, tag: 'Nuevo', photoKey: 'minipizza' },
-];
-
-const catalogProducts = [
-  { id: '5', name: 'Croquetas de Jamón', description: 'Caja x30 unidades', price: 3.90, currency: 'USD', emoji: '🟤', variant: 'light' as const, stock: 200, photoKey: 'croquetas' },
-  { id: '6', name: 'Empanadas de Carne', description: 'Caja x12 unidades', price: 6.20, currency: 'USD', emoji: '🥟', variant: 'warm' as const, stock: 45, photoKey: 'empanadas' },
-  { id: '7', name: 'Deditos de Queso', description: 'Caja x18 unidades', price: 4.50, currency: 'USD', emoji: '🧀', variant: 'light' as const, stock: 150, photoKey: 'deditos' },
-  { id: '8', name: 'Papas Fritas Congeladas', description: 'Bolsa x2kg', price: 3.20, currency: 'USD', emoji: '🍟', variant: 'warm' as const, stock: 180, photoKey: 'papas' },
-  { id: '9', name: 'Hamburguesas Listas', description: 'Pack x12 unidades', price: 9.50, currency: 'USD', emoji: '🍔', variant: 'light' as const, stock: 90, photoKey: 'burgers' },
-  { id: '10', name: 'Palitos de Mozzarella', description: 'Caja x20 unidades', price: 5.00, currency: 'USD', emoji: '🧀', variant: 'warm' as const, stock: 75, photoKey: 'mozzarella' },
-];
-
-const offerProducts = [
-  { id: '11', name: 'Aros de Cebolla', description: 'Bolsa x500g', price: 4.20, originalPrice: 6.50, emoji: '🧅', variant: 'light' as const, stock: 110, photoKey: 'aros' },
-  { id: '12', name: 'Alitas de Pollo', description: 'Bolsa x1kg', price: 7.50, originalPrice: 11.00, emoji: '🍗', variant: 'warm' as const, stock: 65, photoKey: 'alitas' },
-  { id: '1', name: 'Tequeños de Queso', description: 'Caja x24 unidades', price: 5.50, originalPrice: 8.00, emoji: '🧀', variant: 'light' as const, stock: 120, photoKey: 'tequenos2' },
-  { id: '8', name: 'Papas Fritas Congeladas', description: 'Bolsa x2kg', price: 3.20, originalPrice: 5.00, emoji: '🍟', variant: 'warm' as const, stock: 180, photoKey: 'papas2' },
-];
-
-const mockDeliveries = [];
-
-function ProductCard({ product, onAdd, added }: { product: typeof catalogProducts[0]; onAdd: (id: string) => void; added: boolean }) {
-  return (
-    <div className={styles.productCard}>
-      <div className={styles.productImgWrap}>
-        <ProductImg emoji={product.emoji} className={styles.productImg} variant={product.variant} photoKey={product.photoKey} />
-      </div>
-      <div className={styles.productInfo}>
-        <h3 className={styles.productName}>{product.name}</h3>
-        <p className={styles.productDesc}>{product.description}</p>
-        <div className={styles.productPriceRow}>
-          <span className={styles.productPrice}>${product.price.toFixed(2)}</span>
-          <span className={styles.productStock}>Stock: {product.stock}</span>
-        </div>
-        <button
-          onClick={() => onAdd(product.id)}
-          className={`${styles.addBtn} ${added ? styles.addedBtn : ''}`}
-          disabled={added}
-        >
-          {added ? '✓ Agregado' : 'Agregar'}
-        </button>
-      </div>
-    </div>
-  );
+function productTag(p: Product): string | null {
+  const badges = Array.isArray(p.badges) ? p.badges as { label?: string }[] : [];
+  if (badges[0]?.label) return badges[0].label;
+  if (p.hasDiscount) return `-${p.discountPercent}%`;
+  return null;
 }
 
-function DeliveryStatusModule() {
-  const deliveries = [
-    { id: '#4521', status: 'En camino', eta: '15-20 min', items: 'Tequeños x2, Papas Fritas', driver: 'Carlos M.', phone: '+58 414-1234567' },
-    { id: '#4518', status: 'Preparando', eta: '30-40 min', items: 'Mini Pizzas x3, Nuggets', driver: 'Asignando...', phone: '' },
-    { id: '#4512', status: 'Entregado', eta: 'Hoy 3:45pm', items: 'Empanadas x1, Deditos', driver: 'María R.', phone: '+58 412-7654321' },
-  ];
+function SkeletonCard({ className }: { className: string }) {
+  return <div className={className} style={{ minHeight: 180, opacity: 0.35 }} aria-hidden="true" />;
+}
 
+const ORDER_LABELS: Record<string, string> = {
+  pending_payment: 'Pago pendiente',
+  confirmed: 'Confirmado',
+  preparing: 'Preparando',
+  in_transit: 'En camino',
+  delivered: 'Entregado',
+  cancelled: 'Cancelado',
+};
+
+function DeliveryStatusModule({ orders }: { orders: OrderSummary[] | null }) {
   return (
     <div className={styles.logisticsCard}>
       <div className={styles.logisticsHeader}>
         <h3 className={styles.logisticsTitle}>Mis Pedidos</h3>
         <Link href="/orders" className={styles.logisticsLink}>Ver todos →</Link>
       </div>
-      {deliveries.map(d => (
-        <div key={d.id} className={styles.deliveryCard}>
-          <div className={styles.deliveryTop}>
-            <span className={styles.deliveryId}>{d.id}</span>
-            <span className={`${styles.statusPill} ${styles[d.status.toLowerCase().replace(/ /g, '-')]}`}>
-              {d.status}
-            </span>
-          </div>
-          <p className={styles.deliveryItems}>{d.items}</p>
-          <div className={styles.deliveryBottom}>
-            <div className={styles.driverInfo}>
-              <span className={styles.driverIcon}>🚴</span>
-              <span className={styles.driverName}>{d.driver}</span>
+      {orders && orders.length === 0 && (
+        <p className={styles.deliveryItems}>Aún no tienes pedidos. ¡Explora el catálogo y haz el primero!</p>
+      )}
+      {orders?.map(o => {
+        const label = ORDER_LABELS[o.status] || o.status;
+        const itemsSummary = o.items.slice(0, 2).map(i => `${i.name} x${i.quantity}`).join(', ')
+          + (o.items.length > 2 ? '…' : '');
+        return (
+          <Link key={o.id} href={`/orders/${o.id}`} className={styles.deliveryCard}>
+            <div className={styles.deliveryTop}>
+              <span className={styles.deliveryId}>#{o.id.slice(-6).toUpperCase()}</span>
+              <span className={`${styles.statusPill} ${styles[label.toLowerCase().replace(/ /g, '-')]}`}>
+                {label}
+              </span>
             </div>
-            <span className={styles.deliveryEta}>⏱ {d.eta}</span>
-          </div>
-          {d.phone && (
-            <a href={`tel:${d.phone}`} className={styles.callBtn}>📞 Llamar al repartidor</a>
-          )}
-        </div>
-      ))}
+            <p className={styles.deliveryItems}>{itemsSummary}</p>
+            <div className={styles.deliveryBottom}>
+              <span className={styles.deliveryEta}>${o.total.toFixed(2)} · {new Date(o.createdAt).toLocaleDateString('es-VE')}</span>
+            </div>
+          </Link>
+        );
+      })}
     </div>
   );
 }
@@ -190,11 +143,48 @@ function QuickAccessModule() {
 
 export default function Home() {
   const { user } = useAuth();
+  const { currency } = useCurrency();
+  const router = useRouter();
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [catalogProducts, setCatalogProducts] = useState<Product[]>([]);
+  const [offerProducts, setOfferProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<OrderSummary[] | null>(null);
+  const [loading, setLoading] = useState(true);
   const [addedToCart, setAddedToCart] = useState<Record<string, boolean>>({});
 
-  const handleQuickAdd = (productId: string) => {
-    setAddedToCart(prev => ({ ...prev, [productId]: true }));
-    setTimeout(() => setAddedToCart(prev => ({ ...prev, [productId]: false })), 2000);
+  useEffect(() => {
+    const qs = (extra: string) => `/products?${extra}&currency=${encodeURIComponent(currency)}`;
+    Promise.all([
+      api.get<Product[]>(qs('featured=true&perPage=3&orderBy=relevance')),
+      api.get<Product[]>(qs('perPage=6&orderBy=relevance')),
+      api.get<Product[]>(qs('discount=true&perPage=4&orderBy=relevance')),
+    ]).then(([f, c, o]) => {
+      if (f.ok && Array.isArray(f.data)) setFeaturedProducts(f.data);
+      if (c.ok && Array.isArray(c.data)) setCatalogProducts(c.data);
+      if (o.ok && Array.isArray(o.data)) setOfferProducts(o.data);
+      setLoading(false);
+    });
+  }, [currency]);
+
+  useEffect(() => {
+    if (!user) { setOrders(null); return; }
+    api.get<OrderSummary[]>('/checkout/orders').then(res => {
+      if (res.ok && Array.isArray(res.data)) setOrders(res.data.slice(0, 3));
+      else setOrders([]);
+    });
+  }, [user]);
+
+  const handleQuickAdd = async (productId: string) => {
+    if (!user) { router.push('/login'); return; }
+    const res = await api.post(`/cart/items`, { productId, quantity: 1 });
+    if (res.ok) {
+      setAddedToCart(prev => ({ ...prev, [productId]: true }));
+      setTimeout(() => setAddedToCart(prev => {
+        const next = { ...prev };
+        delete next[productId];
+        return next;
+      }), 2000);
+    }
   };
 
   return (
@@ -271,21 +261,27 @@ export default function Home() {
         <div className={styles.sectionInner}>
           <div className={styles.bentoHeader}>
             <h2 className={styles.sectionTitle}>Productos Destacados</h2>
-            <Link href="/products" className={styles.viewAllLink}>Ver catálogo →</Link>
+            <Link href="/products?tab=featured" className={styles.viewAllLink}>Ver catálogo →</Link>
           </div>
           <div className={styles.bentoGrid}>
-            {featuredProducts.map((p, i) => (
-              <Link href={`/products/${p.id}`} key={p.id} className={`${styles.bentoCard} ${styles[`bento${i + 1}`]}`}>
-                <ProductImg emoji={p.emoji} className={styles.bentoImg} variant={p.variant} photoKey={p.photoKey} />
-                <div className={styles.bentoOverlay}>
-                  {p.tag && <span className={styles.bentoTag}>{p.tag}</span>}
-                  <div className={styles.bentoInfo}>
-                    <h3 className={styles.bentoName}>{p.name}</h3>
-                    <span className={styles.bentoPrice}>${p.price.toFixed(2)}</span>
-                  </div>
-                </div>
-              </Link>
+            {loading && Array.from({ length: 3 }).map((_, i) => (
+              <SkeletonCard key={i} className={`${styles.bentoCard} ${styles[`bento${i + 1}`]}`} />
             ))}
+            {featuredProducts.map((p, i) => {
+              const tag = productTag(p);
+              return (
+                <Link href={`/products/${p.id}`} key={p.id} className={`${styles.bentoCard} ${styles[`bento${(i % 3) + 1}`]}`}>
+                  <ProductImg product={p} className={styles.bentoImg} variant={i % 2 === 0 ? 'warm' : 'light'} dims={[600, 400]} />
+                  <div className={styles.bentoOverlay}>
+                    {tag && <span className={styles.bentoTag}>{tag}</span>}
+                    <div className={styles.bentoInfo}>
+                      <h3 className={styles.bentoName}>{p.name}</h3>
+                      <span className={styles.bentoPrice}>{p.displayPrice}</span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -302,18 +298,37 @@ export default function Home() {
               <Link href="/products" className={styles.viewAllLink}>Ver todo →</Link>
             </div>
             <div className={styles.productGrid}>
-              {catalogProducts.map(p => (
-                <ProductCard
-                  key={p.id}
-                  product={p}
-                  onAdd={handleQuickAdd}
-                  added={!!addedToCart[p.id]}
-                />
+              {loading && Array.from({ length: 6 }).map((_, i) => (
+                <SkeletonCard key={i} className={styles.productCard} />
+              ))}
+              {catalogProducts.map((p, i) => (
+                <div key={p.id} className={styles.productCard}>
+                  <Link href={`/products/${p.id}`} className={styles.productImgWrap}>
+                    <ProductImg product={p} className={styles.productImg} variant={i % 2 === 0 ? 'light' : 'warm'} />
+                  </Link>
+                  <div className={styles.productInfo}>
+                    <Link href={`/products/${p.id}`} className={styles.productNameLink}>
+                      <h3 className={styles.productName}>{p.name}</h3>
+                    </Link>
+                    <p className={styles.productDesc}>{p.description || 'Producto Amsterdam Frozen Foods'}</p>
+                    <div className={styles.productPriceRow}>
+                      <span className={styles.productPrice}>{p.hasDiscount && p.displayDiscountPrice ? p.displayDiscountPrice : p.displayPrice}</span>
+                      <span className={styles.productStock}>Stock: {p.stock}</span>
+                    </div>
+                    <button
+                      onClick={() => handleQuickAdd(p.id)}
+                      className={`${styles.addBtn} ${addedToCart[p.id] ? styles.addedBtn : ''}`}
+                      disabled={!!addedToCart[p.id] || p.stock === 0}
+                    >
+                      {addedToCart[p.id] ? '✓ Agregado' : p.stock === 0 ? 'Agotado' : 'Agregar'}
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
           <div className={styles.logisticsSection}>
-            <DeliveryStatusModule />
+            {user && <DeliveryStatusModule orders={orders} />}
             <QuickAccessModule />
           </div>
         </div>
@@ -330,35 +345,37 @@ export default function Home() {
                 <p className={styles.offersSub}>Precios especiales por tiempo limitado</p>
               </div>
             </div>
-            <Link href="/offers" className={styles.offersLink}>Ver todas →</Link>
+            <Link href="/products?tab=offers" className={styles.offersLink}>Ver todas →</Link>
           </div>
           <div className={styles.offersGrid}>
-            {offerProducts.map(p => {
-              const discount = Math.round((1 - p.price / p.originalPrice) * 100);
-              return (
-                <div key={p.id} className={styles.offerCard}>
-                  <div className={styles.offerImgWrap}>
-                    <ProductImg emoji={p.emoji} className={styles.offerImg} variant={p.variant} photoKey={p.photoKey} />
-                    <span className={styles.discountPill}>-{discount}%</span>
-                  </div>
-                  <div className={styles.offerInfo}>
+            {loading && Array.from({ length: 4 }).map((_, i) => (
+              <SkeletonCard key={i} className={styles.offerCard} />
+            ))}
+            {offerProducts.map((p, i) => (
+              <div key={p.id} className={styles.offerCard}>
+                <Link href={`/products/${p.id}`} className={styles.offerImgWrap}>
+                  <ProductImg product={p} className={styles.offerImg} variant={i % 2 === 0 ? 'light' : 'warm'} dims={[400, 400]} />
+                  <span className={styles.discountPill}>-{p.discountPercent}%</span>
+                </Link>
+                <div className={styles.offerInfo}>
+                  <Link href={`/products/${p.id}`} className={styles.productNameLink}>
                     <h3 className={styles.offerName}>{p.name}</h3>
-                    <p className={styles.offerDesc}>{p.description}</p>
-                    <div className={styles.offerPriceRow}>
-                      <span className={styles.offerPrice}>${p.price.toFixed(2)}</span>
-                      <span className={styles.offerOld}>${p.originalPrice.toFixed(2)}</span>
-                    </div>
-                    <button
-                      onClick={() => handleQuickAdd(p.id)}
-                      className={`${styles.offerBtn} ${addedToCart[p.id] ? styles.offerBtnAdded : ''}`}
-                      disabled={!!addedToCart[p.id]}
-                    >
-                      {addedToCart[p.id] ? '✓ Agregado' : 'Comprar'}
-                    </button>
+                  </Link>
+                  <p className={styles.offerDesc}>{p.description || 'Producto Amsterdam Frozen Foods'}</p>
+                  <div className={styles.offerPriceRow}>
+                    <span className={styles.offerPrice}>{p.displayDiscountPrice || p.displayPrice}</span>
+                    <span className={styles.offerOld}>{p.displayPrice}</span>
                   </div>
+                  <button
+                    onClick={() => handleQuickAdd(p.id)}
+                    className={`${styles.offerBtn} ${addedToCart[p.id] ? styles.offerBtnAdded : ''}`}
+                    disabled={!!addedToCart[p.id] || p.stock === 0}
+                  >
+                    {addedToCart[p.id] ? '✓ Agregado' : p.stock === 0 ? 'Agotado' : 'Comprar'}
+                  </button>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </div>
       </section>

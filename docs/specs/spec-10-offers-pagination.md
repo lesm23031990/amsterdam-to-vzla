@@ -2,7 +2,7 @@
 title: "Spec 10 — Ofertas, descuentos y paginación en homepage"
 labels: ["spec"]
 assignees: []
-status: done
+status: in-progress
 ---
 
 ## Objetivo
@@ -49,7 +49,7 @@ Evitar que el homepage sea interminable y generar urgencia de compra con una sec
 
 ## Acceptance Criteria
 - [x] Homepage no muestra más de 12 productos
-- [x] Sección "Ofertas del día" visible en homepage
+- [ ] Sección "Ofertas del día" visible en homepage
 - [x] Página /offers con todos los productos en oferta
 - [x] Badge de oferta con descuento visible
 - [x] Botón "Ver más" redirige a lista completa
@@ -58,7 +58,7 @@ Evitar que el homepage sea interminable y generar urgencia de compra con una sec
 ---
 
 ## Tareas Técnicas
-- [x] Crear sección de ofertas en homepage
+- [ ] Crear sección de ofertas en homepage
 - [x] Crear página /offers con grid completo
 - [x] Implementar paginación (máx 12 por página)
 - [x] Agregar badge con % de descuento

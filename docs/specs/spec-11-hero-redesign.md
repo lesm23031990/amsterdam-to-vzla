@@ -2,7 +2,7 @@
 title: "Spec 11 — Rediseño Hero Banner: imágenes comerciales profesionales"
 labels: ["spec"]
 assignees: []
-status: done
+status: in-progress
 ---
 
 ## Objetivo
@@ -51,7 +51,7 @@ Usar imágenes de Unsplash de productos reales que se ven deliciosos/atractivos:
 - Animación de entrada: fade-in-up escalonado (50ms entre cada uno)
 
 ## Acceptance Criteria
-- [x] Hero muestra imágenes reales de productos (no emojis)
+- [ ] Hero muestra imágenes reales de productos (no emojis)
 - [x] Cada imagen tiene etiqueta con nombre + precio
 - [x] Diseño se ve profesional y comercial
 - [x] Animaciones suaves al cargar
@@ -60,7 +60,7 @@ Usar imágenes de Unsplash de productos reales que se ven deliciosos/atractivos:
 ---
 
 ## Tareas Técnicas
-- [x] Reemplazar emojis por imágenes Unsplash en hero
+- [ ] Reemplazar emojis por imágenes Unsplash en hero
 - [x] Agregar etiquetas flotantes con precio
 - [x] Agregar badge "Más vendido" / "Popular"
 - [x] Animaciones de entrada
