@@ -912,6 +912,7 @@
   .heroSub { font-size: 15px; }
   .heroCtas { flex-direction: column; }
   .heroCta, .heroCtaOutline { text-align: center; padding: 12px 24px; }
+  .heroCta { justify-content: center; }
   .trustBadges { flex-direction: column; gap: 8px; }
   .trustBadge { justify-content: center; }
   .floatingIcons { display: none; }
