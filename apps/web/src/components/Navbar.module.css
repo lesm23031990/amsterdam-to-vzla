@@ -679,27 +679,31 @@
   .nav { height: auto; }
   .container {
     padding: 8px 14px;
-    gap: 10px;
-    flex-wrap: nowrap;
+    gap: 8px 10px;
+    flex-wrap: wrap;
     height: auto;
     align-items: center;
   }
-  .logo { flex-shrink: 0; }
-  .logoImg { height: 26px; }
-  .searchBar {
-    flex: 1;
-    max-width: none;
-    min-width: 0;
-  }
-  .searchInput { padding: 6px 8px; font-size: 12px; }
-  .searchBtn { padding: 6px 12px; font-size: 11px; }
-  .searchIcon { padding: 0 0 0 10px; width: 14px; height: 14px; }
+  .logo { flex-shrink: 0; order: 1; }
+  .logoImg { height: 28px; }
   .actions {
+    order: 2;
+    margin-left: auto;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     gap: 8px;
   }
+  /* Buscador en fila propia, ancho total de la pantalla */
+  .searchBar {
+    order: 3;
+    flex: 0 0 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+  .searchInput { padding: 9px 10px; font-size: 13px; }
+  .searchBtn { padding: 9px 18px; font-size: 12px; }
+  .searchIcon { padding: 0 0 0 14px; width: 16px; height: 16px; }
   .cartBtn { display: none; }
   .authBtns { display: none; }
   .mobileToggle { padding: 6px; }
@@ -712,25 +716,14 @@
 }
 
 @media (max-width: 480px) {
-  .container { padding: 6px 10px; gap: 6px; }
-  .logoImg { height: 24px; }
-  .cartBtn { padding: 6px; }
-  .cartIcon { font-size: 18px; }
-  .userAvatar { width: 28px; height: 28px; font-size: 12px; }
-  .authBtns { gap: 4px; }
-  .loginBtn { padding: 6px 8px; font-size: 11px; }
-  .registerBtn { padding: 6px 10px; font-size: 11px; }
-  .searchBtn { padding: 7px 10px; font-size: 11px; }
-  .searchInput { font-size: 12px; padding: 7px 8px; }
-  .searchIcon { padding: 0 0 0 8px; width: 14px; height: 14px; }
-  .clearBtn { padding: 3px 6px; font-size: 10px; }
+  .container { padding: 6px 10px; }
+  .logoImg { height: 26px; }
+  /* El buscador ya ocupa el 100% del ancho: no hace falta comprimirlo */
+  .searchInput { font-size: 13px; }
+  .searchBtn { padding: 9px 14px; font-size: 12px; }
 }
 
 @media (max-width: 360px) {
-  .container { padding: 5px 8px; gap: 5px; }
-  .logoImg { height: 22px; }
-  .searchInput { font-size: 11px; padding: 6px; }
-  .searchBtn { padding: 6px 8px; font-size: 10px; }
-  .loginBtn { padding: 5px 6px; font-size: 10px; }
-  .registerBtn { padding: 5px 8px; font-size: 10px; }
+  .container { padding: 5px 8px; }
+  .logoImg { height: 24px; }
 }

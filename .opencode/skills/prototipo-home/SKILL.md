@@ -93,6 +93,17 @@ Un bug de datos se arregla en la fuente o con estados vacíos, nunca eliminando 
    bordes izquierdo/derecho de las tres secciones queden alineados. Cambiar uno
    sin el otro desalinea la home (bug histórico: 1200 vs 1280).
 
+## Navbar (contrato responsive — `components/Navbar.module.css`)
+
+- Desktop (>768): una fila — logo | buscador (max 480) | nav links | acciones.
+- **Móvil (≤768): DOS filas**: fila 1 = logo + acciones (dropdown usuario,
+  campana, hamburguesa a la derecha con `margin-left: auto`); fila 2 =
+  `.searchBar` con `order: 3; flex: 0 0 100%` → **ancho total de la pantalla**.
+  Nunca volver a meter el buscador apretado entre logo e iconos.
+- Consecuencias del header a dos filas (~100 px de alto, fixed):
+  `.heroContent` móvil usa `padding-top: 120px` y `.mobileFilterBar` de
+  /products usa `top: 100px`. Si cambia el alto del header, ajustar ambos.
+
 ## Verificación post-cambio (checklist)
 
 ```bash

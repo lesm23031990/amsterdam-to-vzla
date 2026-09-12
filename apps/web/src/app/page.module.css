@@ -906,7 +906,7 @@
 
 @media (max-width: 768px) {
   .heroBanner { min-height: 420px; margin-top: 0; }
-  .heroContent { padding: 80px 16px 40px; }
+  .heroContent { padding: 120px 16px 40px; }
   .heroTitleLine { font-size: clamp(1.8rem, 6vw, 2.5rem); }
   .heroAccent { font-size: clamp(1.6rem, 5vw, 2.2rem); }
   .heroSub { font-size: 15px; }
