@@ -2,6 +2,7 @@
 title: "Spec 15 — Bugfixes MVP"
 labels: ["spec"]
 assignees: []
+status: in-progress
 ---
 
 ## Endpoints

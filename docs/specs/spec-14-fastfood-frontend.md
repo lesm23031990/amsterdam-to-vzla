@@ -2,6 +2,7 @@
 title: "Spec 14 — FastFood Frontend"
 labels: ["spec"]
 assignees: []
+status: done
 ---
 
 ## Endpoints
@@ -106,19 +107,19 @@ Headers: `Authorization: Bearer <token>` (admin)
 - Agregar al carrito sigue el mismo flujo que productos regulares
 
 ## Acceptance Criteria
-- [ ] Página de menú muestra items con opciones y price modifiers
-- [ ] Se pueden agregar items de menú al carrito (mismo flujo que productos)
-- [ ] Admin puede gestionar items de menú desde dashboard
-- [ ] Admin puede crear opciones con múltiples choices
-- [ ] Preparation time visible en la UI
+- [x] Página de menú muestra items con opciones y price modifiers
+- [x] Se pueden agregar items de menú al carrito (mismo flujo que productos)
+- [x] Admin puede gestionar items de menú desde dashboard
+- [x] Admin puede crear opciones con múltiples choices
+- [x] Preparation time visible en la UI
 
 ---
 
 ## Tareas Técnicas
-- [ ] Write tests (TDD)
-- [ ] Crear componente MenuItemCard
-- [ ] Build menu item modal con option selector
-- [ ] Build página de gestión de menú en admin
-- [ ] Crear componente option builder form
-- [ ] Integrar carrito con menu items (customizations como metadata)
-- [ ] PR a main
+- [x] Write tests (TDD)
+- [x] Crear componente MenuItemCard
+- [x] Build menu item modal con option selector
+- [x] Build página de gestión de menú en admin
+- [x] Crear componente option builder form
+- [x] Integrar carrito con menu items (customizations como metadata)
+- [x] PR a main

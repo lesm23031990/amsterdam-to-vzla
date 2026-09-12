@@ -2,6 +2,7 @@
 title: "Spec 12 — Delivery Map Tracking"
 labels: ["spec"]
 assignees: []
+status: in-progress
 ---
 
 ## Endpoints
@@ -73,8 +74,8 @@ Headers: `Authorization: Bearer <token>`
 - [ ] Connect to Socket.io room for live location updates
 - [ ] Implement re-center button logic
 - [ ] Add custom driver marker icon
-- [ ] Write tests (TDD)
-- [ ] Implement rutas
+- [x] Write tests (TDD)
+- [x] Implement rutas
 - [ ] Integrar con frontend
 - [ ] Integrar con mobile
 - [ ] PR a main

@@ -2,6 +2,7 @@
 title: "Spec 18 — Multi-currency Display"
 labels: ["spec"]
 assignees: []
+status: done
 ---
 
 ## Endpoints
@@ -83,22 +84,22 @@ Headers: `Authorization: Bearer <token>` (optional)
 - Backend stores rates in DB or env vars with update mechanism
 
 ## Acceptance Criteria
-- [ ] User can switch between Bs, COP, USD
-- [ ] All prices update dynamically
-- [ ] Preference persists across sessions
-- [ ] Exchange rates are configurable
+- [x] User can switch between Bs, COP, USD
+- [x] All prices update dynamically
+- [x] Preference persists across sessions
+- [x] Exchange rates are configurable
 
 ---
 
 ## Tareas Técnicas
-- [ ] Write tests (TDD)
-- [ ] Create `GET /api/v1/rates` endpoint
-- [ ] Add `?currency` param support to product endpoints
-- [ ] Create currency formatting utility
-- [ ] Build currency selector component in navbar
-- [ ] Implement localStorage persistence
-- [ ] Add rate caching (5 min) on frontend
-- [ ] Make exchange rate source configurable
-- [ ] Integrar con frontend
-- [ ] Integrar con mobile
-- [ ] PR a main
+- [x] Write tests (TDD)
+- [x] Create `GET /api/v1/rates` endpoint
+- [x] Add `?currency` param support to product endpoints
+- [x] Create currency formatting utility
+- [x] Build currency selector component in navbar
+- [x] Implement localStorage persistence
+- [x] Add rate caching (5 min) on frontend
+- [x] Make exchange rate source configurable
+- [x] Integrar con frontend
+- [x] Integrar con mobile
+- [x] PR a main

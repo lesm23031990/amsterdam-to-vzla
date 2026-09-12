@@ -2,6 +2,7 @@
 title: "Spec 02 — Plataforma Única: Amsterdam Frozen Foods"
 labels: ["spec"]
 assignees: []
+status: done
 ---
 
 ## Objetivo
@@ -158,26 +159,26 @@ Una marca es puramente un **campo visual** en los productos. Un producto puede o
 - Los productos son visibles sin autenticación
 
 ## Acceptance Criteria
-- [ ] Cualquier usuario registrado tiene rol `cliente` por defecto
-- [ ] Admin puede crear/editar/eliminar productos
-- [ ] Admin puede gestionar marcas (crear, editar, eliminar)
-- [ ] Productos muestran marca/logo si tienen `brandId`
-- [ ] Productos sin marca muestran "Amsterdam Frozen Foods"
-- [ ] Filtrar productos por marca funciona
-- [ ] No existen endpoints de tienda ni suscripciones
-- [ ] No hay rol `tienda` en el sistema
-- [ ] Seed incluye marcas de ejemplo y productos iniciales
+- [x] Cualquier usuario registrado tiene rol `cliente` por defecto
+- [x] Admin puede crear/editar/eliminar productos
+- [x] Admin puede gestionar marcas (crear, editar, eliminar)
+- [x] Productos muestran marca/logo si tienen `brandId`
+- [x] Productos sin marca muestran "Amsterdam Frozen Foods"
+- [x] Filtrar productos por marca funciona
+- [x] No existen endpoints de tienda ni suscripciones
+- [x] No hay rol `tienda` en el sistema
+- [x] Seed incluye marcas de ejemplo y productos iniciales
 
 ---
 
 ## Tareas Técnicas
-- [ ] Eliminar modelo StoreSubscription, SubscriptionPlan
-- [ ] Simplificar modelo Store → Brand (sin ownerId, sin categoría)
-- [ ] Producto: `storeId` → `brandId` (optional)
-- [ ] Eliminar rutas de stores CRUD y suscripciones
-- [ ] Crear rutas GET /brands y GET /brands/:slug/products
-- [ ] Ajustar rutas de productos (eliminar storeId, agregar brandId)
-- [ ] Ajustar rol "tienda" → solo cliente/admin
-- [ ] Actualizar seed con marcas y productos
-- [ ] Integrar con frontend
-- [ ] PR a main
+- [x] Eliminar modelo StoreSubscription, SubscriptionPlan
+- [x] Simplificar modelo Store → Brand (sin ownerId, sin categoría)
+- [x] Producto: `storeId` → `brandId` (optional)
+- [x] Eliminar rutas de stores CRUD y suscripciones
+- [x] Crear rutas GET /brands y GET /brands/:slug/products
+- [x] Ajustar rutas de productos (eliminar storeId, agregar brandId)
+- [x] Ajustar rol "tienda" → solo cliente/admin
+- [x] Actualizar seed con marcas y productos
+- [x] Integrar con frontend
+- [x] PR a main

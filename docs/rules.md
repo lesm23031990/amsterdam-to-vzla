@@ -45,17 +45,40 @@ amsterdam-to-vzla/
 └── package.json           # Monorepo (npm workspaces)
 ```
 
-## Workflow SDD (Spec-Driven Development)
+## Workflow SDD (Spec-Driven Development) — modo local
 
-1. Escribir spec en Plane.so (Issue con template) o local en `docs/specs/`
-2. `npm run plane:pull` — Traer issues de Plane.so como specs locales
+1. Escribir/refinar la spec local en `docs/specs/` (desde `TEMPLATE.md`)
+2. Definir secciones `## Acceptance Criteria` y `## Tareas Técnicas` con checkboxes `- [ ]`
 3. Crear rama `feature/nombre-de-la-spec`
 4. `npm test` — Escribir tests primero (que fallan) y confirmar que fallan
 5. Implementar hasta que `npm test` pase
-6. `npm run plane:push` — Sincronizar cambios a Plane.so
-7. Hacer PR y cerrar el Issue en Plane
+6. Marcar el checkbox `- [x]` **solo** de las tareas con test pasando o verificación manual explícita
+7. Actualizar `status:` del frontmatter: `draft` → `in-progress` → `done`
+   (regla: `done` solo cuando todos los checkboxes están marcados)
+8. Hacer PR a main y marcar "PR a main"
 
-## Integración con Plane.so
+El spec `.md` local es la fuente de verdad del avance. Comandos:
+
+- `npm run specs` — Dashboard de progreso (status + % de checkboxes por spec)
+- `npm run specs:check` — Falla (exit 1) si alguna spec activa tiene checkboxes pendientes; útil antes de un commit
+
+### Frontmatter de una spec
+
+```yaml
+---
+title: "Spec NN — Título"
+labels: ["spec"]
+assignees: []
+status: in-progress   # draft | in-progress | done | archived
+---
+```
+
+`status: archived` excluye la spec del total del dashboard (ej. spec-13).
+
+## Integración con Plane.so (opcional)
+
+> ⚠️ No se usa en el flujo diario (trabajo individual). Los comandos `plane:*`
+> se conservan solo para experimentar con la dinámica de MCPs/issues colaborativos.
 
 Requiere variables de entorno (ver `.env.example`):
 
@@ -84,8 +107,8 @@ Comandos:
 
 ## Definition of Done
 
-- [ ] La spec en Plane está actualizada
-- [ ] Los tests automatizados pasan
+- [ ] La spec local en `docs/specs/` está actualizada (checkboxes + `status:`)
+- [ ] Los tests automatizados pasan (`npm test`)
+- [ ] `npm run specs` refleja el avance real
 - [ ] El código está en una rama con PR
 - [ ] El servidor arranca sin errores
-- [ ] Se cerró el Issue en Plane

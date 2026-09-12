@@ -2,6 +2,7 @@
 title: "Spec 01 — Auth: Registro, Login y Gestión de Sesión"
 labels: ["spec"]
 assignees: []
+status: done
 ---
 
 ## Endpoints
@@ -105,24 +106,24 @@ Headers: `Authorization: Bearer <token>`
 - No existe rol "tienda" ni "repartidor" — todos los usuarios registrados son clientes
 
 ## Acceptance Criteria
-- [ ] Un usuario puede registrarse con email, password, name y phone
-- [ ] Usuario registrado siempre tiene rol `cliente`
-- [ ] Un usuario puede iniciar sesión con email y password y recibe un JWT
-- [ ] Un usuario puede obtener su perfil con un token válido
-- [ ] Un usuario puede actualizar su perfil con un token válido
-- [ ] Email duplicado devuelve error 400
-- [ ] Credenciales inválidas devuelven error 401
-- [ ] Token expirado o inválido devuelve error 401
-- [ ] Password débil devuelve error 400 con validaciones específicas
-- [ ] Rate limit de login funciona correctamente
+- [x] Un usuario puede registrarse con email, password, name y phone
+- [x] Usuario registrado siempre tiene rol `cliente`
+- [x] Un usuario puede iniciar sesión con email y password y recibe un JWT
+- [x] Un usuario puede obtener su perfil con un token válido
+- [x] Un usuario puede actualizar su perfil con un token válido
+- [x] Email duplicado devuelve error 400
+- [x] Credenciales inválidas devuelven error 401
+- [x] Token expirado o inválido devuelve error 401
+- [x] Password débil devuelve error 400 con validaciones específicas
+- [x] Rate limit de login funciona correctamente
 
 ---
 
 ## Tareas Técnicas
-- [ ] Escribir tests (TDD)
-- [ ] Configurar Prisma con modelo User (sin Store)
-- [ ] Implementar middleware auth con JWT
-- [ ] Implementar rutas register, login, me
-- [ ] Integrar con frontend web
-- [ ] Integrar con mobile
-- [ ] PR a main
+- [x] Escribir tests (TDD)
+- [x] Configurar Prisma con modelo User (sin Store)
+- [x] Implementar middleware auth con JWT
+- [x] Implementar rutas register, login, me
+- [x] Integrar con frontend web
+- [x] Integrar con mobile
+- [x] PR a main

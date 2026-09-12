@@ -2,6 +2,7 @@
 title: "Spec 13 — Subscriptions UI"
 labels: ["spec", "archived"]
 assignees: []
+status: archived
 ---
 
 ## ⚠️ ARCHIVADO

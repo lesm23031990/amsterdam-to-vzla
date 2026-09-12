@@ -2,6 +2,7 @@
 title: "Spec XX — Nombre de la Spec"
 labels: ["spec"]
 assignees: []
+status: draft
 ---
 
 ## Endpoints

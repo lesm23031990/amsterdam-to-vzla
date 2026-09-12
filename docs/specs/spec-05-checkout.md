@@ -2,6 +2,7 @@
 title: "Spec 05 — Checkout y Pagos: Binance Pay, efectivo, transferencia"
 labels: ["spec"]
 assignees: []
+status: in-progress
 ---
 
 ## Endpoints
@@ -94,20 +95,20 @@ Headers: `Authorization: Bearer <token>`
 - Tarifa de delivery única para toda la orden (no por tienda)
 
 ## Acceptance Criteria
-- [ ] Cliente puede hacer checkout de su carrito
-- [ ] Orden se crea con todos los items del carrito
+- [x] Cliente puede hacer checkout de su carrito
+- [x] Orden se crea con todos los items del carrito
 - [ ] Pago con Binance Pay genera link de pago
-- [ ] Pago en efectivo se registra con referencia
-- [ ] Cliente puede ver historial de órdenes
-- [ ] Cliente puede ver detalle de orden
+- [x] Pago en efectivo se registra con referencia
+- [x] Cliente puede ver historial de órdenes
+- [x] Cliente puede ver detalle de orden
 - [ ] Orden expira después de 24h sin pago
 
 ---
 
 ## Tareas Técnicas
-- [ ] Escribir tests (TDD)
-- [ ] Modelos Order, OrderItem en Prisma
-- [ ] Integrar carrito → orden al hacer checkout
-- [ ] Mock de Binance Pay (generar link)
-- [ ] Implementar rutas de orden y pago
+- [x] Escribir tests (TDD)
+- [x] Modelos Order, OrderItem en Prisma
+- [x] Integrar carrito → orden al hacer checkout
+- [x] Mock de Binance Pay (generar link)
+- [x] Implementar rutas de orden y pago
 - [ ] PR a main

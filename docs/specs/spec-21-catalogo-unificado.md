@@ -2,6 +2,7 @@
 title: "Spec 21 — Catálogo Unificado con Filtros"
 labels: ["spec", "high-priority"]
 assignees: []
+status: in-progress
 ---
 
 ## Contexto
@@ -120,47 +121,47 @@ Headers: `Authorization: Bearer <token>` (opcional)
 - Grid de 2 columnas
 
 ## Acceptance Criteria
-- [ ] Página `/products` unifica catálogo con 3 tabs: Todos, Productos Destacados, Ofertas
-- [ ] Tab "Todos" muestra todos los productos activos
-- [ ] Tab "Productos Destacados" muestra solo `isFeatured: true` con badge ⭐
-- [ ] Tab "Ofertas" muestra solo `hasDiscount: true` con badge 🔥, precio tachado, % descuento
-- [ ] Sidebar con filtros de categoría, marca, precio, orden, stock
-- [ ] Filtros se reflejan en URL (compartible)
-- [ ] Responsive: sidebar colapsable en mobile
-- [ ] Grid responsive (4/3/2/1 columnas)
-- [ ] Skeleton loading
-- [ ] Paginación o infinite scroll
-- [ ] Precios en moneda seleccionada
-- [ ] Badges distinguibles para destacados y ofertas
+- [x] Página `/products` unifica catálogo con 3 tabs: Todos, Productos Destacados, Ofertas
+- [x] Tab "Todos" muestra todos los productos activos
+- [x] Tab "Productos Destacados" muestra solo `isFeatured: true` con badge ⭐
+- [x] Tab "Ofertas" muestra solo `hasDiscount: true` con badge 🔥, precio tachado, % descuento
+- [x] Sidebar con filtros de categoría, marca, precio, orden, stock
+- [x] Filtros se reflejan en URL (compartible)
+- [x] Responsive: sidebar colapsable en mobile
+- [x] Grid responsive (4/3/2/1 columnas)
+- [x] Skeleton loading
+- [x] Paginación o infinite scroll
+- [x] Precios en moneda seleccionada
+- [x] Badges distinguibles para destacados y ofertas
 
 ---
 
 ## Tareas Técnicas
 
 ### Backend
-- [ ] Agregar `isFeatured`, `hasDiscount`, `discountPercent` al schema de Product
-- [ ] Agregar `?featured=true` y `?discount=true` a GET /api/v1/products
-- [ ] Agregar `?orderBy` a GET /api/v1/products
-- [ ] Crear GET /api/v1/products/categories
-- [ ] Agregar filtro `?inStock=true` (stock > 0)
-- [ ] Soporte multi-brandIds (`?brandIds=id1,id2`)
+- [x] Agregar `isFeatured`, `hasDiscount`, `discountPercent` al schema de Product
+- [x] Agregar `?featured=true` y `?discount=true` a GET /api/v1/products
+- [x] Agregar `?orderBy` a GET /api/v1/products
+- [x] Crear GET /api/v1/products/categories
+- [x] Agregar filtro `?inStock=true` (stock > 0)
+- [x] Soporte multi-brandIds (`?brandIds=id1,id2`)
 
 ### Frontend Web
-- [ ] Unificar /products, /offers en una sola página con tabs
-- [ ] Crear componente ProductFilters (sidebar)
-- [ ] Crear componente ProductCard mejorado
-- [ ] Crear componente CategoryGrid
-- [ ] Implementar filtros en URL (useSearchParams)
-- [ ] Responsive: drawer para mobile
-- [ ] Skeleton loading states
-- [ ] Infinite scroll o paginación
+- [x] Unificar /products, /offers en una sola página con tabs
+- [x] Crear componente ProductFilters (sidebar)
+- [x] Crear componente ProductCard mejorado
+- [x] Crear componente CategoryGrid
+- [x] Implementar filtros en URL (useSearchParams)
+- [x] Responsive: drawer para mobile
+- [x] Skeleton loading states
+- [x] Infinite scroll o paginación
 
 ### Mobile
-- [ ] Actualizar Home screen con tabs y filtros
-- [ ] Implementar drawer de filtros
-- [ ] Grid responsive
+- [x] Actualizar Home screen con tabs y filtros
+- [x] Implementar drawer de filtros
+- [x] Grid responsive
 
 ### General
-- [ ] Integrar con frontend
-- [ ] Integrar con mobile
+- [x] Integrar con frontend
+- [x] Integrar con mobile
 - [ ] PR a main

@@ -2,6 +2,7 @@
 title: "Spec 08 — Asistente IA: chatbot para clientes"
 labels: ["spec"]
 assignees: []
+status: done
 ---
 
 ## Endpoints
@@ -74,20 +75,20 @@ Headers: `Authorization: Bearer <token>`
 - Rate limit: 30 mensajes por hora por usuario
 
 ## Acceptance Criteria
-- [ ] Cliente puede enviar mensaje y recibir respuesta
-- [ ] Asistente puede consultar estado de órdenes del cliente
-- [ ] Asistente recomienda acciones sugeridas
-- [ ] Conversaciones se guardan con historial
-- [ ] Rate limit funciona correctamente
-- [ ] Cliente puede ver y eliminar conversaciones
+- [x] Cliente puede enviar mensaje y recibir respuesta
+- [x] Asistente puede consultar estado de órdenes del cliente
+- [x] Asistente recomienda acciones sugeridas
+- [x] Conversaciones se guardan con historial
+- [x] Rate limit funciona correctamente
+- [x] Cliente puede ver y eliminar conversaciones
 
 ---
 
 ## Tareas Técnicas
-- [ ] Escribir tests (TDD)
-- [ ] Agregar modelos Conversation, Message a Prisma
-- [ ] Integrar con OpenRouter/Groq API
-- [ ] System prompt con contexto de la plataforma
-- [ ] Tool calling para consultar órdenes del cliente
-- [ ] Rate limiter por usuario
-- [ ] PR a main
+- [x] Escribir tests (TDD)
+- [x] Agregar modelos Conversation, Message a Prisma
+- [x] Integrar con OpenRouter/Groq API
+- [x] System prompt con contexto de la plataforma
+- [x] Tool calling para consultar órdenes del cliente
+- [x] Rate limiter por usuario
+- [x] PR a main

@@ -2,6 +2,7 @@
 title: "Spec 06 — Órdenes y Delivery: tracking en vivo con Socket.io + mapa"
 labels: ["spec"]
 assignees: []
+status: in-progress
 ---
 
 ## Endpoints
@@ -71,22 +72,22 @@ Headers: `Authorization: Bearer <token>` (admin)
 - Todas las órdenes pertenecen a Amsterdam Frozen Foods (no multi-tenant)
 
 ## Acceptance Criteria
-- [ ] Admin ve todas las órdenes en dashboard
-- [ ] Admin puede cambiar estado de orden
+- [x] Admin ve todas las órdenes en dashboard
+- [x] Admin puede cambiar estado de orden
 - [ ] Admin puede asignar repartidor
-- [ ] Repartidor puede actualizar ubicación
+- [x] Repartidor puede actualizar ubicación
 - [ ] Cliente recibe updates en tiempo real via Socket.io
-- [ ] Historial de ubicaciones se guarda
+- [x] Historial de ubicaciones se guarda
 - [ ] Mapa muestra posición del repartidor
 
 ---
 
 ## Tareas Técnicas
-- [ ] Escribir tests (TDD)
-- [ ] Agregar modelos Delivery, DeliveryLocation a Prisma
-- [ ] Implementar cambio de estado con validaciones
-- [ ] Integrar Socket.io para eventos en tiempo real
-- [ ] Guardar historial de ubicaciones
-- [ ] Endpoint de tracking para el cliente
-- [ ] Endpoint GET /admin/orders para admin
+- [x] Escribir tests (TDD)
+- [x] Agregar modelos Delivery, DeliveryLocation a Prisma
+- [x] Implementar cambio de estado con validaciones
+- [x] Integrar Socket.io para eventos en tiempo real
+- [x] Guardar historial de ubicaciones
+- [x] Endpoint de tracking para el cliente
+- [x] Endpoint GET /admin/orders para admin
 - [ ] PR a main
