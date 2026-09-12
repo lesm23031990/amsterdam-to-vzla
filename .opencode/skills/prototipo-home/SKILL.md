@@ -57,13 +57,12 @@ Un bug de datos se arregla en la fuente o con estados vacíos, nunca eliminando 
   `offerPriceRow` (`margin-top: auto`: `offerPrice` naranja grande = precio con
   descuento + `offerOld` tachado = precio original), `offerBtn` "Comprar".
 
-### 5. CTA (`.ctaBanner`) — SIEMPRE VISIBLE (contrato)
+### 5. CTA (`.ctaBanner`) — SIEMPRE VISIBLE, copy FIJO (contrato)
 - Fondo azul marino con partículas, título blanco centrado, texto gris,
-  botón naranja. **No envolver en `{!user && ...}`**: el prototipo exige que la
-  sección exista siempre; lo único que cambia con sesión es el copy:
-  - Sin sesión: "Regístrate y accede a ofertas exclusivas…" + botón
-    `Crear cuenta →` a `/register`.
-  - Con sesión: "Aprovecha las ofertas del día…" + botón `Ver catálogo →` a `/products`.
+  botón naranja. **No envolver en `{!user && ...}`** ni variar el copy por sesión:
+  el prototipo fija exactamente → título "¿Listo para disfrutar los mejores
+  productos congelados?", texto "Regístrate y accede a ofertas exclusivas con
+  delivery hasta tu puerta.", botón **"Crear cuenta →"** a `/register`.
 
 ### 6. Footer (`.footer`)
 - Marca + tagline a la izquierda; 4 enlaces (Catálogo, Marcas, Pedidos, Contacto).

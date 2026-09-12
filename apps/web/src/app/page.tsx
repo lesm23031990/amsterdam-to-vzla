@@ -402,18 +402,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA — banner fijo del prototipo: siempre visible, solo cambia el texto */}
+      {/* CTA — banner fijo del prototipo: siempre visible, copy exacto del prototipo */}
       <section className={styles.ctaBanner}>
         <div className={styles.ctaInner}>
           <h2 className={styles.ctaTitle}>¿Listo para disfrutar los mejores productos congelados?</h2>
-          <p className={styles.ctaText}>
-            {user
-              ? 'Aprovecha las ofertas del día con delivery hasta tu puerta.'
-              : 'Regístrate y accede a ofertas exclusivas con delivery hasta tu puerta.'}
-          </p>
-          <Link href={user ? '/products' : '/register'} className={styles.ctaBtn}>
-            {user ? 'Ver catálogo →' : 'Crear cuenta →'}
-          </Link>
+          <p className={styles.ctaText}>Regístrate y accede a ofertas exclusivas con delivery hasta tu puerta.</p>
+          <Link href="/register" className={styles.ctaBtn}>Crear cuenta →</Link>
         </div>
       </section>
 
