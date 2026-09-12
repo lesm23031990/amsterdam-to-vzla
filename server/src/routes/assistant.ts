@@ -77,14 +77,6 @@ router.post('/chat', authMiddleware, async (req: Request, res: Response) => {
       reply = 'Soy el asistente de amsterdamToVzla. ¿En qué puedo ayudarte?'
     }
 
-    await db.message.create({
-      data: {
-        conversationId: conversation.id,
-        role: 'assistant',
-        content: reply,
-      },
-    })
-
     suggestedActions = [
       'Ver mis pedidos',
       'Rastrear entrega',
@@ -93,7 +85,28 @@ router.post('/chat', authMiddleware, async (req: Request, res: Response) => {
       'Hablar con soporte',
     ]
 
-    res.json({ ok: true, data: { conversationId: conversation.id, reply, suggestedActions } })
+    const assistantMsg = await db.message.create({
+      data: {
+        conversationId: conversation.id,
+        role: 'assistant',
+        content: reply,
+      },
+    })
+
+    res.json({
+      ok: true,
+      data: {
+        conversationId: conversation.id,
+        message: {
+          id: assistantMsg?.id ?? `msg-${Date.now()}`,
+          role: 'assistant',
+          content: reply,
+          createdAt: assistantMsg?.createdAt ?? new Date(),
+        },
+        reply,
+        suggestedActions,
+      },
+    })
   } catch (error) {
     console.error('Chat error:', error)
     res.status(500).json({ ok: false, error: 'Error al procesar mensaje' })

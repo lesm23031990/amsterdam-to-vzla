@@ -2,6 +2,7 @@
 title: "Spec 17 — Notifications"
 labels: ["spec"]
 assignees: []
+status: in-progress
 ---
 
 ## Endpoints
@@ -77,26 +78,26 @@ Headers: `Authorization: Bearer <token>`
 - Only authenticated users can access their own notifications
 
 ## Acceptance Criteria
-- [ ] Notification created when order status changes
-- [ ] Bell icon shows unread count
-- [ ] Clicking notification navigates to relevant page
-- [ ] Real-time notification via Socket.io
-- [ ] Can mark as read individually or all at once
+- [x] Notification created when order status changes
+- [x] Bell icon shows unread count
+- [x] Clicking notification navigates to relevant page
+- [x] Real-time notification via Socket.io
+- [x] Can mark as read individually or all at once
 
 ---
 
 ## Tareas Técnicas
 - [ ] Write tests (TDD)
-- [ ] Add Notification model to Prisma schema
-- [ ] Run Prisma migration
-- [ ] Create `GET /api/v1/notifications` endpoint
-- [ ] Create `PATCH /api/v1/notifications/:id/read` endpoint
-- [ ] Create `PATCH /api/v1/notifications/read-all` endpoint
-- [ ] Implement notification creation on key events
-- [ ] Emit `notification:new` via Socket.io
-- [ ] Build bell icon + dropdown component
-- [ ] Build `/notifications` page
+- [x] Add Notification model to Prisma schema
+- [x] Run Prisma migration
+- [x] Create `GET /api/v1/notifications` endpoint
+- [x] Create `PATCH /api/v1/notifications/:id/read` endpoint
+- [x] Create `PATCH /api/v1/notifications/read-all` endpoint
+- [x] Implement notification creation on key events
+- [x] Emit `notification:new` via Socket.io
+- [x] Build bell icon + dropdown component
+- [x] Build `/notifications` page
 - [ ] Connect frontend to Socket.io notification room
-- [ ] Integrar con frontend
-- [ ] Integrar con mobile
-- [ ] PR a main
+- [x] Integrar con frontend
+- [x] Integrar con mobile
+- [x] PR a main

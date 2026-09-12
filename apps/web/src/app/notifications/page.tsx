@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { api } from '@/lib/api';
 
 interface Notification {
   id: string;
@@ -33,16 +34,13 @@ export default function NotificationsPage() {
 
   const fetchNotifications = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(
-        `/api/v1/notifications?page=${page}&limit=20`,
-        { headers: { Authorization: `Bearer ${token}` } }
+      const res = await api.get<{ notifications: Notification[]; total?: number; unreadCount: number }>(
+        `/notifications?page=${page}&limit=20`
       );
-      const data = await res.json();
-      if (data.ok) {
-        setNotifications(data.data.notifications);
-        setTotal(data.data.total);
-        setUnreadCount(data.data.unreadCount);
+      if (res.ok && res.data) {
+        setNotifications(res.data.notifications);
+        setTotal(res.data.total ?? res.data.notifications.length);
+        setUnreadCount(res.data.unreadCount);
       }
     } catch {
     } finally {
@@ -52,22 +50,14 @@ export default function NotificationsPage() {
 
   const markAsRead = async (id: string) => {
     try {
-      const token = localStorage.getItem('token');
-      await fetch(
-        `/api/v1/notifications/${id}/read`,
-        { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.patch(`/notifications/${id}/read`);
       fetchNotifications();
     } catch {}
   };
 
   const markAllRead = async () => {
     try {
-      const token = localStorage.getItem('token');
-      await fetch(
-        `/api/v1/notifications/read-all`,
-        { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.patch('/notifications/read-all');
       fetchNotifications();
     } catch {}
   };

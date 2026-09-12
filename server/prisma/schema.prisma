@@ -123,15 +123,18 @@ model Cart {
 }
 
 model CartItem {
-  id        String   @id @default(uuid()) @db.Uuid
-  cartId    String   @db.Uuid
-  productId String   @db.Uuid
-  quantity  Int      @default(1)
-  price     Float
-  createdAt DateTime @default(now()) @map("created_at")
+  id             String   @id @default(uuid()) @db.Uuid
+  cartId         String   @db.Uuid
+  productId      String?  @db.Uuid
+  menuItemId     String?  @db.Uuid
+  quantity       Int      @default(1)
+  price          Float
+  customizations Json?
+  createdAt      DateTime @default(now()) @map("created_at")
 
-  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
+  cart     Cart      @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product  Product?  @relation(fields: [productId], references: [id])
+  menuItem MenuItem? @relation(fields: [menuItemId], references: [id])
 
   @@map("cart_items")
 }
@@ -164,16 +167,19 @@ model Order {
 }
 
 model OrderItem {
-  id        String @id @default(uuid()) @db.Uuid
-  orderId   String @db.Uuid
-  productId String @db.Uuid
-  name      String
-  price     Float
-  quantity  Int
-  subtotal  Float
+  id             String  @id @default(uuid()) @db.Uuid
+  orderId        String  @db.Uuid
+  productId      String? @db.Uuid
+  menuItemId     String? @db.Uuid
+  name           String
+  price          Float
+  quantity       Int
+  subtotal       Float
+  customizations Json?
 
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
+  order    Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product  Product?  @relation(fields: [productId], references: [id])
+  menuItem MenuItem? @relation(fields: [menuItemId], references: [id])
 
   @@map("order_items")
 }
@@ -217,8 +223,10 @@ model MenuItem {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  options MenuOption[]
-  comments MenuItemComment[]
+  options    MenuOption[]
+  comments   MenuItemComment[]
+  cartItems  CartItem[]
+  orderItems OrderItem[]
 
   @@map("menu_items")
 }

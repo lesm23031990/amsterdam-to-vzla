@@ -19,7 +19,7 @@ Plataforma de comercio electrónico para venta de productos congelados e insumos
 - Mapas: Leaflet + OpenStreetMap
 - IA: OpenRouter / Groq (DeepSeek, Llama, Mistral - modelos gratuitos)
 - Tests: Vitest
-- SDD: Plane.so (issues como specs)
+- SDD: specs locales en docs/specs/ con checkboxes + `status:` (Plane.so solo opcional/experimental)
 
 ## Características clave
 
@@ -36,4 +36,4 @@ Plataforma de comercio electrónico para venta de productos congelados e insumos
 - Ramas: feature/, fix/, chore/
 - API REST con prefijo /api/v1/
 - UI en español, código en inglés
-- Spec-Driven Development: primero spec en Plane, luego tests, luego código
+- Spec-Driven Development: primero spec local en docs/specs/, luego tests, luego código

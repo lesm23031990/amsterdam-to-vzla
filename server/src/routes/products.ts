@@ -783,6 +783,7 @@ router.get('/:id/related', async (req: Request, res: Response) => {
 
       const freq: Record<string, number> = {}
       for (const item of relatedItems) {
+        if (!item.productId) continue
         freq[item.productId] = (freq[item.productId] || 0) + 1
       }
 

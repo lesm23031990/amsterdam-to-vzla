@@ -42,9 +42,11 @@ export default function AIAssistantScreen() {
         history: messages.map((m) => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.text })),
       });
 
+      const payload = response.data.data;
+      const text = payload?.message?.content ?? payload?.reply ?? 'Lo siento, no pude procesar tu mensaje.';
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: response.data.data.response,
+        text,
         sender: 'assistant',
         timestamp: new Date(),
       };

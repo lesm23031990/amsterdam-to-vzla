@@ -20,6 +20,9 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
             product: {
               select: { id: true, name: true, priceCop: true },
             },
+            menuItem: {
+              select: { id: true, name: true },
+            },
           },
         },
       },
@@ -36,7 +39,10 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       return
     }
 
-    const totalCop = cart.items.reduce((sum: number, item: any) => sum + (item.product.priceCop || 0) * item.quantity, 0)
+    const unitCopOf = (item: any): number =>
+      item.productId ? (item.product?.priceCop || 0) : (item.price || 0)
+
+    const totalCop = cart.items.reduce((sum: number, item: any) => sum + unitCopOf(item) * item.quantity, 0)
     const fee = deliveryFee ?? 0
     const grandTotalCop = totalCop + fee
 
@@ -66,13 +72,22 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       contactPhone: contactPhone || null,
       status: paymentMethod === 'binance_pay' ? OrderStatus.pending_payment : OrderStatus.confirmed,
       items: {
-        create: cart.items.map((item: any) => ({
-          productId: item.productId,
-          name: item.product.name,
-          price: Math.round(((item.product.priceCop || 0) / rate) * 100) / 100,
-          quantity: item.quantity,
-          subtotal: Math.round(((item.product.priceCop || 0) * item.quantity / rate) * 100) / 100,
-        })),
+        create: cart.items.map((item: any) => {
+          const unitCop = unitCopOf(item)
+          const base = {
+            name: item.productId ? item.product.name : item.menuItem.name,
+            price: Math.round((unitCop / rate) * 100) / 100,
+            quantity: item.quantity,
+            subtotal: Math.round(((unitCop * item.quantity) / rate) * 100) / 100,
+          }
+          return item.productId
+            ? { productId: item.productId, ...base }
+            : {
+                menuItemId: item.menuItemId,
+                customizations: item.customizations ?? undefined,
+                ...base,
+              }
+        }),
       },
     }
 

@@ -7,11 +7,25 @@ import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import styles from './page.module.css';
 
+interface CartCustomization {
+  id?: string;
+  optionId?: string;
+  choiceId?: string;
+  optionName?: string;
+  choiceName?: string;
+  priceModifier?: number;
+  option?: { id?: string; name?: string };
+  choice?: { id?: string; name?: string; priceModifier?: number };
+}
+
 interface CartItem {
   id: string;
   productId: string;
+  menuItemId?: string;
   quantity: number;
-  product: {
+  price?: number;
+  customizations?: CartCustomization[];
+  product?: {
     id: string;
     name: string;
     price: number;
@@ -19,14 +33,35 @@ interface CartItem {
     images: string[];
     brand: { id: string; name: string; slug: string };
   };
+  menuItem?: {
+    id: string;
+    name: string;
+    basePrice: number;
+    currency: string;
+    image: string | null;
+    preparationTime: number;
+    category: string | null;
+  };
 }
 
 interface GroupedBrand {
   brandId: string;
   brandName: string;
   brandSlug: string;
+  isFastFood?: boolean;
   items: CartItem[];
 }
+
+const FASTFOOD_GROUP = '__fastfood__';
+
+const isMenuLine = (item: CartItem) => !item.product && !!item.menuItem;
+const lineName = (item: CartItem) => isMenuLine(item) ? item.menuItem!.name : (item.product?.name || '');
+const lineImage = (item: CartItem) => isMenuLine(item) ? (item.menuItem!.image || undefined) : item.product?.images?.[0];
+const lineLink = (item: CartItem) => isMenuLine(item) ? '/menu' : `/products/${item.product?.id}`;
+const lineUnitPrice = (item: CartItem) => isMenuLine(item)
+  ? Number(item.price ?? item.menuItem!.basePrice)
+  : Number(item.product?.price || 0);
+const lineCurrency = (item: CartItem) => isMenuLine(item) ? item.menuItem!.currency : (item.product?.currency || 'USD');
 
 export default function CartPage() {
   const { user } = useAuth();
@@ -64,22 +99,24 @@ export default function CartPage() {
   const grouped: GroupedBrand[] = [];
   const brandMap = new Map<string, CartItem[]>();
   items.forEach((item) => {
-    const brandId = item.product.brand?.id;
+    const brandId = isMenuLine(item) ? FASTFOOD_GROUP : item.product?.brand?.id;
     if (!brandId) return;
     if (!brandMap.has(brandId)) brandMap.set(brandId, []);
     brandMap.get(brandId)!.push(item);
   });
   brandMap.forEach((brandItems, brandId) => {
     const first = brandItems[0];
+    const isFastFood = brandId === FASTFOOD_GROUP;
     grouped.push({
       brandId,
-      brandName: first.product.brand?.name || 'Sin marca',
-      brandSlug: first.product.brand?.slug || '',
+      brandName: isFastFood ? 'Menú Fast Food' : (first.product?.brand?.name || 'Sin marca'),
+      brandSlug: isFastFood ? 'menu' : (first.product?.brand?.slug || ''),
+      isFastFood,
       items: brandItems,
     });
   });
 
-  const total = items.reduce((sum, i) => sum + Number(i.product.price) * i.quantity, 0);
+  const total = items.reduce((sum, i) => sum + lineUnitPrice(i) * i.quantity, 0);
 
   if (loading) return <p className={styles.loading}>Cargando carrito...</p>;
 
@@ -102,21 +139,34 @@ export default function CartPage() {
           <>
             {grouped.map((group) => (
               <div key={group.brandId} className={styles.group}>
-                <Link href={`/brands/${group.brandSlug}`} className={styles.storeHeader}>
+                <Link href={group.isFastFood ? '/menu' : `/brands/${group.brandSlug}`} className={styles.storeHeader}>
                   {group.brandName}
                 </Link>
                 {group.items.map((item) => (
                   <div key={item.id} className={styles.item}>
                     <div
                       className={styles.itemImage}
-                      style={{ backgroundImage: item.product.images?.[0] ? `url(${item.product.images[0]})` : undefined }}
-                    />
+                      style={lineImage(item) ? { backgroundImage: `url(${lineImage(item)})` } : undefined}
+                    >
+                      {!lineImage(item) && <span className={styles.imageFallback}>{isMenuLine(item) ? '🍔' : '❄️'}</span>}
+                    </div>
                     <div className={styles.itemInfo}>
-                      <Link href={`/products/${item.product.id}`} className={styles.itemName}>
-                        {item.product.name}
+                      <Link href={lineLink(item)} className={styles.itemName}>
+                        {lineName(item)}
                       </Link>
+                      {isMenuLine(item) && item.customizations && item.customizations.length > 0 && (
+                        <ul className={styles.customizations}>
+                          {item.customizations.map((c, idx) => {
+                            const optionName = c.optionName || c.option?.name;
+                            const choiceName = c.choiceName || c.choice?.name;
+                            return <li key={c.id || `${c.optionId}-${c.choiceId}-${idx}`}>
+                              {optionName ? `${optionName}: ` : ''}{choiceName || ''}
+                            </li>;
+                          })}
+                        </ul>
+                      )}
                       <p className={styles.itemPrice}>
-                        {item.product.currency} {Number(item.product.price).toLocaleString()} c/u
+                        {lineCurrency(item)} {lineUnitPrice(item).toLocaleString()} c/u
                       </p>
                     </div>
                     <div className={styles.quantityControl}>
@@ -125,7 +175,7 @@ export default function CartPage() {
                       <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className={styles.qtyBtn}>+</button>
                     </div>
                     <p className={styles.subtotal}>
-                      {item.product.currency} {(Number(item.product.price) * item.quantity).toLocaleString()}
+                      {lineCurrency(item)} {(lineUnitPrice(item) * item.quantity).toLocaleString()}
                     </p>
                     <button onClick={() => removeItem(item.id)} className={styles.removeBtn}>✕</button>
                   </div>
@@ -137,7 +187,7 @@ export default function CartPage() {
               <div className={styles.total}>
                 <span>Total:</span>
                 <span className={styles.totalAmount}>
-                  {items[0]?.product.currency || 'USD'} {total.toLocaleString()}
+                  {items[0] ? lineCurrency(items[0]) : 'USD'} {total.toLocaleString()}
                 </span>
               </div>
               <Link href="/checkout" className={styles.checkoutBtn}>Proceder al pago</Link>

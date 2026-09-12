@@ -2,6 +2,7 @@
 title: "Spec 04 — Carrito de Compras"
 labels: ["spec"]
 assignees: []
+status: done
 ---
 
 ## Endpoints
@@ -77,20 +78,20 @@ Headers: `Authorization: Bearer <token>`
 - Sin agrupación por tienda — todos los productos son de Amsterdam Frozen Foods
 
 ## Acceptance Criteria
-- [ ] Cliente puede agregar productos al carrito
-- [ ] Cliente puede ver su carrito con lista de items
-- [ ] Cliente puede actualizar cantidades
-- [ ] Cliente puede eliminar items
-- [ ] Cliente puede vaciar carrito
-- [ ] Stock se valida al agregar
-- [ ] Precio se congela en el carrito
-- [ ] Producto eliminado se muestra como no disponible
+- [x] Cliente puede agregar productos al carrito
+- [x] Cliente puede ver su carrito con lista de items
+- [x] Cliente puede actualizar cantidades
+- [x] Cliente puede eliminar items
+- [x] Cliente puede vaciar carrito
+- [x] Stock se valida al agregar
+- [x] Precio se congela en el carrito
+- [x] Producto eliminado se muestra como no disponible
 
 ---
 
 ## Tareas Técnicas
-- [ ] Escribir tests (TDD)
-- [ ] Modelos Cart, CartItem en Prisma
-- [ ] Implementar rutas de carrito
-- [ ] Validar stock contra producto actual
-- [ ] PR a main
+- [x] Escribir tests (TDD)
+- [x] Modelos Cart, CartItem en Prisma
+- [x] Implementar rutas de carrito
+- [x] Validar stock contra producto actual
+- [x] PR a main

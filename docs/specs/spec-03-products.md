@@ -2,6 +2,7 @@
 title: "Spec 03 — Catálogo de Productos: CRUD por admin"
 labels: ["spec"]
 assignees: []
+status: done
 ---
 
 ## Endpoints
@@ -96,23 +97,23 @@ Headers: `Authorization: Bearer <token>` (admin)
 - No se requiere suscripción para crear productos
 
 ## Acceptance Criteria
-- [ ] Admin puede crear un producto
-- [ ] Productos se listan públicos (sin auth)
-- [ ] Admin puede editar productos
-- [ ] Admin puede eliminar (soft-delete) productos
-- [ ] Stock y precio se validan (no negativos)
-- [ ] Productos con marca muestran logo de la marca
-- [ ] Productos sin marca muestran "Amsterdam Frozen Foods"
-- [ ] Filtrar por categoría funciona
-- [ ] Filtrar por marca funciona
-- [ ] Búsqueda por nombre funciona
+- [x] Admin puede crear un producto
+- [x] Productos se listan públicos (sin auth)
+- [x] Admin puede editar productos
+- [x] Admin puede eliminar (soft-delete) productos
+- [x] Stock y precio se validan (no negativos)
+- [x] Productos con marca muestran logo de la marca
+- [x] Productos sin marca muestran "Amsterdam Frozen Foods"
+- [x] Filtrar por categoría funciona
+- [x] Filtrar por marca funciona
+- [x] Búsqueda por nombre funciona
 
 ---
 
 ## Tareas Técnicas
-- [ ] Escribir tests (TDD)
-- [ ] Modelo Product con brandId opcional
-- [ ] Implementar rutas CRUD (solo admin para write)
-- [ ] Soft-delete en lugar de borrado físico
-- [ ] Filtros: category, brand, q, minPrice, maxPrice
-- [ ] PR a main
+- [x] Escribir tests (TDD)
+- [x] Modelo Product con brandId opcional
+- [x] Implementar rutas CRUD (solo admin para write)
+- [x] Soft-delete en lugar de borrado físico
+- [x] Filtros: category, brand, q, minPrice, maxPrice
+- [x] PR a main

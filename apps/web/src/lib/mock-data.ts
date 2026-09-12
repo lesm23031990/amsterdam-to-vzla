@@ -183,7 +183,7 @@ export const users: User[] = [
 
 export const initialOrders: Order[] = [
   {
-    id: 'order-1', userId: 'user-1', status: 'in_transit', total: 18.70, totalCop: 18.70, deliveryFee: 2.50, currency: 'USD', paymentMethod: 'transfer', paymentStatus: 'pending_review', paymentRef: 'REF-2024-001', paymentUrl: null, paymentProof: null,
+    id: 'order-1', userId: 'user-1', status: 'in_transit', total: 21.70, totalCop: 21.70, deliveryFee: 2.50, currency: 'USD', paymentMethod: 'transfer', paymentStatus: 'pending_review', paymentRef: 'REF-2024-001', paymentUrl: null, paymentProof: null,
     deliveryAddress: 'Av. Principal, Barrio Obrero, San Cristóbal', notes: 'Entregar en la esquina de la panadería', contactPhone: '+58 414-1234567',
     createdAt: '2024-03-20T14:30:00Z', updatedAt: '2024-03-20T15:00:00Z',
     items: [
@@ -207,7 +207,7 @@ export const initialOrders: Order[] = [
     delivery: null,
   },
   {
-    id: 'order-3', userId: 'user-1', status: 'delivered', total: 10.70, totalCop: 10.70, deliveryFee: 2.50, currency: 'USD', paymentMethod: 'cash', paymentStatus: 'paid', paymentRef: 'EF-2024-003', paymentUrl: null, paymentProof: null,
+    id: 'order-3', userId: 'user-1', status: 'delivered', total: 13.20, totalCop: 13.20, deliveryFee: 2.50, currency: 'USD', paymentMethod: 'cash', paymentStatus: 'paid', paymentRef: 'EF-2024-003', paymentUrl: null, paymentProof: null,
     deliveryAddress: 'Av. Principal, Barrio Obrero, San Cristóbal', notes: '', contactPhone: '+58 414-1234567',
     createdAt: '2024-03-19T15:00:00Z', updatedAt: '2024-03-19T16:30:00Z',
     items: [
@@ -230,7 +230,7 @@ export const initialComments: Comment[] = [
 
 export const initialNotifications: Notification[] = [
   { id: 'notif-1', userId: 'user-1', type: 'order_status', title: 'Pedido en camino', message: 'Tu pedido #order-1 ha salido hacia tu dirección', read: false, data: { orderId: 'order-1', status: 'in_transit' }, orderId: 'order-1', createdAt: '2024-03-20T15:00:00Z' },
-  { id: 'notif-2', userId: 'user-1', type: 'promo', title: 'Oferta especial', message: '30% de descuento en Papas Fritas Congeladas solo hoy', read: false, data: { productId: '8' }, orderId: null, createdAt: '2024-03-20T10:00:00Z' },
+  { id: 'notif-2', userId: 'user-1', type: 'promo', title: 'Oferta especial', message: '36% de descuento en Papas Fritas Congeladas solo hoy', read: false, data: { productId: '8' }, orderId: null, createdAt: '2024-03-20T10:00:00Z' },
   { id: 'notif-3', userId: 'user-1', type: 'order_status', title: 'Pedido entregado', message: 'Tu pedido #order-3 ha sido entregado exitosamente', read: true, data: { orderId: 'order-3', status: 'delivered' }, orderId: 'order-3', createdAt: '2024-03-19T16:30:00Z' },
 ]
 

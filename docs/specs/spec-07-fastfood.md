@@ -2,6 +2,7 @@
 title: "Spec 07 — Módulo Comida Rápida: menú personalizable y tiempo de prep"
 labels: ["spec"]
 assignees: []
+status: done
 ---
 
 ## Endpoints
@@ -89,19 +90,19 @@ Headers: `Authorization: Bearer <token>` (admin)
 - Items de menú pertenecen a Amsterdam Frozen Foods (no multi-tenant)
 
 ## Acceptance Criteria
-- [ ] Admin puede crear items de menú
-- [ ] Admin puede agregar opciones personalizables a un item
-- [ ] Cliente ve opciones disponibles al agregar al carrito
-- [ ] Precio final incluye modificadores
-- [ ] Tiempo de preparación se muestra al confirmar orden
-- [ ] Item no disponible no se puede ordenar
+- [x] Admin puede crear items de menú
+- [x] Admin puede agregar opciones personalizables a un item
+- [x] Cliente ve opciones disponibles al agregar al carrito
+- [x] Precio final incluye modificadores
+- [x] Tiempo de preparación se muestra al confirmar orden
+- [x] Item no disponible no se puede ordenar
 
 ---
 
 ## Tareas Técnicas
-- [ ] Escribir tests (TDD)
-- [ ] Agregar modelos MenuItem, MenuOption, MenuChoice a Prisma
-- [ ] Implementar CRUD de menú (solo admin para write)
-- [ ] Integrar opciones con carrito (precio final)
-- [ ] Mostrar tiempo de preparación en checkout
-- [ ] PR a main
+- [x] Escribir tests (TDD)
+- [x] Agregar modelos MenuItem, MenuOption, MenuChoice a Prisma
+- [x] Implementar CRUD de menú (solo admin para write)
+- [x] Integrar opciones con carrito (precio final)
+- [x] Mostrar tiempo de preparación en checkout
+- [x] PR a main

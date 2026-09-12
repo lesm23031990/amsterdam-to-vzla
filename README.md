@@ -49,6 +49,8 @@ npm run web         # Iniciar frontend web
 npm run test        # Ejecutar tests
 ```
 
+> Base de datos local (Docker) + demo en Neon: ver [docs/DATABASE-LOCAL-DEMO.md](docs/DATABASE-LOCAL-DEMO.md)
+
 ## SDD (Spec-Driven Development)
 
 1. Escribir spec en `docs/specs/`

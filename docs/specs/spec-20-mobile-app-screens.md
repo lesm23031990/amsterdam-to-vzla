@@ -2,6 +2,7 @@
 title: "Spec 20 — Mobile App Screens"
 labels: ["spec"]
 assignees: []
+status: in-progress
 ---
 
 ## Endpoints
@@ -76,28 +77,28 @@ User login (same as web).
 
 ## Acceptance Criteria
 - [ ] App builds and runs on both Android and iOS
-- [ ] User can register, login, browse products
-- [ ] User can add to cart and checkout
+- [x] User can register, login, browse products
+- [x] User can add to cart and checkout
 - [ ] User can track delivery on map
-- [ ] Driver can update location
+- [x] Driver can update location
 - [ ] Push notifications work
 
 ---
 
 ## Tareas Técnicas
-- [ ] Set up Expo project with TypeScript and Expo Router
-- [ ] Configure bottom tab navigation
-- [ ] Build shared API client with auth interceptor
-- [ ] Implement SecureStore token persistence
-- [ ] Build Home screen
-- [ ] Build Login/Register screens (no role selector)
-- [ ] Build Brands list and Brand Detail screens (replaces stores)
-- [ ] Build Product Detail screen
-- [ ] Build Cart screen (simple list, no store grouping)
-- [ ] Build Checkout screen
-- [ ] Build Orders list and Order Detail screens
-- [ ] Build Driver view screen
-- [ ] Build AI Assistant chat screen
+- [x] Set up Expo project with TypeScript and Expo Router
+- [x] Configure bottom tab navigation
+- [x] Build shared API client with auth interceptor
+- [x] Implement SecureStore token persistence
+- [x] Build Home screen
+- [x] Build Login/Register screens (no role selector)
+- [x] Build Brands list and Brand Detail screens (replaces stores)
+- [x] Build Product Detail screen
+- [x] Build Cart screen (simple list, no store grouping)
+- [x] Build Checkout screen
+- [x] Build Orders list and Order Detail screens
+- [x] Build Driver view screen
+- [x] Build AI Assistant chat screen
 - [ ] Integrate delivery map (WebView or react-native-maps)
 - [ ] Set up push notifications (Expo)
 - [ ] Write tests (TDD)

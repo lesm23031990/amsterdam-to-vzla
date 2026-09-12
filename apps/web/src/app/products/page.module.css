@@ -509,3 +509,8 @@
   .name { font-size: 12px; }
   .addBtn { padding: 8px; font-size: 12px; }
 }
+
+/* Header a dos filas en movil: el buscador ocupa el ancho total */
+@media (max-width: 768px) {
+  .mobileFilterBar { top: 100px; }
+}

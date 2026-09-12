@@ -45,17 +45,40 @@ amsterdam-to-vzla/
 └── package.json           # Monorepo (npm workspaces)
 ```
 
-## Workflow SDD (Spec-Driven Development)
+## Workflow SDD (Spec-Driven Development) — modo local
 
-1. Escribir spec en Plane.so (Issue con template) o local en `docs/specs/`
-2. `npm run plane:pull` — Traer issues de Plane.so como specs locales
+1. Escribir/refinar la spec local en `docs/specs/` (desde `TEMPLATE.md`)
+2. Definir secciones `## Acceptance Criteria` y `## Tareas Técnicas` con checkboxes `- [ ]`
 3. Crear rama `feature/nombre-de-la-spec`
 4. `npm test` — Escribir tests primero (que fallan) y confirmar que fallan
 5. Implementar hasta que `npm test` pase
-6. `npm run plane:push` — Sincronizar cambios a Plane.so
-7. Hacer PR y cerrar el Issue en Plane
+6. Marcar el checkbox `- [x]` **solo** de las tareas con test pasando o verificación manual explícita
+7. Actualizar `status:` del frontmatter: `draft` → `in-progress` → `done`
+   (regla: `done` solo cuando todos los checkboxes están marcados)
+8. Hacer PR a main y marcar "PR a main"
 
-## Integración con Plane.so
+El spec `.md` local es la fuente de verdad del avance. Comandos:
+
+- `npm run specs` — Dashboard de progreso (status + % de checkboxes por spec)
+- `npm run specs:check` — Falla (exit 1) si alguna spec activa tiene checkboxes pendientes; útil antes de un commit
+
+### Frontmatter de una spec
+
+```yaml
+---
+title: "Spec NN — Título"
+labels: ["spec"]
+assignees: []
+status: in-progress   # draft | in-progress | done | archived
+---
+```
+
+`status: archived` excluye la spec del total del dashboard (ej. spec-13).
+
+## Integración con Plane.so (opcional)
+
+> ⚠️ No se usa en el flujo diario (trabajo individual). Los comandos `plane:*`
+> se conservan solo para experimentar con la dinámica de MCPs/issues colaborativos.
 
 Requiere variables de entorno (ver `.env.example`):
 
@@ -69,6 +92,40 @@ Comandos:
 - `npm run plane:pull` — Descarga issues abiertos como specs en `docs/specs/`
 - `npm run plane:push` — Sube cambios locales a Plane.so
 - `npm run plane:status` — Compara estado local vs remoto
+
+## Protección del Diseño Prototipado
+
+El diseño de la home (y de las secciones ya maquetadas) es **contrato visual**.
+Arreglar bugs de datos o lógica NUNCA debe degradar ni eliminar una sección.
+Ver `.opencode/skills/prototipo-home/SKILL.md` para la anatomía exacta por sección.
+
+Reglas no negociables:
+
+1. **No borrar ni reestructurar secciones** al "limpiar" código. Una sección
+   data-driven se conserva aunque la consulta devuelva vacía.
+2. **Toda sección que consume la API define su empty state**: bloque `.emptySection`
+   con icono + mensaje honesto (no un grid en blanco ni la sección eliminada).
+3. **No cambiar etiquetas de HTML sin ajustar el CSS** que apunta a ellas: p. ej.
+   convertir un `<div>` contenedor en `<Link>` (`<a>` inline) rompe `width/aspect-ratio/overflow`
+   → hay que devolverle `display: block`.
+4. **No tocar clases del prototipo** (`bentoCard`, `productCard`, `offerCard`,
+   `productImgWrap`, `productPriceRow`, `statusPill`, etc.) sin verificar el
+   render visual después: las tarjetas viven de `flex` + `margin-top:auto` para
+   alinear precio/botón al fondo por fila.
+5. **Filas de precio preparadas para cifras largas (COP)**: `nowrap` en el precio,
+   `flex-shrink: 0` en el badge de stock, ellipsis si desborda.
+6. **Fotos de producto salen de `images[0]` real**; si no hay imagen, placeholder
+   con gradiente + icono (nunca una URL inventada que genere "productos huérfanos").
+
+Antes de comitear un cambio que toque `page.tsx` o `*.module.css` de la home:
+
+- [ ] `npm run build -w apps/web` sin errores y `npx tsc --noEmit` en apps/web
+- [ ] Revisar las 6 secciones: Hero, Bento Destacados, Catálogo Express,
+      Mis Pedidos/Info, Ofertas del Día, CTA — todas presentes
+- [ ] Provocar el estado vacío (filtrar por un criterio sin resultados) y
+      confirmar que aparece `.emptySection`, no una sección borrada
+- [ ] Comparar contra las capturas del prototipo (Ofertas con pill de %, precio
+      grande + tachado, botón "Comprar" alineado al fondo)
 
 ## Convenciones de Código
 
@@ -84,8 +141,8 @@ Comandos:
 
 ## Definition of Done
 
-- [ ] La spec en Plane está actualizada
-- [ ] Los tests automatizados pasan
+- [ ] La spec local en `docs/specs/` está actualizada (checkboxes + `status:`)
+- [ ] Los tests automatizados pasan (`npm test`)
+- [ ] `npm run specs` refleja el avance real
 - [ ] El código está en una rama con PR
 - [ ] El servidor arranca sin errores
-- [ ] Se cerró el Issue en Plane

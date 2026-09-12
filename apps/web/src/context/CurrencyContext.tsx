@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { api } from '@/lib/api';
 
 type Currency = 'COP' | 'Bs' | 'USD';
 
@@ -32,11 +33,10 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    fetch(`/api/v1/rates`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.ok && data.data?.rates) {
-          setRates(data.data.rates);
+    api.get<{ rates?: Record<string, number> }>('/rates')
+      .then((res) => {
+        if (res.ok && res.data?.rates) {
+          setRates(res.data.rates);
         }
       })
       .catch(() => {});

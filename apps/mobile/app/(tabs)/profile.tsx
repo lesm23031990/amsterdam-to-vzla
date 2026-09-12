@@ -1,7 +1,10 @@
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { useState, useCallback } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { useAuthStore } from '@/store/authStore';
 import { useCurrencyStore } from '@/store/currencyStore';
 import { useRouter } from 'expo-router';
+import { apiClient } from '@/api/client';
 import { Ionicons } from '@expo/vector-icons';
 
 const currencies: { value: 'COP' | 'Bs' | 'USD'; label: string }[] = [
@@ -14,6 +17,21 @@ export default function ProfileScreen() {
   const { user, logout } = useAuthStore();
   const { currency, setCurrency } = useCurrencyStore();
   const router = useRouter();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchUnread = async () => {
+        try {
+          const response = await apiClient.get('/api/v1/notifications?page=1&perPage=1');
+          setUnreadCount(response.data.data?.unreadCount ?? 0);
+        } catch {
+          setUnreadCount(0);
+        }
+      };
+      fetchUnread();
+    }, [])
+  );
 
   const handleLogout = async () => {
     Alert.alert(
@@ -82,6 +100,31 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.menu}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => router.push('/notifications')}
+        >
+          <Ionicons name="notifications-outline" size={24} color="#1E40AF" />
+          <Text style={styles.menuText}>Notificaciones</Text>
+          {unreadCount > 0 && (
+            <View style={styles.unreadBadge}>
+              <Text style={styles.unreadBadgeText}>
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </Text>
+            </View>
+          )}
+          <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => router.push('/menu')}
+        >
+          <Ionicons name="restaurant-outline" size={24} color="#1E40AF" />
+          <Text style={styles.menuText}>Menú</Text>
+          <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.menuItem}
           onPress={() => router.push('/ai-assistant')}
@@ -203,6 +246,21 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#111827',
+  },
+  unreadBadge: {
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#EF4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    marginRight: 8,
+  },
+  unreadBadgeText: {
+    fontSize: 11,
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   logoutButton: {
     flexDirection: 'row',

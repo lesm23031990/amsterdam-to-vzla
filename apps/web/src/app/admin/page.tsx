@@ -20,14 +20,18 @@ export default function AdminPage() {
     Promise.all([
       api.get('/brands'),
       api.get('/products'),
-    ]).then(([brandsRes, productsRes]) => {
+      api.get('/admin/users'),
+      api.get('/admin/orders'),
+    ]).then(([brandsRes, productsRes, usersRes, ordersRes]) => {
       const brands = (brandsRes.ok && Array.isArray(brandsRes.data)) ? brandsRes.data : [];
       const products = (productsRes.ok && Array.isArray(productsRes.data)) ? productsRes.data : [];
+      const users = (usersRes.ok && Array.isArray(usersRes.data)) ? usersRes.data : [];
+      const orders = (ordersRes.ok && Array.isArray(ordersRes.data)) ? ordersRes.data : [];
       setStats({
-        users: 0,
+        users: users.length,
         stores: brands.length,
         products: products.length,
-        orders: 0,
+        orders: orders.length,
       });
       setLoading(false);
     });
@@ -84,7 +88,12 @@ export default function AdminPage() {
               <h3>Productos</h3>
               <p>Ver catálogo completo</p>
             </Link>
-            <Link href="/orders" className={styles.actionCard}>
+            <Link href="/admin/menu" className={styles.actionCard}>
+              <span className={styles.actionEmoji}>🍔</span>
+              <h3>Menú Fast Food</h3>
+              <p>Gestionar elementos y opciones del menú</p>
+            </Link>
+            <Link href="/admin/orders" className={styles.actionCard}>
               <span className={styles.actionEmoji}>📋</span>
               <h3>Pedidos</h3>
               <p>Ver todos los pedidos</p>

@@ -2,6 +2,7 @@
 title: "Spec 22 — Detalle de Producto Premium"
 labels: ["spec", "high-priority"]
 assignees: []
+status: in-progress
 ---
 
 ## Contexto
@@ -416,18 +417,18 @@ Dos secciones en la parte inferior:
 - [ ] Galería con zoom al hover, lightbox, thumbnails y swipe mobile
 - [ ] Placeholder si no hay imágenes
 - [ ] Badges sociales dinámicos (trending, best-seller, new, low-stock)
-- [ ] Especificaciones dinámicas según categoría del producto
+- [x] Especificaciones dinámicas según categoría del producto
 - [ ] MenuItem con imagen hero grande, contenido, personalización y comentarios
-- [ ] Sistema unificado de comentarios y preguntas (tipos: question, comment, reply)
+- [x] Sistema unificado de comentarios y preguntas (tipos: question, comment, reply)
 - [ ] Rating opcional en comentarios con imágenes
 - [ ] Reacciones "Útil" en comentarios
-- [ ] Admin puede marcar preguntas como resueltas
+- [x] Admin puede marcar preguntas como resueltas
 - [ ] Filtros de comentarios (todos, preguntas, comentarios, con fotos)
 - [ ] Productos similares por categoría/marca
 - [ ] "Comprados juntos" basado en órdenes reales
 - [ ] Compartir por WhatsApp + copiar link
-- [ ] Reportar producto con motivos predefinidos
-- [ ] Notificación de stock para productos agotados
+- [x] Reportar producto con motivos predefinidos
+- [x] Notificación de stock para productos agotados
 - [ ] Mobile: tabs, sticky bottom bar, swipe galería
 - [ ] Responsive en todos los breakpoints
 - [ ] Skeleton loading states
@@ -438,45 +439,45 @@ Dos secciones en la parte inferior:
 ## Tareas Técnicas
 
 ### Database (Prisma)
-- [ ] Crear modelo ProductComment (id, productId, userId, type[question|comment|reply], content, images[], rating, parentId, resolved, reactions[Json], createdAt)
-- [ ] Crear modelo ProductReport (id, productId, userId, reason, details, createdAt)
-- [ ] Crear modelo StockNotification (id, productId, userId, notified, createdAt)
-- [ ] Agregar campo soldCount a Product
-- [ ] Agregar campo specifications[Json] a Product (array de {key, value})
-- [ ] Agregar campo badges[Json] a Product (array de strings)
-- [ ] Crear modelo MenuItemComment (id, menuItemId, userId, content, images[], createdAt)
-- [ ] Migration y seed de datos de prueba
+- [x] Crear modelo ProductComment (id, productId, userId, type[question|comment|reply], content, images[], rating, parentId, resolved, reactions[Json], createdAt)
+- [x] Crear modelo ProductReport (id, productId, userId, reason, details, createdAt)
+- [x] Crear modelo StockNotification (id, productId, userId, notified, createdAt)
+- [x] Agregar campo soldCount a Product
+- [x] Agregar campo specifications[Json] a Product (array de {key, value})
+- [x] Agregar campo badges[Json] a Product (array de strings)
+- [x] Crear modelo MenuItemComment (id, menuItemId, userId, content, images[], createdAt)
+- [x] Migration y seed de datos de prueba
 
 ### Backend
-- [ ] GET /api/v1/products/:id — agregar specifications, commentsCount, averageRating, soldCount, badges
-- [ ] GET /api/v1/products/:id/comments — listar comentarios unificados con filtros
-- [ ] POST /api/v1/products/:id/comments — crear comentario/pregunta (auth)
-- [ ] POST /api/v1/products/:id/comments/:commentId/reply — responder (auth)
-- [ ] POST /api/v1/products/:id/comments/:commentId/react — reaccionar (auth)
-- [ ] POST /api/v1/products/:id/comments/:commentId/resolve — marcar resuelta (admin)
-- [ ] GET /api/v1/products/:id/related — similares + comprados juntos
-- [ ] POST /api/v1/products/:id/report — reportar (auth)
-- [ ] POST /api/v1/products/:id/notify-stock — suscribir notificación (auth)
-- [ ] GET /api/v1/menu-items/:id/comments — listar comentarios de MenuItem
-- [ ] POST /api/v1/menu-items/:id/comments — crear comentario MenuItem (auth)
-- [ ] POST /api/v1/menu-items/:id/comments/:commentId/reply — responder (auth)
+- [x] GET /api/v1/products/:id — agregar specifications, commentsCount, averageRating, soldCount, badges
+- [x] GET /api/v1/products/:id/comments — listar comentarios unificados con filtros
+- [x] POST /api/v1/products/:id/comments — crear comentario/pregunta (auth)
+- [x] POST /api/v1/products/:id/comments/:commentId/reply — responder (auth)
+- [x] POST /api/v1/products/:id/comments/:commentId/react — reaccionar (auth)
+- [x] POST /api/v1/products/:id/comments/:commentId/resolve — marcar resuelta (admin)
+- [x] GET /api/v1/products/:id/related — similares + comprados juntos
+- [x] POST /api/v1/products/:id/report — reportar (auth)
+- [x] POST /api/v1/products/:id/notify-stock — suscribir notificación (auth)
+- [x] GET /api/v1/menu-items/:id/comments — listar comentarios de MenuItem
+- [x] POST /api/v1/menu-items/:id/comments — crear comentario MenuItem (auth)
+- [x] POST /api/v1/menu-items/:id/comments/:commentId/reply — responder (auth)
 - [ ] Middleware: verificar comprador verificado para rating
-- [ ] Middleware: solo admin puede resolver preguntas y ocultar comentarios
+- [x] Middleware: solo admin puede resolver preguntas y ocultar comentarios
 - [ ] Servicio de notificaciones: responder pregunta, reporte, stock restaurado
-- [ ] Algoritmo "comprados juntos": agrupar por orderId, contar frecuencia
+- [x] Algoritmo "comprados juntos": agrupar por orderId, contar frecuencia
 
 ### Frontend Web
-- [ ] Página /products/[id] con layout de 2 columnas (info + galería)
-- [ ] Componente ImageGallery (zoom, lightbox, thumbnails, swipe)
-- [ ] Componente ProductInfo (precio, stock, badges, rating, CTAs)
-- [ ] Componente ProductSpecifications (tabla dinámica por categoría)
-- [ ] Componente CommentsSection (unificado, filtros, crear, reply, reacciones)
-- [ ] Componente RelatedProducts (similares + comprados juntos)
+- [x] Página /products/[id] con layout de 2 columnas (info + galería)
+- [x] Componente ImageGallery (zoom, lightbox, thumbnails, swipe)
+- [x] Componente ProductInfo (precio, stock, badges, rating, CTAs)
+- [x] Componente ProductSpecifications (tabla dinámica por categoría)
+- [x] Componente CommentsSection (unificado, filtros, crear, reply, reacciones)
+- [x] Componente RelatedProducts (similares + comprados juntos)
 - [ ] Componente ShareButton (WhatsApp + clipboard)
-- [ ] Componente ReportModal
-- [ ] Componente StockNotificationButton
+- [x] Componente ReportModal
+- [x] Componente StockNotificationButton
 - [ ] Componente MenuItemDetail (hero, contenido, personalización, comentarios)
-- [ ] Componente CustomizationOptions (opciones de MenuItem con precio dinámico)
+- [x] Componente CustomizationOptions (opciones de MenuItem con precio dinámico)
 - [ ] Skeleton loading states
 - [ ] Responsive design
 
@@ -490,11 +491,11 @@ Dos secciones en la parte inferior:
 - [ ] Carrusel de productos relacionados
 
 ### General
-- [ ] Tests para endpoints de comentarios
-- [ ] Tests para endpoints de MenuItem comments
+- [x] Tests para endpoints de comentarios
+- [x] Tests para endpoints de MenuItem comments
 - [ ] Tests para verified buyer middleware
-- [ ] Tests para algoritmo "comprados juntos"
-- [ ] Tests para notificación de stock
+- [x] Tests para algoritmo "comprados juntos"
+- [x] Tests para notificación de stock
 - [ ] Integrar con frontend
 - [ ] Integrar con mobile
 - [ ] PR a main

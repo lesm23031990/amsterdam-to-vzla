@@ -2,6 +2,7 @@
 title: "Spec 19 — Binance Pay Integration"
 labels: ["spec"]
 assignees: []
+status: in-progress
 ---
 
 ## Endpoints
@@ -91,7 +92,7 @@ Headers: `BinancePay-Certificate-SN: <certificate-serial>`
 - Binance API key and secret stored in env vars (`BINANCE_API_KEY`, `BINANCE_SECRET_KEY`)
 
 ## Acceptance Criteria
-- [ ] User can select Binance Pay at checkout
+- [x] User can select Binance Pay at checkout
 - [ ] Redirect to Binance Pay or show QR
 - [ ] Webhook updates order status
 - [ ] Payment confirmed shown to user
@@ -105,7 +106,7 @@ Headers: `BinancePay-Certificate-SN: <certificate-serial>`
 - [ ] Create `POST /api/v1/webhooks/binance` endpoint
 - [ ] Implement webhook signature verification
 - [ ] Create `GET /api/v1/checkout/pay/binance/:orderId/status` endpoint
-- [ ] Add Binance env vars to `.env.example`
+- [x] Add Binance env vars to `.env.example`
 - [ ] Build Binance Pay checkout UI (QR / button)
 - [ ] Implement polling fallback on frontend
 - [ ] Handle payment timeout/expiry

@@ -2,6 +2,7 @@
 title: "Spec 16 — Gestión de Repartidores y Deliveries"
 labels: ["spec"]
 assignees: []
+status: in-progress
 ---
 
 ## Endpoints
@@ -109,7 +110,7 @@ Headers: `Authorization: Bearer <token>` (repartidor)
 
 ## Acceptance Criteria
 - [ ] Admin puede crear cuentas de repartidor
-- [ ] Admin puede asignar deliveries a repartidores
+- [x] Admin puede asignar deliveries a repartidores
 - [ ] Repartidor ve sus deliveries asignados
 - [ ] Repartidor puede actualizar estado del delivery
 - [ ] Repartidor puede compartir ubicación en vivo
@@ -118,7 +119,7 @@ Headers: `Authorization: Bearer <token>` (repartidor)
 ---
 
 ## Tareas Técnicas
-- [ ] Write tests (TDD)
+- [x] Write tests (TDD)
 - [ ] Crear modelo Driver vinculado a User
 - [ ] Crear página `/admin/drivers` para gestión de repartidores
 - [ ] Crear página `/driver` para dashboard del repartidor
