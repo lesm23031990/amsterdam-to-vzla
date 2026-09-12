@@ -88,6 +88,11 @@ Un bug de datos se arregla en la fuente o con estados vacíos, nunca eliminando 
    `SkeletonCard` (bento 3, express 6, ofertas 4) para que la página no salte.
 7. El fetch de home usa `api` (`@/lib/api`) con `currency` de `useCurrency()`
    en la query — nunca `fetch('/api/v1/...')` crudo (rompe NEXT_PUBLIC_API_URL).
+8. **Ancho de secciones unificado**: Bento Destacados y Ofertas del Día usan
+   `.sectionInner`; Catálogo Express usa `.splitContainer`. AMBOS contenedores
+   deben mantener `max-width: 1280px; padding: 0 20px` idénticos para que los
+   bordes izquierdo/derecho de las tres secciones queden alineados. Cambiar uno
+   sin el otro desalinea la home (bug histórico: 1200 vs 1280).
 
 ## Verificación post-cambio (checklist)
 

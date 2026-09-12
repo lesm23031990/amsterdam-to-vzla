@@ -307,7 +307,7 @@
 /* ============================================================
    COMMON
    ============================================================ */
-.sectionInner { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+.sectionInner { max-width: 1280px; margin: 0 auto; padding: 0 20px; }
 .sectionTitle { font-size: 26px; font-weight: 800; color: var(--primary); }
 .sectionSub { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
 
