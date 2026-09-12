@@ -447,6 +447,7 @@
 }
 
 .productImgWrap {
+  display: block;
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 3;
@@ -714,6 +715,7 @@
 }
 
 .offerImgWrap {
+  display: block;
   position: relative;
   width: 100%;
   aspect-ratio: 1 / 1;
