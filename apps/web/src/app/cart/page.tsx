@@ -53,6 +53,7 @@ interface GroupedBrand {
 }
 
 const FASTFOOD_GROUP = '__fastfood__';
+const NO_BRAND_GROUP = '__no_brand__';
 
 const isMenuLine = (item: CartItem) => !item.product && !!item.menuItem;
 const lineName = (item: CartItem) => isMenuLine(item) ? item.menuItem!.name : (item.product?.name || '');
@@ -60,8 +61,10 @@ const lineImage = (item: CartItem) => isMenuLine(item) ? (item.menuItem!.image |
 const lineLink = (item: CartItem) => isMenuLine(item) ? '/menu' : `/products/${item.product?.id}`;
 const lineUnitPrice = (item: CartItem) => isMenuLine(item)
   ? Number(item.price ?? item.menuItem!.basePrice)
-  : Number(item.product?.price || 0);
-const lineCurrency = (item: CartItem) => isMenuLine(item) ? item.menuItem!.currency : (item.product?.currency || 'USD');
+  : Number(item.price ?? item.product?.price ?? 0);
+const lineCurrency = (item: CartItem) => isMenuLine(item)
+  ? (item.menuItem?.currency || 'USD')
+  : (item.product?.currency || 'USD');
 
 export default function CartPage() {
   const { user } = useAuth();
@@ -99,14 +102,14 @@ export default function CartPage() {
   const grouped: GroupedBrand[] = [];
   const brandMap = new Map<string, CartItem[]>();
   items.forEach((item) => {
-    const brandId = isMenuLine(item) ? FASTFOOD_GROUP : item.product?.brand?.id;
-    if (!brandId) return;
+    const brandId = isMenuLine(item) ? FASTFOOD_GROUP : (item.product?.brand?.id || NO_BRAND_GROUP);
     if (!brandMap.has(brandId)) brandMap.set(brandId, []);
     brandMap.get(brandId)!.push(item);
   });
   brandMap.forEach((brandItems, brandId) => {
     const first = brandItems[0];
     const isFastFood = brandId === FASTFOOD_GROUP;
+    const noBrand = brandId === NO_BRAND_GROUP;
     grouped.push({
       brandId,
       brandName: isFastFood ? 'Menú Fast Food' : (first.product?.brand?.name || 'Sin marca'),
@@ -139,7 +142,7 @@ export default function CartPage() {
           <>
             {grouped.map((group) => (
               <div key={group.brandId} className={styles.group}>
-                <Link href={group.isFastFood ? '/menu' : `/brands/${group.brandSlug}`} className={styles.storeHeader}>
+                <Link href={group.isFastFood ? '/menu' : (group.brandSlug ? `/brands/${group.brandSlug}` : '/products')} className={styles.storeHeader}>
                   {group.brandName}
                 </Link>
                 {group.items.map((item) => (

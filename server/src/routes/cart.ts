@@ -214,6 +214,8 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
               select: {
                 id: true,
                 name: true,
+                basePrice: true,
+                currency: true,
                 image: true,
                 preparationTime: true,
                 category: true,
