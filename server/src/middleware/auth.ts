@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
+import { db } from '../lib/db'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-prod'
 
@@ -9,10 +10,18 @@ export interface AuthPayload {
   email: string
 }
 
+export interface DriverSession {
+  id: string
+  userId: string
+  isActive: boolean
+  isOnline: boolean
+}
+
 declare global {
   namespace Express {
     interface Request {
       user?: AuthPayload
+      driver?: DriverSession
     }
   }
 }
@@ -43,5 +52,36 @@ export function requireRole(...roles: string[]) {
       return
     }
     next()
+  }
+}
+
+/**
+ * Autoriza a usuarios con un registro Driver activo.
+ * Según spec-16, un repartidor mantiene rol `cliente` + perfil en `drivers`.
+ */
+export async function requireDriver(req: Request, res: Response, next: NextFunction): Promise<void> {
+  if (!req.user) {
+    res.status(401).json({ ok: false, error: 'Token requerido' })
+    return
+  }
+
+  try {
+    const driver = await db.driver.findUnique({ where: { userId: req.user.userId } })
+
+    if (!driver || !driver.isActive) {
+      res.status(403).json({ ok: false, error: 'No autorizado: no eres un repartidor activo' })
+      return
+    }
+
+    req.driver = {
+      id: driver.id,
+      userId: driver.userId,
+      isActive: driver.isActive,
+      isOnline: driver.isOnline,
+    }
+    next()
+  } catch (error) {
+    console.error('Require driver error:', error)
+    res.status(500).json({ ok: false, error: 'Error al validar repartidor' })
   }
 }

@@ -98,6 +98,11 @@ export default function AdminPage() {
               <h3>Pedidos</h3>
               <p>Ver todos los pedidos</p>
             </Link>
+            <Link href="/admin/drivers" className={styles.actionCard}>
+              <span className={styles.actionEmoji}>🛵</span>
+              <h3>Repartidores</h3>
+              <p>Crear cuentas y asignar entregas</p>
+            </Link>
           </div>
         </div>
       </div>

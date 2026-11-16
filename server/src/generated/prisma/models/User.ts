@@ -215,6 +215,7 @@ export type UserWhereInput = {
   productReports?: Prisma.ProductReportListRelationFilter
   stockNotifications?: Prisma.StockNotificationListRelationFilter
   menuItemComments?: Prisma.MenuItemCommentListRelationFilter
+  driver?: Prisma.XOR<Prisma.DriverNullableScalarRelationFilter, Prisma.DriverWhereInput> | null
 }
 
 export type UserOrderByWithRelationInput = {
@@ -235,6 +236,7 @@ export type UserOrderByWithRelationInput = {
   productReports?: Prisma.ProductReportOrderByRelationAggregateInput
   stockNotifications?: Prisma.StockNotificationOrderByRelationAggregateInput
   menuItemComments?: Prisma.MenuItemCommentOrderByRelationAggregateInput
+  driver?: Prisma.DriverOrderByWithRelationInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -258,6 +260,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   productReports?: Prisma.ProductReportListRelationFilter
   stockNotifications?: Prisma.StockNotificationListRelationFilter
   menuItemComments?: Prisma.MenuItemCommentListRelationFilter
+  driver?: Prisma.XOR<Prisma.DriverNullableScalarRelationFilter, Prisma.DriverWhereInput> | null
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -306,6 +309,7 @@ export type UserCreateInput = {
   productReports?: Prisma.ProductReportCreateNestedManyWithoutUserInput
   stockNotifications?: Prisma.StockNotificationCreateNestedManyWithoutUserInput
   menuItemComments?: Prisma.MenuItemCommentCreateNestedManyWithoutUserInput
+  driver?: Prisma.DriverCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -326,6 +330,7 @@ export type UserUncheckedCreateInput = {
   productReports?: Prisma.ProductReportUncheckedCreateNestedManyWithoutUserInput
   stockNotifications?: Prisma.StockNotificationUncheckedCreateNestedManyWithoutUserInput
   menuItemComments?: Prisma.MenuItemCommentUncheckedCreateNestedManyWithoutUserInput
+  driver?: Prisma.DriverUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -346,6 +351,7 @@ export type UserUpdateInput = {
   productReports?: Prisma.ProductReportUpdateManyWithoutUserNestedInput
   stockNotifications?: Prisma.StockNotificationUpdateManyWithoutUserNestedInput
   menuItemComments?: Prisma.MenuItemCommentUpdateManyWithoutUserNestedInput
+  driver?: Prisma.DriverUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -366,6 +372,7 @@ export type UserUncheckedUpdateInput = {
   productReports?: Prisma.ProductReportUncheckedUpdateManyWithoutUserNestedInput
   stockNotifications?: Prisma.StockNotificationUncheckedUpdateManyWithoutUserNestedInput
   menuItemComments?: Prisma.MenuItemCommentUncheckedUpdateManyWithoutUserNestedInput
+  driver?: Prisma.DriverUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -497,6 +504,20 @@ export type UserUpdateOneRequiredWithoutDeliveriesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutDeliveriesInput, Prisma.UserUpdateWithoutDeliveriesInput>, Prisma.UserUncheckedUpdateWithoutDeliveriesInput>
 }
 
+export type UserCreateNestedOneWithoutDriverInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDriverInput, Prisma.UserUncheckedCreateWithoutDriverInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDriverInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutDriverNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDriverInput, Prisma.UserUncheckedCreateWithoutDriverInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDriverInput
+  upsert?: Prisma.UserUpsertWithoutDriverInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutDriverInput, Prisma.UserUpdateWithoutDriverInput>, Prisma.UserUncheckedUpdateWithoutDriverInput>
+}
+
 export type UserCreateNestedOneWithoutConversationsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutConversationsInput, Prisma.UserUncheckedCreateWithoutConversationsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutConversationsInput
@@ -598,6 +619,7 @@ export type UserCreateWithoutCartInput = {
   productReports?: Prisma.ProductReportCreateNestedManyWithoutUserInput
   stockNotifications?: Prisma.StockNotificationCreateNestedManyWithoutUserInput
   menuItemComments?: Prisma.MenuItemCommentCreateNestedManyWithoutUserInput
+  driver?: Prisma.DriverCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutCartInput = {
@@ -617,6 +639,7 @@ export type UserUncheckedCreateWithoutCartInput = {
   productReports?: Prisma.ProductReportUncheckedCreateNestedManyWithoutUserInput
   stockNotifications?: Prisma.StockNotificationUncheckedCreateNestedManyWithoutUserInput
   menuItemComments?: Prisma.MenuItemCommentUncheckedCreateNestedManyWithoutUserInput
+  driver?: Prisma.DriverUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutCartInput = {
@@ -652,6 +675,7 @@ export type UserUpdateWithoutCartInput = {
   productReports?: Prisma.ProductReportUpdateManyWithoutUserNestedInput
   stockNotifications?: Prisma.StockNotificationUpdateManyWithoutUserNestedInput
   menuItemComments?: Prisma.MenuItemCommentUpdateManyWithoutUserNestedInput
+  driver?: Prisma.DriverUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCartInput = {
@@ -671,6 +695,7 @@ export type UserUncheckedUpdateWithoutCartInput = {
   productReports?: Prisma.ProductReportUncheckedUpdateManyWithoutUserNestedInput
   stockNotifications?: Prisma.StockNotificationUncheckedUpdateManyWithoutUserNestedInput
   menuItemComments?: Prisma.MenuItemCommentUncheckedUpdateManyWithoutUserNestedInput
+  driver?: Prisma.DriverUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutOrdersInput = {
@@ -690,6 +715,7 @@ export type UserCreateWithoutOrdersInput = {
   productReports?: Prisma.ProductReportCreateNestedManyWithoutUserInput
   stockNotifications?: Prisma.StockNotificationCreateNestedManyWithoutUserInput
   menuItemComments?: Prisma.MenuItemCommentCreateNestedManyWithoutUserInput
+  driver?: Prisma.DriverCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutOrdersInput = {
@@ -709,6 +735,7 @@ export type UserUncheckedCreateWithoutOrdersInput = {
   productReports?: Prisma.ProductReportUncheckedCreateNestedManyWithoutUserInput
   stockNotifications?: Prisma.StockNotificationUncheckedCreateNestedManyWithoutUserInput
   menuItemComments?: Prisma.MenuItemCommentUncheckedCreateNestedManyWithoutUserInput
+  driver?: Prisma.DriverUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutOrdersInput = {
@@ -744,6 +771,7 @@ export type UserUpdateWithoutOrdersInput = {
   productReports?: Prisma.ProductReportUpdateManyWithoutUserNestedInput
   stockNotifications?: Prisma.StockNotificationUpdateManyWithoutUserNestedInput
   menuItemComments?: Prisma.MenuItemCommentUpdateManyWithoutUserNestedInput
+  driver?: Prisma.DriverUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutOrdersInput = {
@@ -763,6 +791,7 @@ export type UserUncheckedUpdateWithoutOrdersInput = {
   productReports?: Prisma.ProductReportUncheckedUpdateManyWithoutUserNestedInput
   stockNotifications?: Prisma.StockNotificationUncheckedUpdateManyWithoutUserNestedInput
   menuItemComments?: Prisma.MenuItemCommentUncheckedUpdateManyWithoutUserNestedInput
+  driver?: Prisma.DriverUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutDeliveriesInput = {
@@ -782,6 +811,7 @@ export type UserCreateWithoutDeliveriesInput = {
   productReports?: Prisma.ProductReportCreateNestedManyWithoutUserInput
   stockNotifications?: Prisma.StockNotificationCreateNestedManyWithoutUserInput
   menuItemComments?: Prisma.MenuItemCommentCreateNestedManyWithoutUserInput
+  driver?: Prisma.DriverCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutDeliveriesInput = {
@@ -801,6 +831,7 @@ export type UserUncheckedCreateWithoutDeliveriesInput = {
   productReports?: Prisma.ProductReportUncheckedCreateNestedManyWithoutUserInput
   stockNotifications?: Prisma.StockNotificationUncheckedCreateNestedManyWithoutUserInput
   menuItemComments?: Prisma.MenuItemCommentUncheckedCreateNestedManyWithoutUserInput
+  driver?: Prisma.DriverUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutDeliveriesInput = {
@@ -836,6 +867,7 @@ export type UserUpdateWithoutDeliveriesInput = {
   productReports?: Prisma.ProductReportUpdateManyWithoutUserNestedInput
   stockNotifications?: Prisma.StockNotificationUpdateManyWithoutUserNestedInput
   menuItemComments?: Prisma.MenuItemCommentUpdateManyWithoutUserNestedInput
+  driver?: Prisma.DriverUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutDeliveriesInput = {
@@ -850,6 +882,103 @@ export type UserUncheckedUpdateWithoutDeliveriesInput = {
   cart?: Prisma.CartUncheckedUpdateOneWithoutUserNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
   conversations?: Prisma.ConversationUncheckedUpdateManyWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  productComments?: Prisma.ProductCommentUncheckedUpdateManyWithoutUserNestedInput
+  productReports?: Prisma.ProductReportUncheckedUpdateManyWithoutUserNestedInput
+  stockNotifications?: Prisma.StockNotificationUncheckedUpdateManyWithoutUserNestedInput
+  menuItemComments?: Prisma.MenuItemCommentUncheckedUpdateManyWithoutUserNestedInput
+  driver?: Prisma.DriverUncheckedUpdateOneWithoutUserNestedInput
+}
+
+export type UserCreateWithoutDriverInput = {
+  id?: string
+  email: string
+  password: string
+  name: string
+  phone?: string | null
+  role?: $Enums.Role
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  cart?: Prisma.CartCreateNestedOneWithoutUserInput
+  orders?: Prisma.OrderCreateNestedManyWithoutUserInput
+  conversations?: Prisma.ConversationCreateNestedManyWithoutUserInput
+  deliveries?: Prisma.DeliveryCreateNestedManyWithoutDriverInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  productComments?: Prisma.ProductCommentCreateNestedManyWithoutUserInput
+  productReports?: Prisma.ProductReportCreateNestedManyWithoutUserInput
+  stockNotifications?: Prisma.StockNotificationCreateNestedManyWithoutUserInput
+  menuItemComments?: Prisma.MenuItemCommentCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutDriverInput = {
+  id?: string
+  email: string
+  password: string
+  name: string
+  phone?: string | null
+  role?: $Enums.Role
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  cart?: Prisma.CartUncheckedCreateNestedOneWithoutUserInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
+  conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutUserInput
+  deliveries?: Prisma.DeliveryUncheckedCreateNestedManyWithoutDriverInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  productComments?: Prisma.ProductCommentUncheckedCreateNestedManyWithoutUserInput
+  productReports?: Prisma.ProductReportUncheckedCreateNestedManyWithoutUserInput
+  stockNotifications?: Prisma.StockNotificationUncheckedCreateNestedManyWithoutUserInput
+  menuItemComments?: Prisma.MenuItemCommentUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutDriverInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutDriverInput, Prisma.UserUncheckedCreateWithoutDriverInput>
+}
+
+export type UserUpsertWithoutDriverInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutDriverInput, Prisma.UserUncheckedUpdateWithoutDriverInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutDriverInput, Prisma.UserUncheckedCreateWithoutDriverInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutDriverInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutDriverInput, Prisma.UserUncheckedUpdateWithoutDriverInput>
+}
+
+export type UserUpdateWithoutDriverInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cart?: Prisma.CartUpdateOneWithoutUserNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
+  conversations?: Prisma.ConversationUpdateManyWithoutUserNestedInput
+  deliveries?: Prisma.DeliveryUpdateManyWithoutDriverNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  productComments?: Prisma.ProductCommentUpdateManyWithoutUserNestedInput
+  productReports?: Prisma.ProductReportUpdateManyWithoutUserNestedInput
+  stockNotifications?: Prisma.StockNotificationUpdateManyWithoutUserNestedInput
+  menuItemComments?: Prisma.MenuItemCommentUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutDriverInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  cart?: Prisma.CartUncheckedUpdateOneWithoutUserNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
+  conversations?: Prisma.ConversationUncheckedUpdateManyWithoutUserNestedInput
+  deliveries?: Prisma.DeliveryUncheckedUpdateManyWithoutDriverNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   productComments?: Prisma.ProductCommentUncheckedUpdateManyWithoutUserNestedInput
   productReports?: Prisma.ProductReportUncheckedUpdateManyWithoutUserNestedInput
@@ -874,6 +1003,7 @@ export type UserCreateWithoutConversationsInput = {
   productReports?: Prisma.ProductReportCreateNestedManyWithoutUserInput
   stockNotifications?: Prisma.StockNotificationCreateNestedManyWithoutUserInput
   menuItemComments?: Prisma.MenuItemCommentCreateNestedManyWithoutUserInput
+  driver?: Prisma.DriverCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutConversationsInput = {
@@ -893,6 +1023,7 @@ export type UserUncheckedCreateWithoutConversationsInput = {
   productReports?: Prisma.ProductReportUncheckedCreateNestedManyWithoutUserInput
   stockNotifications?: Prisma.StockNotificationUncheckedCreateNestedManyWithoutUserInput
   menuItemComments?: Prisma.MenuItemCommentUncheckedCreateNestedManyWithoutUserInput
+  driver?: Prisma.DriverUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutConversationsInput = {
@@ -928,6 +1059,7 @@ export type UserUpdateWithoutConversationsInput = {
   productReports?: Prisma.ProductReportUpdateManyWithoutUserNestedInput
   stockNotifications?: Prisma.StockNotificationUpdateManyWithoutUserNestedInput
   menuItemComments?: Prisma.MenuItemCommentUpdateManyWithoutUserNestedInput
+  driver?: Prisma.DriverUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutConversationsInput = {
@@ -947,6 +1079,7 @@ export type UserUncheckedUpdateWithoutConversationsInput = {
   productReports?: Prisma.ProductReportUncheckedUpdateManyWithoutUserNestedInput
   stockNotifications?: Prisma.StockNotificationUncheckedUpdateManyWithoutUserNestedInput
   menuItemComments?: Prisma.MenuItemCommentUncheckedUpdateManyWithoutUserNestedInput
+  driver?: Prisma.DriverUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutNotificationsInput = {
@@ -966,6 +1099,7 @@ export type UserCreateWithoutNotificationsInput = {
   productReports?: Prisma.ProductReportCreateNestedManyWithoutUserInput
   stockNotifications?: Prisma.StockNotificationCreateNestedManyWithoutUserInput
   menuItemComments?: Prisma.MenuItemCommentCreateNestedManyWithoutUserInput
+  driver?: Prisma.DriverCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutNotificationsInput = {
@@ -985,6 +1119,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   productReports?: Prisma.ProductReportUncheckedCreateNestedManyWithoutUserInput
   stockNotifications?: Prisma.StockNotificationUncheckedCreateNestedManyWithoutUserInput
   menuItemComments?: Prisma.MenuItemCommentUncheckedCreateNestedManyWithoutUserInput
+  driver?: Prisma.DriverUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutNotificationsInput = {
@@ -1020,6 +1155,7 @@ export type UserUpdateWithoutNotificationsInput = {
   productReports?: Prisma.ProductReportUpdateManyWithoutUserNestedInput
   stockNotifications?: Prisma.StockNotificationUpdateManyWithoutUserNestedInput
   menuItemComments?: Prisma.MenuItemCommentUpdateManyWithoutUserNestedInput
+  driver?: Prisma.DriverUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationsInput = {
@@ -1039,6 +1175,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   productReports?: Prisma.ProductReportUncheckedUpdateManyWithoutUserNestedInput
   stockNotifications?: Prisma.StockNotificationUncheckedUpdateManyWithoutUserNestedInput
   menuItemComments?: Prisma.MenuItemCommentUncheckedUpdateManyWithoutUserNestedInput
+  driver?: Prisma.DriverUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutProductCommentsInput = {
@@ -1058,6 +1195,7 @@ export type UserCreateWithoutProductCommentsInput = {
   productReports?: Prisma.ProductReportCreateNestedManyWithoutUserInput
   stockNotifications?: Prisma.StockNotificationCreateNestedManyWithoutUserInput
   menuItemComments?: Prisma.MenuItemCommentCreateNestedManyWithoutUserInput
+  driver?: Prisma.DriverCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutProductCommentsInput = {
@@ -1077,6 +1215,7 @@ export type UserUncheckedCreateWithoutProductCommentsInput = {
   productReports?: Prisma.ProductReportUncheckedCreateNestedManyWithoutUserInput
   stockNotifications?: Prisma.StockNotificationUncheckedCreateNestedManyWithoutUserInput
   menuItemComments?: Prisma.MenuItemCommentUncheckedCreateNestedManyWithoutUserInput
+  driver?: Prisma.DriverUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutProductCommentsInput = {
@@ -1112,6 +1251,7 @@ export type UserUpdateWithoutProductCommentsInput = {
   productReports?: Prisma.ProductReportUpdateManyWithoutUserNestedInput
   stockNotifications?: Prisma.StockNotificationUpdateManyWithoutUserNestedInput
   menuItemComments?: Prisma.MenuItemCommentUpdateManyWithoutUserNestedInput
+  driver?: Prisma.DriverUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutProductCommentsInput = {
@@ -1131,6 +1271,7 @@ export type UserUncheckedUpdateWithoutProductCommentsInput = {
   productReports?: Prisma.ProductReportUncheckedUpdateManyWithoutUserNestedInput
   stockNotifications?: Prisma.StockNotificationUncheckedUpdateManyWithoutUserNestedInput
   menuItemComments?: Prisma.MenuItemCommentUncheckedUpdateManyWithoutUserNestedInput
+  driver?: Prisma.DriverUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutProductReportsInput = {
@@ -1150,6 +1291,7 @@ export type UserCreateWithoutProductReportsInput = {
   productComments?: Prisma.ProductCommentCreateNestedManyWithoutUserInput
   stockNotifications?: Prisma.StockNotificationCreateNestedManyWithoutUserInput
   menuItemComments?: Prisma.MenuItemCommentCreateNestedManyWithoutUserInput
+  driver?: Prisma.DriverCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutProductReportsInput = {
@@ -1169,6 +1311,7 @@ export type UserUncheckedCreateWithoutProductReportsInput = {
   productComments?: Prisma.ProductCommentUncheckedCreateNestedManyWithoutUserInput
   stockNotifications?: Prisma.StockNotificationUncheckedCreateNestedManyWithoutUserInput
   menuItemComments?: Prisma.MenuItemCommentUncheckedCreateNestedManyWithoutUserInput
+  driver?: Prisma.DriverUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutProductReportsInput = {
@@ -1204,6 +1347,7 @@ export type UserUpdateWithoutProductReportsInput = {
   productComments?: Prisma.ProductCommentUpdateManyWithoutUserNestedInput
   stockNotifications?: Prisma.StockNotificationUpdateManyWithoutUserNestedInput
   menuItemComments?: Prisma.MenuItemCommentUpdateManyWithoutUserNestedInput
+  driver?: Prisma.DriverUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutProductReportsInput = {
@@ -1223,6 +1367,7 @@ export type UserUncheckedUpdateWithoutProductReportsInput = {
   productComments?: Prisma.ProductCommentUncheckedUpdateManyWithoutUserNestedInput
   stockNotifications?: Prisma.StockNotificationUncheckedUpdateManyWithoutUserNestedInput
   menuItemComments?: Prisma.MenuItemCommentUncheckedUpdateManyWithoutUserNestedInput
+  driver?: Prisma.DriverUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutStockNotificationsInput = {
@@ -1242,6 +1387,7 @@ export type UserCreateWithoutStockNotificationsInput = {
   productComments?: Prisma.ProductCommentCreateNestedManyWithoutUserInput
   productReports?: Prisma.ProductReportCreateNestedManyWithoutUserInput
   menuItemComments?: Prisma.MenuItemCommentCreateNestedManyWithoutUserInput
+  driver?: Prisma.DriverCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutStockNotificationsInput = {
@@ -1261,6 +1407,7 @@ export type UserUncheckedCreateWithoutStockNotificationsInput = {
   productComments?: Prisma.ProductCommentUncheckedCreateNestedManyWithoutUserInput
   productReports?: Prisma.ProductReportUncheckedCreateNestedManyWithoutUserInput
   menuItemComments?: Prisma.MenuItemCommentUncheckedCreateNestedManyWithoutUserInput
+  driver?: Prisma.DriverUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutStockNotificationsInput = {
@@ -1296,6 +1443,7 @@ export type UserUpdateWithoutStockNotificationsInput = {
   productComments?: Prisma.ProductCommentUpdateManyWithoutUserNestedInput
   productReports?: Prisma.ProductReportUpdateManyWithoutUserNestedInput
   menuItemComments?: Prisma.MenuItemCommentUpdateManyWithoutUserNestedInput
+  driver?: Prisma.DriverUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutStockNotificationsInput = {
@@ -1315,6 +1463,7 @@ export type UserUncheckedUpdateWithoutStockNotificationsInput = {
   productComments?: Prisma.ProductCommentUncheckedUpdateManyWithoutUserNestedInput
   productReports?: Prisma.ProductReportUncheckedUpdateManyWithoutUserNestedInput
   menuItemComments?: Prisma.MenuItemCommentUncheckedUpdateManyWithoutUserNestedInput
+  driver?: Prisma.DriverUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutMenuItemCommentsInput = {
@@ -1334,6 +1483,7 @@ export type UserCreateWithoutMenuItemCommentsInput = {
   productComments?: Prisma.ProductCommentCreateNestedManyWithoutUserInput
   productReports?: Prisma.ProductReportCreateNestedManyWithoutUserInput
   stockNotifications?: Prisma.StockNotificationCreateNestedManyWithoutUserInput
+  driver?: Prisma.DriverCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutMenuItemCommentsInput = {
@@ -1353,6 +1503,7 @@ export type UserUncheckedCreateWithoutMenuItemCommentsInput = {
   productComments?: Prisma.ProductCommentUncheckedCreateNestedManyWithoutUserInput
   productReports?: Prisma.ProductReportUncheckedCreateNestedManyWithoutUserInput
   stockNotifications?: Prisma.StockNotificationUncheckedCreateNestedManyWithoutUserInput
+  driver?: Prisma.DriverUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutMenuItemCommentsInput = {
@@ -1388,6 +1539,7 @@ export type UserUpdateWithoutMenuItemCommentsInput = {
   productComments?: Prisma.ProductCommentUpdateManyWithoutUserNestedInput
   productReports?: Prisma.ProductReportUpdateManyWithoutUserNestedInput
   stockNotifications?: Prisma.StockNotificationUpdateManyWithoutUserNestedInput
+  driver?: Prisma.DriverUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutMenuItemCommentsInput = {
@@ -1407,6 +1559,7 @@ export type UserUncheckedUpdateWithoutMenuItemCommentsInput = {
   productComments?: Prisma.ProductCommentUncheckedUpdateManyWithoutUserNestedInput
   productReports?: Prisma.ProductReportUncheckedUpdateManyWithoutUserNestedInput
   stockNotifications?: Prisma.StockNotificationUncheckedUpdateManyWithoutUserNestedInput
+  driver?: Prisma.DriverUncheckedUpdateOneWithoutUserNestedInput
 }
 
 
@@ -1521,6 +1674,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   productReports?: boolean | Prisma.User$productReportsArgs<ExtArgs>
   stockNotifications?: boolean | Prisma.User$stockNotificationsArgs<ExtArgs>
   menuItemComments?: boolean | Prisma.User$menuItemCommentsArgs<ExtArgs>
+  driver?: boolean | Prisma.User$driverArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1568,6 +1722,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   productReports?: boolean | Prisma.User$productReportsArgs<ExtArgs>
   stockNotifications?: boolean | Prisma.User$stockNotificationsArgs<ExtArgs>
   menuItemComments?: boolean | Prisma.User$menuItemCommentsArgs<ExtArgs>
+  driver?: boolean | Prisma.User$driverArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1585,6 +1740,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     productReports: Prisma.$ProductReportPayload<ExtArgs>[]
     stockNotifications: Prisma.$StockNotificationPayload<ExtArgs>[]
     menuItemComments: Prisma.$MenuItemCommentPayload<ExtArgs>[]
+    driver: Prisma.$DriverPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1998,6 +2154,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   productReports<T extends Prisma.User$productReportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$productReportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProductReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   stockNotifications<T extends Prisma.User$stockNotificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$stockNotificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StockNotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   menuItemComments<T extends Prisma.User$menuItemCommentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$menuItemCommentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MenuItemCommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  driver<T extends Prisma.User$driverArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$driverArgs<ExtArgs>>): Prisma.Prisma__DriverClient<runtime.Types.Result.GetResult<Prisma.$DriverPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2636,6 +2793,25 @@ export type User$menuItemCommentsArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.MenuItemCommentScalarFieldEnum | Prisma.MenuItemCommentScalarFieldEnum[]
+}
+
+/**
+ * User.driver
+ */
+export type User$driverArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Driver
+   */
+  select?: Prisma.DriverSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Driver
+   */
+  omit?: Prisma.DriverOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DriverInclude<ExtArgs> | null
+  where?: Prisma.DriverWhereInput
 }
 
 /**

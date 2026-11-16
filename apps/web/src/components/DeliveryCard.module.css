@@ -1,0 +1,120 @@
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f3f4f6;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.orderId {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+  margin: 0 0 4px;
+  text-transform: uppercase;
+}
+
+.customer {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.status {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #f3f4f6;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.assigned { background: #e0e7ff; color: #4338ca; }
+.pending { background: #fef3c7; color: #b45309; }
+.accepted { background: #dbeafe; color: #1d4ed8; }
+.picked_up { background: #ede9fe; color: #6d28d9; }
+.in_transit { background: #ffedd5; color: #c2410c; }
+.delivered { background: #dcfce7; color: #15803d; }
+.cancelled { background: #fee2e2; color: #b91c1c; }
+
+.address,
+.phone {
+  font-size: 14px;
+  color: #4b5563;
+  margin: 12px 0 0;
+}
+
+.items {
+  margin: 12px 0 0;
+  padding: 12px 16px;
+  list-style: none;
+  background: #f9fafb;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #374151;
+}
+
+.items li + li {
+  margin-top: 4px;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.total {
+  font-size: 18px;
+  font-weight: 700;
+  color: #f97316;
+}
+
+.actionButton {
+  border: none;
+  border-radius: 10px;
+  background: #1e40af;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+.actionButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.locationButton {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 2px solid #1e40af;
+  background: #fff;
+  color: #1e40af;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.locationActive {
+  background: #1e40af;
+  color: #fff;
+}
