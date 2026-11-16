@@ -414,25 +414,25 @@ Dos secciones en la parte inferior:
 
 ## Acceptance Criteria
 
-- [ ] Galería con zoom al hover, lightbox, thumbnails y swipe mobile
-- [ ] Placeholder si no hay imágenes
-- [ ] Badges sociales dinámicos (trending, best-seller, new, low-stock)
+- [ ] Galería con zoom al hover, lightbox, thumbnails y swipe mobile (web ✅ zoom/lightbox/thumbnails; mobile: swipe ✅, lightbox/zoom ❌)
+- [x] Placeholder si no hay imágenes
+- [x] Badges sociales dinámicos (trending, best-seller, new, low-stock)
 - [x] Especificaciones dinámicas según categoría del producto
-- [ ] MenuItem con imagen hero grande, contenido, personalización y comentarios
+- [ ] MenuItem con imagen hero grande, contenido, personalización y comentarios (hero + personalización ✅; comentarios ❌)
 - [x] Sistema unificado de comentarios y preguntas (tipos: question, comment, reply)
-- [ ] Rating opcional en comentarios con imágenes
-- [ ] Reacciones "Útil" en comentarios
+- [ ] Rating opcional en comentarios con imágenes (rating ✅; subida de imágenes ❌)
+- [x] Reacciones "Útil" en comentarios
 - [x] Admin puede marcar preguntas como resueltas
-- [ ] Filtros de comentarios (todos, preguntas, comentarios, con fotos)
-- [ ] Productos similares por categoría/marca
-- [ ] "Comprados juntos" basado en órdenes reales
-- [ ] Compartir por WhatsApp + copiar link
+- [ ] Filtros de comentarios (todos, preguntas, comentarios, con fotos) (faltan filtros "con fotos")
+- [x] Productos similares por categoría/marca
+- [x] "Comprados juntos" basado en órdenes reales
+- [ ] Compartir por WhatsApp + copiar link (navigator.share + clipboard ✅; deep link WhatsApp ❌)
 - [x] Reportar producto con motivos predefinidos
 - [x] Notificación de stock para productos agotados
-- [ ] Mobile: tabs, sticky bottom bar, swipe galería
-- [ ] Responsive en todos los breakpoints
+- [x] Mobile: tabs, sticky bottom bar, swipe galería
+- [ ] Responsive en todos los breakpoints (hay @media para móvil; falta verificación formal)
 - [ ] Skeleton loading states
-- [ ] Notificaciones al responder preguntas y reportar
+- [x] Notificaciones al responder preguntas y reportar
 
 ---
 
@@ -461,9 +461,9 @@ Dos secciones en la parte inferior:
 - [x] GET /api/v1/menu-items/:id/comments — listar comentarios de MenuItem
 - [x] POST /api/v1/menu-items/:id/comments — crear comentario MenuItem (auth)
 - [x] POST /api/v1/menu-items/:id/comments/:commentId/reply — responder (auth)
-- [ ] Middleware: verificar comprador verificado para rating
+- [ ] Middleware: verificar comprador verificado para rating (obsoleto: el spec indica "sin verified buyer estricto")
 - [x] Middleware: solo admin puede resolver preguntas y ocultar comentarios
-- [ ] Servicio de notificaciones: responder pregunta, reporte, stock restaurado
+- [x] Servicio de notificaciones: responder pregunta, reporte, stock restaurado
 - [x] Algoritmo "comprados juntos": agrupar por orderId, contar frecuencia
 
 ### Frontend Web
@@ -473,27 +473,27 @@ Dos secciones en la parte inferior:
 - [x] Componente ProductSpecifications (tabla dinámica por categoría)
 - [x] Componente CommentsSection (unificado, filtros, crear, reply, reacciones)
 - [x] Componente RelatedProducts (similares + comprados juntos)
-- [ ] Componente ShareButton (WhatsApp + clipboard)
+- [ ] Componente ShareButton (WhatsApp + clipboard) (lógica inline en page.tsx; falta componente y WhatsApp)
 - [x] Componente ReportModal
 - [x] Componente StockNotificationButton
-- [ ] Componente MenuItemDetail (hero, contenido, personalización, comentarios)
+- [ ] Componente MenuItemDetail (hero, contenido, personalización, comentarios) (web usa MenuItemModal sin comentarios)
 - [x] Componente CustomizationOptions (opciones de MenuItem con precio dinámico)
 - [ ] Skeleton loading states
-- [ ] Responsive design
+- [ ] Responsive design (hay @media para móvil; falta verificación formal)
 
 ### Mobile
-- [ ] Pantalla detalle Product con galería swipe + lightbox
-- [ ] Pantalla detalle MenuItem con hero + personalización
-- [ ] Tabs: Descripción | Comentarios | Relacionados
-- [ ] Sticky bottom bar con precio + CTA
-- [ ] Bottom sheet para personalización de MenuItem
-- [ ] Lista de comentarios con replies indentados
-- [ ] Carrusel de productos relacionados
+- [ ] Pantalla detalle Product con galería swipe + lightbox (swipe ✅; lightbox ❌)
+- [x] Pantalla detalle MenuItem con hero + personalización
+- [x] Tabs: Descripción | Comentarios | Relacionados
+- [x] Sticky bottom bar con precio + CTA
+- [ ] Bottom sheet para personalización de MenuItem (opciones inline, no bottom sheet)
+- [x] Lista de comentarios con replies indentados
+- [x] Carrusel de productos relacionados
 
 ### General
 - [x] Tests para endpoints de comentarios
 - [x] Tests para endpoints de MenuItem comments
-- [ ] Tests para verified buyer middleware
+- [ ] Tests para verified buyer middleware (obsoleto junto con el middleware)
 - [x] Tests para algoritmo "comprados juntos"
 - [x] Tests para notificación de stock
 - [ ] Integrar con frontend

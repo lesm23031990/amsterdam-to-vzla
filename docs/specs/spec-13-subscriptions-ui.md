@@ -21,8 +21,11 @@ Todo el contenido de este spec ha sido reemplazado por **Spec 02 — Plataforma 
 ---
 
 ## Tareas Técnicas
-- [ ] Eliminar modelos SubscriptionPlan, StoreSubscription de Prisma
-- [ ] Eliminar endpoints de planes y suscripciones
-- [ ] Eliminar página `/dashboard/subscriptions` si existe
-- [ ] Eliminar componentes de PlanCard
-- [ ] PR a main
+
+> ✅ Verificado 2026-11-16: no existen modelos `SubscriptionPlan`/`StoreSubscription`, endpoints de planes/suscripciones, página `/dashboard/subscriptions` ni componentes `PlanCard` en el código. La eliminación se cumplió con el pivote a plataforma única (spec-02).
+
+- [x] Eliminar modelos SubscriptionPlan, StoreSubscription de Prisma
+- [x] Eliminar endpoints de planes y suscripciones
+- [x] Eliminar página `/dashboard/subscriptions` si existe
+- [x] Eliminar componentes de PlanCard
+- [x] PR a main (spec archivado en `cb91ef1`)
