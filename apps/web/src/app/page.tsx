@@ -225,31 +225,62 @@ export default function Home() {
         </div>
 
         <div className={styles.heroContent}>
-          <div className={styles.heroText}>
-            <div className={styles.heroBadgeWrap}>
-              <span className={styles.heroBadge}>❄️ Calidad y frescura en cada producto</span>
-            </div>
-            <h1 className={styles.heroTitle}>
-              <span className={styles.heroTitleLine}>Alimentos Congelados</span>
-              <span className={styles.heroAccent}>para tu Hogar y Negocio</span>
-            </h1>
-            <p className={styles.heroSub}>
-              Productos congelados e insumos de comida rápida con delivery en San Cristóbal.
-            </p>
-            <div className={styles.heroCtas}>
-              <Link href="/products" className={styles.heroCta}>
-                <span>🛒</span> Ver Catálogo
-              </Link>
-              <Link href={user ? '/orders' : '/register'} className={styles.heroCtaOutline}>
-                {user ? 'Mis Pedidos' : 'Hacer Pedido'}
-              </Link>
+          <div className={styles.heroLayout}>
+            <div className={styles.heroText}>
+              <div className={styles.heroBadgeWrap}>
+                <span className={styles.heroBadge}>❄️ Calidad y frescura en cada producto</span>
+              </div>
+              <h1 className={styles.heroTitle}>
+                <span className={styles.heroTitleLine}>Alimentos Congelados</span>
+                <span className={styles.heroAccent}>para tu Hogar y Negocio</span>
+              </h1>
+              <p className={styles.heroSub}>
+                Productos congelados e insumos de comida rápida con delivery en San Cristóbal.
+              </p>
+              <div className={styles.heroCtas}>
+                <Link href="/products" className={styles.heroCta}>
+                  <span>🛒</span> Ver Catálogo
+                </Link>
+                <Link href={user ? '/orders' : '/register'} className={styles.heroCtaOutline}>
+                  {user ? 'Mis Pedidos' : 'Hacer Pedido'}
+                </Link>
+              </div>
+
+              {/* Trust Badges */}
+              <div className={styles.trustBadges}>
+                <span className={styles.trustBadge}>🚚 Delivery gratis</span>
+                <span className={styles.trustBadge}>⚡ Entrega en 30 min</span>
+                <span className={styles.trustBadge}>💳 Paga en Bs o USD</span>
+              </div>
             </div>
 
-            {/* Trust Badges */}
-            <div className={styles.trustBadges}>
-              <span className={styles.trustBadge}>🚚 Delivery gratis</span>
-              <span className={styles.trustBadge}>⚡ Entrega en 30 min</span>
-              <span className={styles.trustBadge}>💳 Paga en Bs o USD</span>
+            <div className={styles.heroCollage} aria-label="Productos populares">
+              {loading && (
+                <>
+                  <div className={`${styles.heroCollageItem} ${styles.heroCollageMain} ${styles.heroCollageSkeleton}`} aria-hidden="true" />
+                  <div className={`${styles.heroCollageItem} ${styles.heroCollageTop} ${styles.heroCollageSkeleton}`} aria-hidden="true" />
+                  <div className={`${styles.heroCollageItem} ${styles.heroCollageBottom} ${styles.heroCollageSkeleton}`} aria-hidden="true" />
+                </>
+              )}
+              {featuredProducts.slice(0, 3).map((p, i) => {
+                const position = i === 0 ? styles.heroCollageMain : i === 1 ? styles.heroCollageTop : styles.heroCollageBottom;
+                return (
+                  <Link href={`/products/${p.id}`} key={p.id} className={`${styles.heroCollageItem} ${position}`}>
+                    <ProductImg product={p} className={styles.heroCollageImg} variant={i === 0 ? 'warm' : 'light'} dims={[600, 600]} />
+                    {i === 0 && <span className={styles.heroCollageBadge}>{'Más vendido'}</span>}
+                    <div className={styles.heroCollageLabel}>
+                      <span className={styles.heroCollageName}>{p.name}</span>
+                      <span className={styles.heroCollagePrice}>{p.displayPrice}</span>
+                    </div>
+                  </Link>
+                );
+              })}
+              {!loading && featuredProducts.length === 0 && (
+                <Link href="/products" className={`${styles.heroCollageItem} ${styles.heroCollageMain} ${styles.heroCollageFallback}`}>
+                  <span className={styles.heroCollageName}>Ver catálogo</span>
+                  <span className={styles.heroCollagePrice}>Productos congelados</span>
+                </Link>
+              )}
             </div>
           </div>
         </div>

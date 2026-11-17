@@ -18,6 +18,18 @@ Un bug de datos se arregla en la fuente o con estados vacíos, nunca eliminando 
   (`.heroTitleLine` blanco + `.heroAccent` naranja), subtítulo, 2 CTAs
   (`.heroCta` sólido naranja → `/products`; `.heroCtaOutline` → `/orders` o `/register`),
   3 trust badges (🚚  💳). 3 orbs de gradiente `.orb1/.orb2/.orb3`.
+- Layout `.heroLayout`: texto a la izquierda (`.heroText`) + collage a la derecha
+  (`.heroCollage`, 3 productos reales de `featuredProducts`):
+  - `.heroCollageMain` (grande, columna izquierda), `.heroCollageTop` y
+    `.heroCollageBottom` (columna derecha).
+  - Cada tile es un `<Link>` a `/products/{id}` con `ProductImg`
+    (`.heroCollageImg`), badge `.heroCollageBadge` ("Más vendido") en el
+    primero y overlay `.heroCollageLabel` con nombre + `displayPrice`.
+  - Hover: zoom de imagen + elevación; entrada escalonada (`collageIn`).
+  - `loading` → 3 skeletons `.heroCollageSkeleton`; sin destacados →
+    `.heroCollageFallback` (nunca dejar el collage vacío).
+  - Responsive: ≤1024px columna única; ≤768px 2 tiles (main + top);
+    ≤400px 1 tile (main).
 
 ### 2. Bento — Productos Destacados (`.bentoSection`)
 - Header: título + `Ver catálogo →` a `/products?tab=featured`.
