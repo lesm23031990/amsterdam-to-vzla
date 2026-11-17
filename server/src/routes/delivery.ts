@@ -1,9 +1,10 @@
 import { Router, Request, Response } from 'express'
 import { db } from '../lib/db'
-import { authMiddleware, requireRole } from '../middleware/auth'
+import { authMiddleware, requireRole, requireDriver } from '../middleware/auth'
 import { io } from '../index'
 import { OrderStatus } from '../generated/prisma/enums'
 import { createNotification } from '../services/notifications'
+import { assignDriverToOrder } from '../services/deliveryAssignment'
 
 const router = Router()
 
@@ -15,6 +16,27 @@ const validTransitions: Record<string, string[]> = {
   delivered: [],
   cancelled: [],
 }
+
+const deliveryStatusTransitions: Record<string, string[]> = {
+  assigned: ['accepted'],
+  pending: ['accepted'],
+  accepted: ['picked_up'],
+  picked_up: ['in_transit'],
+  in_transit: ['delivered'],
+  delivered: [],
+  cancelled: [],
+}
+
+const deliveryStatusLabels: Record<string, string> = {
+  assigned: 'Asignado',
+  pending: 'Pendiente',
+  accepted: 'Aceptado',
+  picked_up: 'Recogido',
+  in_transit: 'En camino',
+  delivered: 'Entregado',
+  cancelled: 'Cancelado',
+}
+
 
 router.patch('/orders/:id/status', authMiddleware, requireRole('admin'), async (req: Request, res: Response) => {
   try {
@@ -82,81 +104,14 @@ router.patch('/orders/:id/status', authMiddleware, requireRole('admin'), async (
 router.post('/orders/:id/assign', authMiddleware, requireRole('admin'), async (req: Request, res: Response) => {
   try {
     const { driverId } = req.body
+    const result = await assignDriverToOrder(req.params.id as string, driverId)
 
-    if (!driverId) {
-      res.status(400).json({ ok: false, error: 'driverId es requerido' })
+    if (!result.ok) {
+      res.status(result.status).json({ ok: false, error: result.error })
       return
     }
 
-    const order = await db.order.findUnique({
-      where: { id: req.params.id as string },
-    })
-
-    if (!order) {
-      res.status(404).json({ ok: false, error: 'Pedido no encontrado' })
-      return
-    }
-
-    const driver = await db.user.findUnique({ where: { id: driverId } })
-    if (!driver) {
-      res.status(400).json({ ok: false, error: 'El usuario seleccionado no existe' })
-      return
-    }
-
-    const existing = await db.delivery.findUnique({ where: { orderId: order.id } })
-    if (existing) {
-      res.status(409).json({ ok: false, error: 'Este pedido ya tiene un conductor asignado' })
-      return
-    }
-
-    const delivery = await db.delivery.create({
-      data: {
-        orderId: order.id,
-        driverId,
-        status: 'assigned',
-      },
-    })
-
-    if (order.status === OrderStatus.confirmed) {
-      await db.order.update({
-        where: { id: order.id },
-        data: { status: OrderStatus.preparing },
-      })
-    }
-
-    await createNotification(
-      order.userId,
-      'driver_assigned',
-      'Conductor asignado',
-      `Tu pedido #${order.id.slice(-6)} tiene un conductor asignado: ${driver.name}`,
-      { orderId: order.id, driverId, driverName: driver.name },
-      order.id
-    )
-
-    await createNotification(
-      driverId,
-      'delivery_update',
-      'Nueva entrega asignada',
-      `Te han asignado la entrega del pedido #${order.id.slice(-6)}`,
-      { orderId: order.id },
-      order.id
-    )
-
-    io.to(order.userId).emit('notification:new', {
-      type: 'driver_assigned',
-      title: 'Conductor asignado',
-      message: `Tu pedido #${order.id.slice(-6)} tiene un conductor: ${driver.name}`,
-      orderId: order.id,
-    })
-
-    io.to(driverId).emit('notification:new', {
-      type: 'delivery_update',
-      title: 'Nueva entrega',
-      message: `Te han asignado la entrega del pedido #${order.id.slice(-6)}`,
-      orderId: order.id,
-    })
-
-    res.status(201).json({ ok: true, data: delivery })
+    res.status(201).json({ ok: true, data: result.delivery })
   } catch (error) {
     console.error('Assign driver error:', error)
     res.status(500).json({ ok: false, error: 'Error al asignar conductor' })
@@ -211,12 +166,155 @@ router.get('/orders/:id/tracking', authMiddleware, async (req: Request, res: Res
   }
 })
 
+// GET /api/v1/delivery/my-deliveries — deliveries asignados al repartidor autenticado
+router.get('/my-deliveries', authMiddleware, requireDriver, async (req: Request, res: Response) => {
+  try {
+    const deliveries = await db.delivery.findMany({
+      where: {
+        driverId: req.user!.userId,
+        status: { in: ['assigned', 'pending', 'accepted', 'picked_up', 'in_transit'] },
+      },
+      include: {
+        order: {
+          include: {
+            user: { select: { name: true, phone: true } },
+            items: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    })
+
+    const data = deliveries.map((delivery) => ({
+      id: delivery.id,
+      orderId: delivery.orderId,
+      customerName: delivery.order.user.name,
+      contactPhone: delivery.order.contactPhone,
+      deliveryAddress: delivery.order.deliveryAddress,
+      status: delivery.status,
+      total: delivery.order.total,
+      currency: delivery.order.currency,
+      items: delivery.order.items.map((item) => ({ name: item.name, quantity: item.quantity })),
+      createdAt: delivery.createdAt,
+    }))
+
+    res.json({ ok: true, data: { deliveries: data } })
+  } catch (error) {
+    console.error('My deliveries error:', error)
+    res.status(500).json({ ok: false, error: 'Error al obtener tus entregas' })
+  }
+})
+
+// PATCH /api/v1/delivery/:id/status — el repartidor avanza el estado de su entrega
+router.patch('/delivery/:id/status', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { status } = req.body
+    const deliveryId = req.params.id as string
+    const driverAllowedStatuses = ['accepted', 'picked_up', 'in_transit', 'delivered']
+
+    if (!status || !driverAllowedStatuses.includes(status)) {
+      res.status(400).json({ ok: false, error: 'Estado inválido. Usa accepted, picked_up, in_transit o delivered' })
+      return
+    }
+
+    const delivery = await db.delivery.findUnique({
+      where: { id: deliveryId },
+      include: { order: true },
+    })
+
+    if (!delivery) {
+      res.status(404).json({ ok: false, error: 'Delivery no encontrado' })
+      return
+    }
+
+    if (delivery.driverId !== req.user!.userId && req.user!.role !== 'admin') {
+      res.status(403).json({ ok: false, error: 'No autorizado para actualizar este delivery' })
+      return
+    }
+
+    const allowedTransitions = deliveryStatusTransitions[delivery.status] || []
+    if (!allowedTransitions.includes(status)) {
+      res.status(400).json({
+        ok: false,
+        error: `No se puede cambiar de ${delivery.status} a ${status}`,
+      })
+      return
+    }
+
+    if (status === 'accepted' && delivery.order.status === 'pending_payment') {
+      res.status(400).json({ ok: false, error: 'El pedido aún no está pagado' })
+      return
+    }
+
+    const updated = await db.delivery.update({
+      where: { id: delivery.id },
+      data: { status },
+    })
+
+    let orderStatus = delivery.order.status
+    const nextOrderStatus: OrderStatus =
+      status === 'delivered' ? OrderStatus.delivered : status === 'in_transit' ? OrderStatus.in_transit : OrderStatus.preparing
+
+    if (delivery.order.status !== 'delivered' && delivery.order.status !== 'cancelled' && delivery.order.status !== nextOrderStatus) {
+      const updatedOrder = await db.order.update({
+        where: { id: delivery.orderId },
+        data: { status: nextOrderStatus },
+      })
+      orderStatus = updatedOrder.status
+      io.emit('order:status', { orderId: delivery.orderId, status: orderStatus })
+    }
+
+    await db.driver
+      .updateMany({
+        where: { userId: delivery.driverId },
+        data: { isOnline: status !== 'delivered' },
+      })
+      .catch(() => undefined)
+
+    const label = deliveryStatusLabels[status] || status
+    await createNotification(
+      delivery.order.userId,
+      'delivery_update',
+      `Entrega ${label.toLowerCase()}`,
+      `Tu pedido #${delivery.orderId.slice(-6)} está: ${label.toLowerCase()}`,
+      { orderId: delivery.orderId, deliveryId: delivery.id, status },
+      delivery.orderId
+    )
+
+    io.to(delivery.order.userId).emit('notification:new', {
+      type: 'delivery_update',
+      title: `Entrega ${label.toLowerCase()}`,
+      message: `Tu pedido #${delivery.orderId.slice(-6)} está: ${label.toLowerCase()}`,
+      orderId: delivery.orderId,
+    })
+    io.to(delivery.orderId).emit('delivery:status', {
+      deliveryId: delivery.id,
+      orderId: delivery.orderId,
+      status,
+      orderStatus,
+    })
+    io.emit('delivery:status', { deliveryId: delivery.id, orderId: delivery.orderId, status, orderStatus })
+
+    res.json({ ok: true, data: { id: updated.id, status: updated.status, orderStatus } })
+  } catch (error) {
+    console.error('Update delivery status error:', error)
+    res.status(500).json({ ok: false, error: 'Error al actualizar estado del delivery' })
+  }
+})
+
 router.patch('/delivery/:id/location', authMiddleware, async (req: Request, res: Response) => {
   try {
     const { lat, lng } = req.body
 
     if (lat === undefined || lng === undefined) {
       res.status(400).json({ ok: false, error: 'lat y lng son requeridos' })
+      return
+    }
+
+    const numericLat = Number(lat)
+    const numericLng = Number(lng)
+    if (!Number.isFinite(numericLat) || !Number.isFinite(numericLng)) {
+      res.status(400).json({ ok: false, error: 'lat y lng deben ser números válidos' })
       return
     }
 
@@ -235,18 +333,31 @@ router.patch('/delivery/:id/location', authMiddleware, async (req: Request, res:
       return
     }
 
+    // El repartidor solo comparte ubicación cuando la entrega está en camino.
+    if (req.user!.role !== 'admin' && delivery.status !== 'in_transit') {
+      res.status(400).json({ ok: false, error: 'Solo puedes compartir ubicación cuando el delivery está en tránsito' })
+      return
+    }
+
     const location = await db.deliveryLocation.create({
       data: {
         deliveryId: delivery.id,
-        lat,
-        lng,
+        lat: numericLat,
+        lng: numericLng,
       },
     })
 
-    io.emit('delivery:location', {
+    await db.driver
+      .updateMany({
+        where: { userId: delivery.driverId },
+        data: { isOnline: true, lastLocationAt: new Date() },
+      })
+      .catch(() => undefined)
+
+    io.to(delivery.orderId).emit('delivery:location', {
       orderId: delivery.orderId,
-      lat,
-      lng,
+      lat: numericLat,
+      lng: numericLng,
       timestamp: location.createdAt.toISOString(),
     })
 

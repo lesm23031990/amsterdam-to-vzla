@@ -59,6 +59,7 @@ model User {
   productReports  ProductReport[]
   stockNotifications StockNotification[]
   menuItemComments MenuItemComment[]
+  driver         Driver?
 
   @@map("users")
 }
@@ -208,6 +209,21 @@ model DeliveryLocation {
   delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
 
   @@map("delivery_locations")
+}
+
+model Driver {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @unique @db.Uuid @map("user_id")
+  document       String?
+  isActive       Boolean   @default(true) @map("is_active")
+  isOnline       Boolean   @default(false) @map("is_online")
+  lastLocationAt DateTime? @map("last_location_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("drivers")
 }
 
 model MenuItem {

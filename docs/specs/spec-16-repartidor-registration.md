@@ -109,23 +109,23 @@ Headers: `Authorization: Bearer <token>` (repartidor)
 - Admin ve lista de repartidores con estado (activo, en delivery, offline)
 
 ## Acceptance Criteria
-- [ ] Admin puede crear cuentas de repartidor
+- [x] Admin puede crear cuentas de repartidor
 - [x] Admin puede asignar deliveries a repartidores
-- [ ] Repartidor ve sus deliveries asignados
-- [ ] Repartidor puede actualizar estado del delivery
-- [ ] Repartidor puede compartir ubicación en vivo
-- [ ] Transiciones de estado se validan correctamente
+- [x] Repartidor ve sus deliveries asignados
+- [x] Repartidor puede actualizar estado del delivery
+- [x] Repartidor puede compartir ubicación en vivo
+- [x] Transiciones de estado se validan correctamente
 
 ---
 
 ## Tareas Técnicas
 - [x] Write tests (TDD)
-- [ ] Crear modelo Driver vinculado a User
-- [ ] Crear página `/admin/drivers` para gestión de repartidores
-- [ ] Crear página `/driver` para dashboard del repartidor
-- [ ] Crear componente DeliveryCard
-- [ ] Implementar botones de estado con validación
-- [ ] Implementar geolocalización del navegador
-- [ ] Endpoint GET /api/v1/delivery/my-deliveries
-- [ ] Endpoint POST /api/v1/admin/deliveries
+- [x] Crear modelo Driver vinculado a User
+- [x] Crear página `/admin/drivers` para gestión de repartidores
+- [x] Crear página `/driver` para dashboard del repartidor
+- [x] Crear componente DeliveryCard
+- [x] Implementar botones de estado con validación
+- [x] Implementar geolocalización del navegador
+- [x] Endpoint GET /api/v1/delivery/my-deliveries
+- [x] Endpoint POST /api/v1/admin/deliveries
 - [ ] PR a main

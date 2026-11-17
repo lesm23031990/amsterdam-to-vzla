@@ -62,6 +62,40 @@ let orderCounter = 4
 let registeredUsers: User[] = []
 let notifCounter = 3
 
+interface DriverProfile {
+  id: string
+  userId: string
+  document: string | null
+  isActive: boolean
+  isOnline: boolean
+  createdAt: string
+}
+
+let drivers: DriverProfile[] = [
+  { id: 'driver-1', userId: 'user-3', document: 'V-12345678', isActive: true, isOnline: true, createdAt: '2024-01-05T00:00:00Z' },
+]
+let driverCounter = 2
+let deliveryCounter = 3
+
+const activeDeliveryStatuses = ['assigned', 'pending', 'accepted', 'picked_up', 'in_transit']
+const deliveryStatusLabels: Record<string, string> = {
+  assigned: 'Asignado',
+  pending: 'Pendiente',
+  accepted: 'Aceptado',
+  picked_up: 'Recogido',
+  in_transit: 'En camino',
+  delivered: 'Entregado',
+  cancelled: 'Cancelado',
+}
+const deliveryTransitions: Record<string, string[]> = {
+  assigned: ['accepted'],
+  pending: ['accepted'],
+  accepted: ['picked_up'],
+  picked_up: ['in_transit'],
+  in_transit: ['delivered'],
+}
+
+
 // ============================================================
 // JWT (simple simulation)
 // ============================================================
@@ -469,6 +503,230 @@ async function handleAdminOrderStatus(id: string, body: any) {
 }
 
 // ============================================================
+// DRIVER / DELIVERY HANDLERS (demo)
+// ============================================================
+
+function getDriverByUserId(userId: string) {
+  return drivers.find((driver) => driver.userId === userId) || null
+}
+
+function findOrderByDeliveryId(deliveryId: string) {
+  return orders.find((order) => order.delivery?.id === deliveryId) || null
+}
+
+function handleMyDeliveries(auth: any) {
+  const driver = getDriverByUserId(auth.userId)
+  if (!driver || !driver.isActive) return error('No autorizado: no eres un repartidor activo', 403)
+
+  const data = orders
+    .filter((order) => order.delivery && order.delivery.driverId === auth.userId && activeDeliveryStatuses.includes(order.delivery.status))
+    .map((order) => ({
+      id: order.delivery!.id,
+      orderId: order.id,
+      customerName: getUserById(order.userId)?.name || 'Cliente',
+      contactPhone: order.contactPhone,
+      deliveryAddress: order.deliveryAddress,
+      status: order.delivery!.status,
+      total: order.total,
+      currency: order.currency,
+      items: order.items.map((item) => ({ name: item.name, quantity: item.quantity })),
+      createdAt: order.delivery!.locations[0]?.createdAt || order.createdAt,
+    }))
+
+  return json({ ok: true, data: { deliveries: data } })
+}
+
+function handleAdminDrivers() {
+  const data = drivers.map((driver) => {
+    const user = getUserById(driver.userId)
+    const activeCount = orders.filter(
+      (order) => order.delivery?.driverId === driver.userId && activeDeliveryStatuses.includes(order.delivery.status)
+    ).length
+    const status = activeCount > 0 ? 'en_delivery' : driver.isOnline ? 'activo' : 'offline'
+
+    return {
+      id: driver.id, userId: driver.userId, name: user?.name || 'Repartidor',
+      email: user?.email || '', phone: user?.phone || null, document: driver.document,
+      isActive: driver.isActive, isOnline: driver.isOnline, status,
+      activeDeliveries: activeCount, createdAt: driver.createdAt,
+    }
+  })
+
+  return json({ ok: true, data })
+}
+
+function handleCreateDriver(body: any) {
+  const { name, email, phone, document, password } = body
+
+  if (!name || !email) return error('name y email son requeridos', 400)
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return error('Formato de email inválido', 400)
+  if (getUserByEmail(email)) return error('El email ya está registrado', 409)
+  if (password && (password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password))) {
+    return error('Password debe tener mínimo 8 caracteres, 1 mayúscula y 1 número', 400)
+  }
+
+  const temporaryPassword = password || `Repartidor${Math.random().toString(36).slice(2, 8).toUpperCase()}1`
+  const now = new Date().toISOString()
+  const user: User = {
+    id: `user-${Date.now()}`, email, password: temporaryPassword, name,
+    phone: phone || null, role: 'cliente', createdAt: now, updatedAt: now,
+  }
+  registeredUsers.push(user)
+
+  const driver: DriverProfile = {
+    id: `driver-${driverCounter++}`, userId: user.id, document: document || null,
+    isActive: true, isOnline: false, createdAt: now,
+  }
+  drivers.push(driver)
+
+  return json({
+    ok: true,
+    data: {
+      id: driver.id, userId: user.id, name: user.name, email: user.email, phone: user.phone,
+      document: driver.document, isActive: driver.isActive, status: 'offline',
+      temporaryPassword: password ? undefined : temporaryPassword,
+    },
+  }, 201)
+}
+
+function handleAdminDeliveries() {
+  const data = orders
+    .filter((order) => order.delivery && activeDeliveryStatuses.includes(order.delivery.status))
+    .map((order) => ({
+      ...order.delivery!,
+      order: {
+        id: order.id,
+        deliveryAddress: order.deliveryAddress,
+        user: getUserById(order.userId),
+        items: order.items,
+      },
+    }))
+
+  return json({ ok: true, data })
+}
+
+function handleCreateDelivery(body: any) {
+  const { orderId, driverId } = body
+
+  if (!orderId || !driverId) return error('orderId y driverId son requeridos', 400)
+
+  const order = orders.find((item) => item.id === orderId)
+  if (!order) return error('Pedido no encontrado', 404)
+
+  const driverUser = getUserById(driverId)
+  if (!driverUser) return error('El usuario seleccionado no existe', 400)
+
+  const driver = getDriverByUserId(driverId)
+  if (!driver || !driver.isActive) return error('El usuario seleccionado no es un repartidor activo', 400)
+
+  if (order.delivery) return error('Este pedido ya tiene un conductor asignado', 409)
+
+  order.delivery = {
+    id: `del-${deliveryCounter++}`,
+    orderId: order.id,
+    driverId,
+    status: 'assigned',
+    driver: { id: driverUser.id, name: driverUser.name, phone: driverUser.phone },
+    locations: [],
+  }
+  if (order.status === 'confirmed') order.status = 'preparing'
+  order.updatedAt = new Date().toISOString()
+
+  notifCounter++
+  notifications.push({
+    id: `notif-${notifCounter}`,
+    userId: order.userId,
+    type: 'driver_assigned',
+    title: 'Conductor asignado',
+    message: `Tu pedido #${order.id.slice(-6)} tiene un conductor: ${driverUser.name}`,
+    read: false,
+    data: { orderId: order.id, driverId },
+    orderId: order.id,
+    createdAt: new Date().toISOString(),
+  })
+
+  return json({ ok: true, data: order.delivery }, 201)
+}
+
+function handleDeliveryStatus(deliveryId: string, body: any, auth: any) {
+  const { status } = body
+  const allowedStatuses = ['accepted', 'picked_up', 'in_transit', 'delivered']
+
+  if (!status || !allowedStatuses.includes(status)) {
+    return error('Estado inválido. Usa accepted, picked_up, in_transit o delivered', 400)
+  }
+
+  const order = findOrderByDeliveryId(deliveryId)
+  if (!order || !order.delivery) return error('Delivery no encontrado', 404)
+  if (order.delivery.driverId !== auth.userId && auth.role !== 'admin') {
+    return error('No autorizado para actualizar este delivery', 403)
+  }
+
+  const allowedTransitions = deliveryTransitions[order.delivery.status] || []
+  if (!allowedTransitions.includes(status)) {
+    return error(`No se puede cambiar de ${order.delivery.status} a ${status}`, 400)
+  }
+  if (status === 'accepted' && order.status === 'pending_payment') {
+    return error('El pedido aún no está pagado', 400)
+  }
+
+  order.delivery.status = status
+  const nextOrderStatus = status === 'delivered' ? 'delivered' : status === 'in_transit' ? 'in_transit' : 'preparing'
+  if (order.status !== 'delivered' && order.status !== 'cancelled') order.status = nextOrderStatus
+  order.updatedAt = new Date().toISOString()
+
+  const driver = getDriverByUserId(order.delivery.driverId)
+  if (driver) driver.isOnline = status !== 'delivered'
+
+  const label = deliveryStatusLabels[status] || status
+  notifCounter++
+  notifications.push({
+    id: `notif-${notifCounter}`,
+    userId: order.userId,
+    type: 'delivery_update',
+    title: `Entrega ${label.toLowerCase()}`,
+    message: `Tu pedido #${order.id.slice(-6)} está: ${label.toLowerCase()}`,
+    read: false,
+    data: { orderId: order.id, deliveryId: order.delivery.id, status },
+    orderId: order.id,
+    createdAt: new Date().toISOString(),
+  })
+
+  return json({ ok: true, data: { id: order.delivery.id, status, orderStatus: order.status } })
+}
+
+function handleDeliveryLocation(deliveryId: string, body: any, auth: any) {
+  const lat = Number(body.lat)
+  const lng = Number(body.lng)
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return error('lat y lng deben ser números válidos', 400)
+  }
+
+  const order = findOrderByDeliveryId(deliveryId)
+  if (!order || !order.delivery) return error('Delivery no encontrado', 404)
+  if (order.delivery.driverId !== auth.userId && auth.role !== 'admin') {
+    return error('No autorizado para actualizar ubicación', 403)
+  }
+  if (auth.role !== 'admin' && order.delivery.status !== 'in_transit') {
+    return error('Solo puedes compartir ubicación cuando el delivery está en tránsito', 400)
+  }
+
+  const location = {
+    id: `loc-${Date.now()}`,
+    deliveryId: order.delivery.id,
+    lat,
+    lng,
+    createdAt: new Date().toISOString(),
+  }
+  order.delivery.locations.unshift(location)
+
+  const driver = getDriverByUserId(order.delivery.driverId)
+  if (driver) driver.isOnline = true
+
+  return json({ ok: true, data: location })
+}
+
+// ============================================================
 // MAIN HANDLER
 // ============================================================
 
@@ -492,6 +750,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
   if (path === '/checkout/orders') return auth ? handleGetOrders(auth.userId) : error('No autorizado', 401)
   if (path.match(/^\/checkout\/orders\/[^/]+$/)) return auth ? handleGetOrder(path.split('/').pop()!, auth) : error('No autorizado', 401)
   if (path.match(/^\/delivery\/orders\/[^/]+\/tracking$/)) return auth ? handleTracking(path.split('/')[3], auth) : error('No autorizado', 401)
+  if (path === '/delivery/my-deliveries') return auth ? handleMyDeliveries(auth) : error('No autorizado', 401)
   if (path === '/fastfood/menu') return handleGetMenu()
   if (path === '/fastfood/preparation-time') return handlePrepTime()
   if (path.match(/^\/fastfood\/menu\/[^/]+\/comments$/)) return handleMenuComments()
@@ -501,6 +760,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
   if (path === '/admin/orders') return (auth && auth.role === 'admin') ? handleAdminOrders() : error('No autorizado', 403)
   if (path === '/admin/users') return (auth && auth.role === 'admin') ? handleAdminUsers() : error('No autorizado', 403)
   if (path === '/admin/products') return (auth && auth.role === 'admin') ? handleAdminProducts() : error('No autorizado', 403)
+  if (path === '/admin/drivers') return (auth && auth.role === 'admin') ? handleAdminDrivers() : error('No autorizado', 403)
+  if (path === '/admin/deliveries') return (auth && auth.role === 'admin') ? handleAdminDeliveries() : error('No autorizado', 403)
 
   return error('Ruta no encontrada', 404)
 }
@@ -525,6 +786,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   if (path.match(/^\/products\/[^/]+\/notify-stock$/)) return auth ? handleNotifyStock(path.split('/')[2], auth) : error('No autorizado', 401)
   if (path === '/assistant/chat') return auth ? handleAssistant(body) : error('No autorizado', 401)
   if (path.match(/^\/delivery\/orders\/[^/]+\/status$/)) return (auth && auth.role === 'admin') ? handleAdminOrderStatus(path.split('/')[3], body) : error('No autorizado', 403)
+  if (path === '/admin/drivers') return (auth && auth.role === 'admin') ? handleCreateDriver(body) : error('No autorizado', 403)
+  if (path === '/admin/deliveries') return (auth && auth.role === 'admin') ? handleCreateDelivery(body) : error('No autorizado', 403)
 
   return error('Ruta no encontrada', 404)
 }
@@ -547,6 +810,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ sl
   if (path.match(/^\/cart\/items\/[^/]+$/)) return auth ? handleUpdateCartItem(path.split('/').pop()!, body, auth) : error('No autorizado', 401)
   if (path.match(/^\/notifications\/[^/]+\/read$/)) return auth ? handleMarkRead(path.split('/')[2]) : error('No autorizado', 401)
   if (path === '/notifications/read-all') return auth ? handleMarkAllRead(auth.userId) : error('No autorizado', 401)
+  if (path.match(/^\/delivery\/[^/]+\/status$/)) return auth ? handleDeliveryStatus(path.split('/')[2], body, auth) : error('No autorizado', 401)
+  if (path.match(/^\/delivery\/[^/]+\/location$/)) return auth ? handleDeliveryLocation(path.split('/')[2], body, auth) : error('No autorizado', 401)
 
   return error('Ruta no encontrada', 404)
 }

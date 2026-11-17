@@ -16,14 +16,16 @@ vi.mock('../lib/db', () => ({
     cartItem: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), deleteMany: vi.fn() },
     order: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn() },
     orderItem: { findMany: vi.fn() },
-    delivery: { findUnique: vi.fn(), create: vi.fn() },
+    delivery: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn() },
     deliveryLocation: { create: vi.fn() },
+    driver: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
     menuItem: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), aggregate: vi.fn() },
     menuOption: { create: vi.fn() },
     conversation: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), delete: vi.fn() },
     message: { findMany: vi.fn(), create: vi.fn(), deleteMany: vi.fn() },
     exchangeRate: { findMany: vi.fn(), upsert: vi.fn() },
     notification: { create: vi.fn(), findMany: vi.fn(), count: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
+    $transaction: vi.fn(),
   },
 }))
 
@@ -136,6 +138,7 @@ const mockMessage = {
 
 const clienteToken = token({ userId: 'user-1', role: 'cliente', email: 'client@test.com' })
 const adminToken = token({ userId: 'user-admin', role: 'admin', email: 'admin@test.com' })
+const driverToken = token({ userId: 'driver-1', role: 'cliente', email: 'driver@test.com' })
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -144,6 +147,9 @@ beforeEach(() => {
     { id: 'r2', currency: 'USD', rate: 0.024, updatedAt: new Date() },
   ])
   ;(mockDb.notification.create as MockFn).mockResolvedValue({ id: 'n1' })
+  ;(mockDb.driver.updateMany as MockFn).mockResolvedValue({ count: 0 })
+  ;(mockDb.driver.findUnique as MockFn).mockResolvedValue(null)
+  ;(mockDb.$transaction as MockFn).mockImplementation((fn: (tx: typeof mockDb) => unknown) => fn(mockDb))
 })
 
 describe('Auth', () => {
@@ -528,6 +534,9 @@ describe('Delivery', () => {
     ;(mockDb.user.findUnique as MockFn).mockResolvedValue({
       id: 'driver-1', role: 'cliente', name: 'Driver', email: 'driver@test.com',
     })
+    ;(mockDb.driver.findUnique as MockFn).mockResolvedValue({
+      id: 'driver-profile-1', userId: 'driver-1', isActive: true,
+    })
     ;(mockDb.delivery.findUnique as MockFn).mockResolvedValue(null)
     ;(mockDb.delivery.create as MockFn).mockResolvedValue(mockDelivery)
     ;(mockDb.order.update as MockFn).mockResolvedValue({ ...mockOrder, status: 'preparing' })
@@ -567,6 +576,72 @@ describe('Delivery', () => {
 
     expect(res.status).toBe(200)
     expect(res.body.ok).toBe(true)
+  })
+
+  it('GET /delivery/my-deliveries returns driver deliveries', async () => {
+    ;(mockDb.driver.findUnique as MockFn).mockResolvedValue({
+      id: 'driver-profile-1', userId: 'driver-1', isActive: true, isOnline: false,
+    })
+    ;(mockDb.delivery.findMany as MockFn).mockResolvedValue([{
+      ...mockDelivery,
+      order: {
+        ...mockOrder,
+        user: { name: 'Cliente Uno', phone: '+584241234567' },
+        items: [{ id: 'oi-1', name: 'Producto Test', quantity: 2, price: 25.50 }],
+      },
+    }])
+
+    const res = await request('GET', '/api/v1/delivery/my-deliveries', undefined, driverToken)
+
+    expect(res.status).toBe(200)
+    expect(res.body.ok).toBe(true)
+    expect(res.body.data.deliveries).toHaveLength(1)
+    expect(res.body.data.deliveries[0].customerName).toBe('Cliente Uno')
+    expect(res.body.data.deliveries[0].items[0].quantity).toBe(2)
+  })
+
+  it('GET /delivery/my-deliveries without driver profile returns 403', async () => {
+    const res = await request('GET', '/api/v1/delivery/my-deliveries', undefined, clienteToken)
+
+    expect(res.status).toBe(403)
+    expect(res.body.error).toContain('repartidor')
+  })
+
+  it('PATCH /delivery/:id/status accepts a valid transition', async () => {
+    ;(mockDb.delivery.findUnique as MockFn).mockResolvedValue({
+      ...mockDelivery, status: 'accepted', order: { ...mockOrder, status: 'preparing' },
+    })
+    ;(mockDb.delivery.update as MockFn).mockResolvedValue({ ...mockDelivery, status: 'picked_up' })
+    ;(mockDb.order.update as MockFn).mockResolvedValue({ ...mockOrder, status: 'preparing' })
+    ;(mockDb.driver.updateMany as MockFn).mockResolvedValue({ count: 1 })
+
+    const res = await request('PATCH', '/api/v1/delivery/delivery/delivery-1/status', { status: 'picked_up' }, driverToken)
+
+    expect(res.status).toBe(200)
+    expect(res.body.ok).toBe(true)
+    expect(res.body.data.status).toBe('picked_up')
+  })
+
+  it('PATCH /delivery/:id/status rejects an invalid transition', async () => {
+    ;(mockDb.delivery.findUnique as MockFn).mockResolvedValue({
+      ...mockDelivery, status: 'assigned', order: { ...mockOrder, status: 'confirmed' },
+    })
+
+    const res = await request('PATCH', '/api/v1/delivery/delivery/delivery-1/status', { status: 'delivered' }, driverToken)
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toContain('No se puede cambiar')
+  })
+
+  it('driver cannot share location before in_transit', async () => {
+    ;(mockDb.delivery.findUnique as MockFn).mockResolvedValue({
+      ...mockDelivery, status: 'assigned', driver: { id: 'driver-1' },
+    })
+
+    const res = await request('PATCH', '/api/v1/delivery/delivery/delivery-1/location', { lat: 7.7703, lng: -72.2292 }, driverToken)
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toContain('tránsito')
   })
 })
 
@@ -666,5 +741,80 @@ describe('Admin', () => {
     const res = await request('GET', '/api/v1/admin/users', undefined, clienteToken)
 
     expect(res.status).toBe(403)
+  })
+
+  it('GET /admin/drivers returns drivers with operational status', async () => {
+    ;(mockDb.driver.findMany as MockFn).mockResolvedValue([{
+      id: 'driver-profile-1', userId: 'driver-1', document: 'V-12345678',
+      isActive: true, isOnline: true, lastLocationAt: new Date(), createdAt: new Date(), updatedAt: new Date(),
+      user: { id: 'driver-1', name: 'Driver Uno', email: 'driver@test.com', phone: '+584241234567' },
+    }])
+    ;(mockDb.delivery.findMany as MockFn).mockResolvedValue([])
+
+    const res = await request('GET', '/api/v1/admin/drivers', undefined, adminToken)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data[0].status).toBe('activo')
+    expect(res.body.data[0].activeDeliveries).toBe(0)
+  })
+
+  it('POST /admin/drivers creates a driver account with temporary password', async () => {
+    ;(mockDb.user.findUnique as MockFn).mockResolvedValue(null)
+    ;(mockDb.user.create as MockFn).mockResolvedValue({
+      id: 'driver-user-1', email: 'nuevo-driver@test.com', name: 'Nuevo Driver',
+      phone: '+584241234567', role: 'cliente', createdAt: new Date(),
+    })
+    ;(mockDb.driver.create as MockFn).mockResolvedValue({
+      id: 'driver-profile-1', userId: 'driver-user-1', document: 'V-12345678',
+      isActive: true, isOnline: false, createdAt: new Date(), updatedAt: new Date(),
+      user: { id: 'driver-user-1', name: 'Nuevo Driver', email: 'nuevo-driver@test.com', phone: '+584241234567' },
+    })
+
+    const res = await request('POST', '/api/v1/admin/drivers', {
+      name: 'Nuevo Driver', email: 'nuevo-driver@test.com', phone: '+584241234567', document: 'V-12345678',
+    }, adminToken)
+
+    expect(res.status).toBe(201)
+    expect(res.body.ok).toBe(true)
+    expect(res.body.data.status).toBe('offline')
+    expect(res.body.data.temporaryPassword).toBeTruthy()
+  })
+
+  it('POST /admin/drivers rejects duplicated email', async () => {
+    ;(mockDb.user.findUnique as MockFn).mockResolvedValue(mockUser)
+
+    const res = await request('POST', '/api/v1/admin/drivers', {
+      name: 'Driver', email: mockUser.email,
+    }, adminToken)
+
+    expect(res.status).toBe(409)
+  })
+
+  it('POST /admin/deliveries assigns an order to a driver', async () => {
+    ;(mockDb.order.findUnique as MockFn).mockResolvedValue({ ...mockOrder, status: 'confirmed' })
+    ;(mockDb.user.findUnique as MockFn).mockResolvedValue({
+      id: 'driver-1', role: 'cliente', name: 'Driver', email: 'driver@test.com',
+    })
+    ;(mockDb.driver.findUnique as MockFn).mockResolvedValue({
+      id: 'driver-profile-1', userId: 'driver-1', isActive: true,
+    })
+    ;(mockDb.delivery.findUnique as MockFn).mockResolvedValue(null)
+    ;(mockDb.delivery.create as MockFn).mockResolvedValue(mockDelivery)
+    ;(mockDb.order.update as MockFn).mockResolvedValue({ ...mockOrder, status: 'preparing' })
+
+    const res = await request('POST', '/api/v1/admin/deliveries', {
+      orderId: 'order-1', driverId: 'driver-1',
+    }, adminToken)
+
+    expect(res.status).toBe(201)
+    expect(res.body.ok).toBe(true)
+    expect(res.body.data.status).toBe('assigned')
+  })
+
+  it('POST /admin/deliveries requires orderId and driverId', async () => {
+    const res = await request('POST', '/api/v1/admin/deliveries', { orderId: 'order-1' }, adminToken)
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toContain('driverId')
   })
 })

@@ -74,7 +74,7 @@ Headers: `Authorization: Bearer <token>` (admin)
 ## Acceptance Criteria
 - [x] Admin ve todas las órdenes en dashboard
 - [x] Admin puede cambiar estado de orden
-- [ ] Admin puede asignar repartidor
+- [ ] Admin puede asignar repartidor (backend ✅ `POST /api/v1/delivery/orders/:id/assign`; falta UI en `/admin/orders`)
 - [x] Repartidor puede actualizar ubicación
 - [ ] Cliente recibe updates en tiempo real via Socket.io
 - [x] Historial de ubicaciones se guarda

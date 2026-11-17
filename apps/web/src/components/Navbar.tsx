@@ -186,6 +186,9 @@ export default function Navbar() {
                     <Link href="/orders" className={styles.dropdownItem} onClick={() => setMenuOpen(false)}>
                       📦 Mis pedidos
                     </Link>
+                    <Link href="/driver" className={styles.dropdownItem} onClick={() => setMenuOpen(false)}>
+                      🛵 Panel repartidor
+                    </Link>
                     <Link href="/assistant" className={styles.dropdownItem} onClick={() => setMenuOpen(false)}>
                       🤖 Asistente IA
                     </Link>

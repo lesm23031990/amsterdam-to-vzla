@@ -60,6 +60,7 @@ export const ModelName = {
   OrderItem: 'OrderItem',
   Delivery: 'Delivery',
   DeliveryLocation: 'DeliveryLocation',
+  Driver: 'Driver',
   MenuItem: 'MenuItem',
   MenuOption: 'MenuOption',
   MenuChoice: 'MenuChoice',
@@ -225,6 +226,20 @@ export const DeliveryLocationScalarFieldEnum = {
 } as const
 
 export type DeliveryLocationScalarFieldEnum = (typeof DeliveryLocationScalarFieldEnum)[keyof typeof DeliveryLocationScalarFieldEnum]
+
+
+export const DriverScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  document: 'document',
+  isActive: 'isActive',
+  isOnline: 'isOnline',
+  lastLocationAt: 'lastLocationAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type DriverScalarFieldEnum = (typeof DriverScalarFieldEnum)[keyof typeof DriverScalarFieldEnum]
 
 
 export const MenuItemScalarFieldEnum = {

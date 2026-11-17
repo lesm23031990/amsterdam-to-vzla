@@ -1,30 +1,51 @@
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { apiClient } from '@/api/client';
 import { Ionicons } from '@expo/vector-icons';
 
 interface Delivery {
   id: string;
   orderId: string;
-  address: string;
+  deliveryAddress?: string | null;
   status: string;
   customerName: string;
+  contactPhone?: string | null;
   total: number;
+  currency?: string;
+  items?: { name: string; quantity: number }[];
 }
+
+const statusLabels: Record<string, string> = {
+  assigned: 'Asignado',
+  pending: 'Pendiente',
+  accepted: 'Aceptado',
+  picked_up: 'Recogido',
+  in_transit: 'En camino',
+  delivered: 'Entregado',
+  cancelled: 'Cancelado',
+};
 
 export default function DriverScreen() {
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [loading, setLoading] = useState(true);
   const [sharingLocation, setSharingLocation] = useState(false);
+  const watchRef = useRef<any>(null);
 
   useEffect(() => {
     fetchDeliveries();
+
+    return () => {
+      const geolocation = (globalThis as any).navigator?.geolocation;
+      if (watchRef.current !== null && geolocation?.clearWatch) {
+        geolocation.clearWatch(watchRef.current);
+      }
+    };
   }, []);
 
   const fetchDeliveries = async () => {
     try {
-      const response = await apiClient.get('/api/v1/driver/deliveries');
-      setDeliveries(response.data.data || []);
+      const response = await apiClient.get('/api/v1/delivery/my-deliveries');
+      setDeliveries(response.data.data?.deliveries || []);
     } catch (error) {
       console.error('Error fetching deliveries:', error);
     } finally {
@@ -34,10 +55,11 @@ export default function DriverScreen() {
 
   const updateStatus = async (deliveryId: string, newStatus: string) => {
     try {
-      await apiClient.patch(`/api/v1/driver/deliveries/${deliveryId}/status`, {
+      await apiClient.patch(`/api/v1/delivery/${deliveryId}/status`, {
         status: newStatus,
       });
-      Alert.alert('Éxito', `Estado actualizado a: ${newStatus}`);
+      Alert.alert('Éxito', `Estado actualizado: ${statusLabels[newStatus] || newStatus}`);
+      if (newStatus === 'delivered') stopSharingLocation(false);
       fetchDeliveries();
     } catch (error) {
       Alert.alert('Error', 'No se pudo actualizar el estado');
@@ -45,16 +67,47 @@ export default function DriverScreen() {
   };
 
   const startSharingLocation = () => {
-    setSharingLocation(true);
-    Alert.alert(
-      'Ubicación',
-      'Compartiendo ubicación en tiempo real con el cliente'
+    const inTransit = deliveries.find((delivery) => delivery.status === 'in_transit');
+
+    if (!inTransit) {
+      Alert.alert('Ubicación', 'Solo puedes compartir ubicación cuando una entrega está en camino.');
+      return;
+    }
+
+    const geolocation = (globalThis as any).navigator?.geolocation;
+    if (!geolocation?.watchPosition) {
+      Alert.alert('Ubicación', 'La geolocalización no está disponible en este dispositivo. Usa la versión web del panel de repartidor.');
+      return;
+    }
+
+    watchRef.current = geolocation.watchPosition(
+      (position: any) => {
+        apiClient
+          .patch(`/api/v1/delivery/${inTransit.id}/location`, {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          })
+          .catch(() => undefined);
+      },
+      () => {
+        Alert.alert('Ubicación', 'No pudimos obtener tu ubicación. Revisa los permisos del dispositivo.');
+        stopSharingLocation(false);
+      },
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
     );
+
+    setSharingLocation(true);
+    Alert.alert('Ubicación', 'Compartiendo ubicación en tiempo real con el cliente');
   };
 
-  const stopSharingLocation = () => {
+  const stopSharingLocation = (notify = true) => {
+    const geolocation = (globalThis as any).navigator?.geolocation;
+    if (watchRef.current !== null && geolocation?.clearWatch) {
+      geolocation.clearWatch(watchRef.current);
+    }
+    watchRef.current = null;
     setSharingLocation(false);
-    Alert.alert('Ubicación', 'Dejaste de compartir tu ubicación');
+    if (notify) Alert.alert('Ubicación', 'Dejaste de compartir tu ubicación');
   };
 
   if (loading) {
@@ -82,7 +135,7 @@ export default function DriverScreen() {
             styles.locationButton,
             sharingLocation && styles.locationButtonActive,
           ]}
-          onPress={sharingLocation ? stopSharingLocation : startSharingLocation}
+          onPress={sharingLocation ? () => stopSharingLocation() : startSharingLocation}
         >
           <Ionicons
             name={sharingLocation ? 'location' : 'location-outline'}
@@ -109,32 +162,41 @@ export default function DriverScreen() {
             <View style={styles.cardHeader}>
               <Text style={styles.orderId}>Pedido #{item.orderId.slice(-6)}</Text>
               <View style={styles.statusBadge}>
-                <Text style={styles.statusText}>{item.status}</Text>
+                <Text style={styles.statusText}>{statusLabels[item.status] || item.status}</Text>
               </View>
             </View>
 
             <Text style={styles.customerName}>{item.customerName}</Text>
-            <Text style={styles.address}>{item.address}</Text>
-            <Text style={styles.total}>Bs {item.total.toFixed(2)}</Text>
+            <Text style={styles.address}>{item.deliveryAddress || 'Dirección no registrada'}</Text>
+            {item.contactPhone ? <Text style={styles.address}>📞 {item.contactPhone}</Text> : null}
+            <Text style={styles.total}>{item.currency || 'USD'} {item.total.toFixed(2)}</Text>
 
             <View style={styles.actions}>
-              {item.status === 'pending' && (
+              {(item.status === 'assigned' || item.status === 'pending') && (
                 <TouchableOpacity
                   style={[styles.actionButton, styles.acceptButton]}
-                  onPress={() => updateStatus(item.id, 'confirmed')}
+                  onPress={() => updateStatus(item.id, 'accepted')}
                 >
                   <Text style={styles.actionButtonText}>Aceptar</Text>
                 </TouchableOpacity>
               )}
-              {item.status === 'confirmed' && (
+              {item.status === 'accepted' && (
                 <TouchableOpacity
                   style={[styles.actionButton, styles.pickupButton]}
-                  onPress={() => updateStatus(item.id, 'shipping')}
+                  onPress={() => updateStatus(item.id, 'picked_up')}
+                >
+                  <Text style={styles.actionButtonText}>Recogido</Text>
+                </TouchableOpacity>
+              )}
+              {item.status === 'picked_up' && (
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.pickupButton]}
+                  onPress={() => updateStatus(item.id, 'in_transit')}
                 >
                   <Text style={styles.actionButtonText}>En Camino</Text>
                 </TouchableOpacity>
               )}
-              {item.status === 'shipping' && (
+              {item.status === 'in_transit' && (
                 <TouchableOpacity
                   style={[styles.actionButton, styles.deliverButton]}
                   onPress={() => updateStatus(item.id, 'delivered')}

@@ -2,7 +2,7 @@
 title: "Spec 09 — Rediseño UX Marketing: App centrada en productos y ofertas"
 labels: ["spec"]
 assignees: []
-status: in-progress
+status: done
 ---
 
 ## Objetivo
@@ -58,9 +58,9 @@ Rediseñar la experiencia principal para que sea **product-first**. El usuario d
 - Ofertas flash: productos con badge "Oferta" y precio tachado
 
 ## Acceptance Criteria
-- [ ] Landing muestra productos como prioridad
+- [x] Landing muestra productos como prioridad (Destacados, Catálogo Express y Ofertas en home)
 - [x] Búsqueda encuentra productos por nombre
-- [ ] Compra en máximo 3 clics desde el landing
+- [x] Compra en máximo 3 clics desde el landing (quick-add → carrito → checkout en 1 página)
 - [x] Diseño visualmente atractivo y orientado a conversión
 - [x] Navegación intuitiva para usuarios no técnicos
 

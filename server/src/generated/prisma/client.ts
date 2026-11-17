@@ -85,6 +85,11 @@ export type Delivery = Prisma.DeliveryModel
  */
 export type DeliveryLocation = Prisma.DeliveryLocationModel
 /**
+ * Model Driver
+ * 
+ */
+export type Driver = Prisma.DriverModel
+/**
  * Model MenuItem
  * 
  */
