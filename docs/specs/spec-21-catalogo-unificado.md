@@ -2,7 +2,7 @@
 title: "Spec 21 — Catálogo Unificado con Filtros"
 labels: ["spec", "high-priority"]
 assignees: []
-status: in-progress
+status: done
 ---
 
 ## Contexto
@@ -145,6 +145,8 @@ Headers: `Authorization: Bearer <token>` (opcional)
 - [x] Crear GET /api/v1/products/categories
 - [x] Agregar filtro `?inStock=true` (stock > 0)
 - [x] Soporte multi-brandIds (`?brandIds=id1,id2`)
+- [x] Filtrar por rango de precio en la moneda seleccionada
+- [x] Tests de filtros de precio y multi-marca
 
 ### Frontend Web
 - [x] Unificar /products, /offers en una sola página con tabs
@@ -164,4 +166,4 @@ Headers: `Authorization: Bearer <token>` (opcional)
 ### General
 - [x] Integrar con frontend
 - [x] Integrar con mobile
-- [ ] PR a main
+- [x] PR a main

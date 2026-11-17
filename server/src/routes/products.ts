@@ -70,6 +70,15 @@ router.get('/', async (req: Request, res: Response) => {
     const perPage = Math.min(100, Math.max(1, parseInt(String(req.query.perPage)) || 24))
     const targetCurrency = (currency as string) || 'COP'
 
+    const rates = await db.exchangeRate.findMany()
+    const rateMap: Record<string, number> = { COP: 1 }
+    for (const r of rates) {
+      rateMap[r.currency] = r.rate
+    }
+    if (!rateMap['Bs']) rateMap['Bs'] = 36.50
+    if (!rateMap['USD']) rateMap['USD'] = 0.024
+    const targetRate = rateMap[targetCurrency] || 1
+
     const where: Record<string, unknown> = { isActive: true }
 
     if (featured === 'true') where.isFeatured = true
@@ -83,19 +92,17 @@ router.get('/', async (req: Request, res: Response) => {
       if (ids.length > 0) where.brandId = { in: ids }
     }
     if (q) where.name = { contains: q as string, mode: 'insensitive' }
-    if (minPrice || maxPrice) {
+    const minValue = minPrice ? Number.parseFloat(String(minPrice)) : null
+    const maxValue = maxPrice ? Number.parseFloat(String(maxPrice)) : null
+    if ((minValue !== null && Number.isFinite(minValue)) || (maxValue !== null && Number.isFinite(maxValue))) {
       where.priceCop = {}
-      if (minPrice) (where.priceCop as Record<string, unknown>).gte = parseFloat(minPrice as string)
-      if (maxPrice) (where.priceCop as Record<string, unknown>).lte = parseFloat(maxPrice as string)
+      if (minValue !== null && Number.isFinite(minValue)) {
+        (where.priceCop as Record<string, unknown>).gte = minValue * targetRate
+      }
+      if (maxValue !== null && Number.isFinite(maxValue)) {
+        (where.priceCop as Record<string, unknown>).lte = maxValue * targetRate
+      }
     }
-
-    const rates = await db.exchangeRate.findMany()
-    const rateMap: Record<string, number> = { COP: 1 }
-    for (const r of rates) {
-      rateMap[r.currency] = r.rate
-    }
-    if (!rateMap['Bs']) rateMap['Bs'] = 36.50
-    if (!rateMap['USD']) rateMap['USD'] = 0.024
 
     const orderMap: Record<string, Record<string, 'asc' | 'desc'>> = {
       relevance: { createdAt: 'desc' },

@@ -34,6 +34,10 @@ function ProductsContent() {
   const tab = searchParams.get('tab') || 'all';
   const categoryFilter = searchParams.get('category') || '';
   const brandFilter = searchParams.get('brand') || '';
+  const brandIdsParam = searchParams.get('brandIds') || '';
+  const brandFilters = brandIdsParam.split(',').filter(Boolean);
+  const minPriceFilter = searchParams.get('minPrice') || '';
+  const maxPriceFilter = searchParams.get('maxPrice') || '';
   const searchQuery = searchParams.get('q') || '';
   const orderBy = searchParams.get('orderBy') || 'relevance';
   const inStock = searchParams.get('inStock') === 'true';
@@ -47,6 +51,9 @@ function ProductsContent() {
   const [addedToCart, setAddedToCart] = useState<Record<string, boolean>>({});
   const [total, setTotal] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [priceMin, setPriceMin] = useState(minPriceFilter);
+  const [priceMax, setPriceMax] = useState(maxPriceFilter);
+  const [priceError, setPriceError] = useState('');
   const pageSize = 24;
 
   const updateParams = useCallback((updates: Record<string, string | null>) => {
@@ -60,13 +67,22 @@ function ProductsContent() {
   }, [searchParams, router]);
 
   useEffect(() => {
+    setPriceMin(minPriceFilter);
+    setPriceMax(maxPriceFilter);
+    setPriceError('');
+  }, [minPriceFilter, maxPriceFilter]);
+
+  useEffect(() => {
     setLoading(true);
     const query: Record<string, string> = { page: String(page), perPage: String(pageSize), currency };
     if (tab === 'featured') query.featured = 'true';
     if (tab === 'offers') query.discount = 'true';
     if (categoryFilter) query.category = categoryFilter;
-    if (brandFilter) query.brand = brandFilter;
+    if (brandFilters.length > 0) query.brandIds = brandFilters.join(',');
+    else if (brandFilter) query.brand = brandFilter;
     if (searchQuery) query.q = searchQuery;
+    if (minPriceFilter) query.minPrice = minPriceFilter;
+    if (maxPriceFilter) query.maxPrice = maxPriceFilter;
     if (orderBy) query.orderBy = orderBy;
     if (inStock) query.inStock = 'true';
 
@@ -86,7 +102,7 @@ function ProductsContent() {
       if (brandsRes.ok && brandsRes.data) setBrands(brandsRes.data);
       setLoading(false);
     });
-  }, [tab, categoryFilter, brandFilter, searchQuery, orderBy, inStock, page, currency]);
+  }, [tab, categoryFilter, brandFilter, brandIdsParam, minPriceFilter, maxPriceFilter, searchQuery, orderBy, inStock, page, currency]);
 
   const handleQuickAdd = async (productId: string) => {
     if (!user) { window.location.href = '/login'; return; }
@@ -95,6 +111,39 @@ function ProductsContent() {
       setAddedToCart(prev => ({ ...prev, [productId]: true }));
       setTimeout(() => setAddedToCart(prev => ({ ...prev, [productId]: false })), 2000);
     }
+  };
+
+  const toggleBrand = (brand: Brand) => {
+    let current = [...brandFilters];
+    if (current.length === 0 && brandFilter) {
+      const legacyBrand = brands.find((b) => b.slug === brandFilter);
+      if (legacyBrand) current = [legacyBrand.id];
+    }
+    const next = current.includes(brand.id)
+      ? current.filter((id) => id !== brand.id)
+      : [...current, brand.id];
+    updateParams({ brand: null, brandIds: next.join(',') || null });
+  };
+
+  const applyPriceRange = () => {
+    const min = priceMin.trim();
+    const max = priceMax.trim();
+    const minValue = min ? Number(min) : null;
+    const maxValue = max ? Number(max) : null;
+    if (minValue !== null && (!Number.isFinite(minValue) || minValue < 0)) {
+      setPriceError('Ingresa un precio mínimo válido');
+      return;
+    }
+    if (maxValue !== null && (!Number.isFinite(maxValue) || maxValue < 0)) {
+      setPriceError('Ingresa un precio máximo válido');
+      return;
+    }
+    if (minValue !== null && maxValue !== null && minValue > maxValue) {
+      setPriceError('El precio mínimo no puede ser mayor que el máximo');
+      return;
+    }
+    setPriceError('');
+    updateParams({ minPrice: min || null, maxPrice: max || null });
   };
 
   const totalPages = Math.ceil(total / pageSize);
@@ -147,20 +196,58 @@ function ProductsContent() {
           <div className={styles.filterSection}>
             <h4>Marca</h4>
             <button
-              className={`${styles.filterChip} ${!brandFilter ? styles.filterChipActive : ''}`}
-              onClick={() => updateParams({ brand: '' })}
+              className={`${styles.filterChip} ${brandFilters.length === 0 && !brandFilter ? styles.filterChipActive : ''}`}
+              onClick={() => updateParams({ brand: null, brandIds: null })}
             >
               Todas
             </button>
-            {brands.map(b => (
-              <button
-                key={b.id}
-                className={`${styles.filterChip} ${brandFilter === b.slug ? styles.filterChipActive : ''}`}
-                onClick={() => updateParams({ brand: b.slug })}
-              >
-                {b.name}
-              </button>
-            ))}
+            <div className={styles.brandList}>
+              {brands.map((b) => {
+                const checked = brandFilters.includes(b.id) || (brandFilters.length === 0 && brandFilter === b.slug);
+                return (
+                  <label key={b.id} className={`${styles.brandOption} ${checked ? styles.brandOptionActive : ''}`}>
+                    <input type="checkbox" checked={checked} onChange={() => toggleBrand(b)} />
+                    {b.logoImage ? (
+                      <img src={b.logoImage} alt="" className={styles.brandLogo} />
+                    ) : (
+                      <span className={styles.brandLogoPlaceholder}>{b.name.charAt(0).toUpperCase()}</span>
+                    )}
+                    <span>{b.name}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className={styles.filterSection}>
+            <h4>Precio ({currency})</h4>
+            <div className={styles.priceInputs}>
+              <input
+                type="number"
+                min="0"
+                inputMode="decimal"
+                className={styles.priceInput}
+                placeholder="Mín."
+                aria-label="Precio mínimo"
+                value={priceMin}
+                onChange={(e) => setPriceMin(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') applyPriceRange(); }}
+              />
+              <span className={styles.priceSeparator}>—</span>
+              <input
+                type="number"
+                min="0"
+                inputMode="decimal"
+                className={styles.priceInput}
+                placeholder="Máx."
+                aria-label="Precio máximo"
+                value={priceMax}
+                onChange={(e) => setPriceMax(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') applyPriceRange(); }}
+              />
+            </div>
+            {priceError && <p className={styles.filterError}>{priceError}</p>}
+            <button className={styles.applyFilters} onClick={applyPriceRange}>Aplicar</button>
           </div>
 
           <div className={styles.filterSection}>
@@ -191,7 +278,7 @@ function ProductsContent() {
 
           <button
             className={styles.clearFilters}
-            onClick={() => { updateParams({ category: '', brand: '', orderBy: '', inStock: '', tab: 'all' }); }}
+            onClick={() => { setPriceMin(''); setPriceMax(''); setPriceError(''); updateParams({ category: '', brand: null, brandIds: null, minPrice: null, maxPrice: null, orderBy: '', inStock: '', tab: 'all' }); }}
           >
             Limpiar filtros
           </button>
@@ -232,7 +319,7 @@ function ProductsContent() {
           ) : products.length === 0 ? (
             <div className={styles.empty}>
               <p>No se encontraron productos</p>
-              <button onClick={() => updateParams({ category: '', brand: '', tab: 'all' })}>
+              <button onClick={() => { setPriceMin(''); setPriceMax(''); setPriceError(''); updateParams({ category: '', brand: null, brandIds: null, minPrice: null, maxPrice: null, tab: 'all' }); }}>
                 Ver todos los productos
               </button>
             </div>

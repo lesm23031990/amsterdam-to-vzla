@@ -344,6 +344,35 @@ describe('Products', () => {
     expect(res.body.data.length).toBe(1)
   })
 
+  it('List products applies multi-brand and COP price filters', async () => {
+    ;(mockDb.product.findMany as MockFn).mockResolvedValue([mockProduct])
+    ;(mockDb.product.count as MockFn).mockResolvedValue(1)
+
+    const res = await request('GET', '/api/v1/products?brandIds=brand-1,brand-2&minPrice=1000&maxPrice=50000&currency=COP')
+
+    expect(res.status).toBe(200)
+    expect(mockDb.product.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        brandId: { in: ['brand-1', 'brand-2'] },
+        priceCop: { gte: 1000, lte: 50000 },
+      }),
+    }))
+  })
+
+  it('List products converts price range from selected currency to COP', async () => {
+    ;(mockDb.product.findMany as MockFn).mockResolvedValue([mockProduct])
+    ;(mockDb.product.count as MockFn).mockResolvedValue(1)
+
+    const res = await request('GET', '/api/v1/products?minPrice=10&maxPrice=20&currency=USD')
+
+    expect(res.status).toBe(200)
+    expect(mockDb.product.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        priceCop: { gte: 0.24, lte: 0.48 },
+      }),
+    }))
+  })
+
   it('Get product by id returns 200', async () => {
     ;(mockDb.product.findUnique as MockFn).mockResolvedValue({
       ...mockProduct, brand: { id: 'brand-1', name: 'Tiffany Foods', slug: 'tiffany-foods' },

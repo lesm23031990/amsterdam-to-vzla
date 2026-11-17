@@ -181,6 +181,11 @@ function handleGetProducts(sp: URLSearchParams) {
   if (bf) { const b = brands.find(br => br.slug === bf); if (b) f = f.filter(p => p.brandId === b.id) }
   const bfid = sp.get('brandId')
   if (bfid) f = f.filter(p => p.brandId === bfid)
+  const bfids = sp.get('brandIds')
+  if (bfids) {
+    const ids = new Set(bfids.split(',').filter(Boolean))
+    f = f.filter(p => p.brandId !== null && ids.has(p.brandId))
+  }
   const cat = sp.get('category')
   if (cat) f = f.filter(p => p.category === cat)
   const q = sp.get('q')
