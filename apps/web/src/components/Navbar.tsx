@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { api } from '@/lib/api';
+import { connectNotificationSocket } from '@/lib/socket';
 import styles from './Navbar.module.css';
 
 const navLinks = [
@@ -41,21 +42,38 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      fetchNotifications();
-    }
-  }, [user]);
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
-      const res = await api.get<{ notifications: any[]; unreadCount: number }>('/notifications?limit=10');
+      const res = await api.get<{ notifications: any[]; unreadCount: number }>('/notifications?perPage=10');
       if (res.ok && res.data) {
         setNotifications(res.data.notifications);
         setUnreadCount(res.data.unreadCount);
       }
     } catch {}
-  };
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+    }
+  }, [user, fetchNotifications]);
+
+  useEffect(() => {
+    if (!user) return;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) return;
+
+    const socket = connectNotificationSocket(token);
+    if (!socket) return;
+
+    socket.on('connect', () => socket.emit('join', user.id));
+    socket.on('notification:new', fetchNotifications);
+
+    return () => {
+      socket.off('notification:new', fetchNotifications);
+      socket.disconnect();
+    };
+  }, [user, fetchNotifications]);
 
   const markAsRead = async (id: string) => {
     try {

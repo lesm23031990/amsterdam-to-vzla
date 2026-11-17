@@ -6,7 +6,7 @@ const router = Router()
 
 router.get('/', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId
+    const userId = req.user!.userId
     const page = Math.max(1, parseInt(String(req.query.page)) || 1)
     const perPage = Math.min(50, Math.max(1, parseInt(String(req.query.perPage)) || 20))
     const unreadOnly = req.query.unread === 'true'
@@ -46,7 +46,7 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
 
 router.patch('/:id/read', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId
+    const userId = req.user!.userId
     const notification = await db.notification.findUnique({
       where: { id: String(req.params.id) },
     })
@@ -70,7 +70,7 @@ router.patch('/:id/read', authMiddleware, async (req: Request, res: Response) =>
 
 router.patch('/read-all', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId
+    const userId = req.user!.userId
 
     await db.notification.updateMany({
       where: { userId, read: false },

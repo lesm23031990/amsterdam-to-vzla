@@ -2,7 +2,7 @@
 title: "Spec 17 — Notifications"
 labels: ["spec"]
 assignees: []
-status: in-progress
+status: done
 ---
 
 ## Endpoints
@@ -87,7 +87,7 @@ Headers: `Authorization: Bearer <token>`
 ---
 
 ## Tareas Técnicas
-- [ ] Write tests (TDD)
+- [x] Write tests (TDD)
 - [x] Add Notification model to Prisma schema
 - [x] Run Prisma migration
 - [x] Create `GET /api/v1/notifications` endpoint
@@ -97,7 +97,19 @@ Headers: `Authorization: Bearer <token>`
 - [x] Emit `notification:new` via Socket.io
 - [x] Build bell icon + dropdown component
 - [x] Build `/notifications` page
-- [ ] Connect frontend to Socket.io notification room
+- [x] Connect frontend to Socket.io notification room
 - [x] Integrar con frontend
 - [x] Integrar con mobile
 - [x] PR a main
+
+## Verificación (2026-11-17)
+
+- 6 tests nuevos para `GET /notifications`, filtro `unread`, autenticación,
+  `PATCH /:id/read` (propia y de otro usuario) y `PATCH /read-all`.
+- Bug corregido: los endpoints leían `(req as any).userId` (siempre `undefined`);
+  ahora usan `req.user!.userId` del payload JWT.
+- Web conecta a Socket.io con `socket.io-client` y escucha `notification:new`
+  en Navbar y `/notifications`; sin `NEXT_PUBLIC_API_URL` absoluto (demo Vercel)
+  se omite la conexión porque no hay servidor de sockets.
+- `npx tsc --noEmit -p server/tsconfig.json`, `npx tsc --noEmit -p apps/web/tsconfig.json`,
+  `npx vitest run` (119 tests) y `npm run build -w apps/web` en verde.

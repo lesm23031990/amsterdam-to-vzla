@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
+import { connectNotificationSocket } from '@/lib/socket';
 
 interface Notification {
   id: string;
@@ -24,18 +25,10 @@ export default function NotificationsPage() {
   const [total, setTotal] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  useEffect(() => {
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-    fetchNotifications();
-  }, [user, page]);
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       const res = await api.get<{ notifications: Notification[]; total?: number; unreadCount: number }>(
-        `/notifications?page=${page}&limit=20`
+        `/notifications?page=${page}&perPage=20`
       );
       if (res.ok && res.data) {
         setNotifications(res.data.notifications);
@@ -46,7 +39,32 @@ export default function NotificationsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page]);
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    fetchNotifications();
+  }, [user, router, fetchNotifications]);
+
+  useEffect(() => {
+    if (!user) return;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) return;
+
+    const socket = connectNotificationSocket(token);
+    if (!socket) return;
+
+    socket.on('connect', () => socket.emit('join', user.id));
+    socket.on('notification:new', fetchNotifications);
+
+    return () => {
+      socket.off('notification:new', fetchNotifications);
+      socket.disconnect();
+    };
+  }, [user, fetchNotifications]);
 
   const markAsRead = async (id: string) => {
     try {

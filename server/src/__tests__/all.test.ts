@@ -24,7 +24,7 @@ vi.mock('../lib/db', () => ({
     conversation: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), delete: vi.fn() },
     message: { findMany: vi.fn(), create: vi.fn(), deleteMany: vi.fn() },
     exchangeRate: { findMany: vi.fn(), upsert: vi.fn() },
-    notification: { create: vi.fn(), findMany: vi.fn(), count: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
+    notification: { create: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), count: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
     $transaction: vi.fn(),
   },
 }))
@@ -739,6 +739,88 @@ describe('Assistant', () => {
     expect(res.status).toBe(200)
     expect(res.body.ok).toBe(true)
     expect(Array.isArray(res.body.data)).toBe(true)
+  })
+})
+
+describe('Notifications', () => {
+  const notification = {
+    id: 'notif-1', userId: 'user-1', type: 'order_status', title: 'Pedido confirmado',
+    message: 'Tu pedido #123 ha sido confirmado', read: false,
+    data: { orderId: 'order-1', status: 'confirmed' }, orderId: 'order-1',
+    createdAt: new Date('2024-03-20T15:00:00Z'),
+  }
+
+  it('GET /notifications returns paginated notifications for the authenticated user', async () => {
+    ;(mockDb.notification.findMany as MockFn).mockResolvedValue([notification])
+    ;(mockDb.notification.count as MockFn).mockResolvedValueOnce(1).mockResolvedValueOnce(1)
+
+    const res = await request('GET', '/api/v1/notifications?page=1&perPage=20', undefined, clienteToken)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.notifications).toHaveLength(1)
+    expect(res.body.data.total).toBe(1)
+    expect(res.body.data.unreadCount).toBe(1)
+    expect(res.body.data.page).toBe(1)
+    expect(res.body.data.limit).toBe(20)
+    expect(mockDb.notification.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { userId: 'user-1' },
+      skip: 0,
+      take: 20,
+    }))
+  })
+
+  it('GET /notifications filters unread when unread=true', async () => {
+    ;(mockDb.notification.findMany as MockFn).mockResolvedValue([notification])
+    ;(mockDb.notification.count as MockFn).mockResolvedValueOnce(1).mockResolvedValueOnce(1)
+
+    const res = await request('GET', '/api/v1/notifications?unread=true', undefined, clienteToken)
+
+    expect(res.status).toBe(200)
+    expect(mockDb.notification.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { userId: 'user-1', read: false },
+    }))
+  })
+
+  it('GET /notifications requires authentication', async () => {
+    const res = await request('GET', '/api/v1/notifications')
+
+    expect(res.status).toBe(401)
+  })
+
+  it('PATCH /notifications/:id/read marks own notification as read', async () => {
+    ;(mockDb.notification.findUnique as MockFn).mockResolvedValue(notification)
+    ;(mockDb.notification.update as MockFn).mockResolvedValue({ ...notification, read: true })
+
+    const res = await request('PATCH', '/api/v1/notifications/notif-1/read', undefined, clienteToken)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.read).toBe(true)
+    expect(mockDb.notification.update).toHaveBeenCalledWith({
+      where: { id: 'notif-1' },
+      data: { read: true },
+    })
+  })
+
+  it('PATCH /notifications/:id/read returns 404 for another user notification', async () => {
+    ;(mockDb.notification.findUnique as MockFn).mockResolvedValue({ ...notification, userId: 'user-2' })
+
+    const res = await request('PATCH', '/api/v1/notifications/notif-1/read', undefined, clienteToken)
+
+    expect(res.status).toBe(404)
+    expect(mockDb.notification.update).not.toHaveBeenCalled()
+  })
+
+  it('PATCH /notifications/read-all marks all own notifications as read', async () => {
+    ;(mockDb.notification.updateMany as MockFn).mockResolvedValue({ count: 3 })
+
+    const res = await request('PATCH', '/api/v1/notifications/read-all', undefined, clienteToken)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.read).toBe(true)
+    expect(mockDb.notification.updateMany).toHaveBeenCalledWith({
+      where: { userId: 'user-1', read: false },
+      data: { read: true },
+    })
   })
 })
 
