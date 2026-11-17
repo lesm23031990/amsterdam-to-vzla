@@ -2,7 +2,7 @@
 title: "Spec 16 — Gestión de Repartidores y Deliveries"
 labels: ["spec"]
 assignees: []
-status: in-progress
+status: done
 ---
 
 ## Endpoints
@@ -128,4 +128,4 @@ Headers: `Authorization: Bearer <token>` (repartidor)
 - [x] Implementar geolocalización del navegador
 - [x] Endpoint GET /api/v1/delivery/my-deliveries
 - [x] Endpoint POST /api/v1/admin/deliveries
-- [ ] PR a main
+- [x] PR a main
