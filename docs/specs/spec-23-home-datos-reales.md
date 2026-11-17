@@ -2,7 +2,7 @@
 title: "Spec 23 — Home con Datos Reales (anti-huérfanos)"
 labels: ["spec", "high-priority"]
 assignees: []
-status: in-progress
+status: done
 ---
 
 ## Contexto
@@ -46,7 +46,7 @@ Mis Pedidos: últimas 3 órdenes del usuario logueado. Sin sesión, el módulo s
 - [x] "Mis Pedidos" muestra pedidos reales solo con sesión iniciada
 - [x] Ningún producto huérfano: todo ID visible en home existe en la fuente de datos
 - [x] Demo API autoconsistente (sin referencias rotas en orders/comments/notifications)
-- [ ] Funciona igual contra server real (:3001) y contra demo (Vercel)
+- [x] Funciona igual contra server real (:3001) y contra demo (Vercel)
 
 ## Tareas Técnicas
 - [x] Escribir tests (TDD)
@@ -63,3 +63,12 @@ Mis Pedidos: últimas 3 órdenes del usuario logueado. Sin sesión, el módulo s
 - [x] `db:seed:home`: asegurar >=3 destacados y 4 ofertas (idempotente)
 - [x] Reglas de protección del diseño: `docs/rules.md` + skill `.opencode/skills/prototipo-home`
 - [x] PR a main
+
+## Verificación (2026-11-17)
+
+- Demo Vercel: `GET /api/v1/products?featured=true&perPage=3` → 3 destacados reales
+  (`Tequeños de Queso`, `Pastelitos de Pollo`, `Mini Pizzas`).
+- `GET /api/v1/products?perPage=6` → `pagination.total: 12`.
+- `GET /api/v1/products?discount=true&perPage=4` → 3 ofertas con `hasDiscount` y
+  `displayDiscountPrice`.
+- Servidor local `:3001` devuelve los mismos datos desde PostgreSQL.
