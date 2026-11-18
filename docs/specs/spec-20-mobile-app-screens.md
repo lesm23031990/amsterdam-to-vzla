@@ -166,11 +166,13 @@ User login (same as web).
   - `DELETE /api/v1/notifications/push-token` → `removed: 1`; segundo intento →
     `removed: 0`.
   - `GET /api/v1/notifications` → 200.
-- Nota: `npm run build -w apps/web` falla al prerenderizar `/_global-error`
-  (`Cannot read properties of null (reading 'useContext')`). Es un fallo
-  preexistente de la app web (dos copias de React en el workspace: raíz 19.2.8
-  y `apps/web` 19.2.4) y se reproduce igual en `main` sin estos cambios; ningún
-  archivo de `apps/web` se modificó en este spec.
+- Nota (resuelta el 2026-11-18): `npm run build -w apps/web` fallaba al
+  prerenderizar `/_global-error` (`Cannot read properties of null (reading
+  'useContext')`) por dos copias de React en el workspace: `expo` y `prisma`
+  (Studio) hoistean `react-dom@19.2.8` en la raíz y `apps/web` fijaba
+  `19.2.4`. Se alineó `apps/web` a `react`/`react-dom` `19.2.8`, npm deduplicó
+  (sin copia en `apps/web/node_modules`) y el build web vuelve a pasar
+  (23 rutas, 0 errores). Ver `docs/DEPLOY.md`.
 
 ### Pendiente
 - Validar en dispositivo físico (token real de Expo y build EAS). Requiere

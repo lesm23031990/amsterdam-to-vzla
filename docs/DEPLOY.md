@@ -120,6 +120,14 @@ Si quieres datos de demo (6 tiendas, 62 productos) en producción:
 
 > Vercel detecta automáticamente npm workspaces. Solo instalará las dependencias de `apps/web` y `next` (no las del server ni mobile).
 
+> **React y `react-dom` deben ir con la misma versión exacta** en `apps/web/package.json`.
+> En el monorepo, `expo` y `prisma` (Studio) hoistean `react-dom` en la raíz; si
+> `apps/web` fija otra versión, npm instala una copia anidada y `next build` falla
+> al prerenderizar con `Cannot read properties of null (reading 'useContext')`
+> (dos copias de React). Antes de subir la versión, correr
+> `npm install && npm ls react react-dom` y verificar que no quede copia local en
+> `apps/web/node_modules`.
+
 ### 3.2 Volver a Render y fijar el CORS
 
 Ahora que Vercel te dio una URL final ( ej: `https://amsterdam-to-vzla.vercel.app` ):
