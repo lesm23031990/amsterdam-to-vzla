@@ -49,6 +49,7 @@ interface GroupedBrand {
   brandName: string;
   brandSlug: string;
   isFastFood?: boolean;
+  noBrand?: boolean;
   items: CartItem[];
 }
 
@@ -115,6 +116,7 @@ export default function CartPage() {
       brandName: isFastFood ? 'Menú Fast Food' : (first.product?.brand?.name || 'Sin marca'),
       brandSlug: isFastFood ? 'menu' : (first.product?.brand?.slug || ''),
       isFastFood,
+      noBrand,
       items: brandItems,
     });
   });
@@ -142,7 +144,7 @@ export default function CartPage() {
           <>
             {grouped.map((group) => (
               <div key={group.brandId} className={styles.group}>
-                <Link href={group.isFastFood ? '/menu' : (group.brandSlug ? `/brands/${group.brandSlug}` : '/products')} className={styles.storeHeader}>
+                <Link href={group.isFastFood ? '/menu' : (group.noBrand || !group.brandSlug ? '/products' : `/brands/${group.brandSlug}`)} className={styles.storeHeader}>
                   {group.brandName}
                 </Link>
                 {group.items.map((item) => (
