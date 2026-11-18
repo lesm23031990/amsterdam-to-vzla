@@ -68,6 +68,7 @@ export const ModelName = {
   Message: 'Message',
   ExchangeRate: 'ExchangeRate',
   Notification: 'Notification',
+  PushToken: 'PushToken',
   ProductComment: 'ProductComment',
   ProductReport: 'ProductReport',
   StockNotification: 'StockNotification',
@@ -325,6 +326,18 @@ export const NotificationScalarFieldEnum = {
 } as const
 
 export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
+
+
+export const PushTokenScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  token: 'token',
+  platform: 'platform',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PushTokenScalarFieldEnum = (typeof PushTokenScalarFieldEnum)[keyof typeof PushTokenScalarFieldEnum]
 
 
 export const ProductCommentScalarFieldEnum = {

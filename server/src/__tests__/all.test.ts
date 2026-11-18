@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { app, io } from '../index'
 import { authenticateSocket, registerSocketHandlers } from '../lib/socket'
+import { EXPO_PUSH_URL, sendPushToUser } from '../services/push'
 import http from 'http'
 import jwt from 'jsonwebtoken'
 
@@ -26,6 +27,7 @@ vi.mock('../lib/db', () => ({
     message: { findMany: vi.fn(), create: vi.fn(), deleteMany: vi.fn() },
     exchangeRate: { findMany: vi.fn(), upsert: vi.fn() },
     notification: { create: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), count: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
+    pushToken: { findMany: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn() },
     $transaction: vi.fn(),
   },
 }))
@@ -58,6 +60,7 @@ function request(method: string, path: string, body?: any, token?: string): Prom
         hostname: 'localhost', port: addr.port, path, method,
         headers: { 'Content-Type': 'application/json' } as any,
       }
+      if (body) (options.headers as any)['Content-Length'] = Buffer.byteLength(JSON.stringify(body))
       if (token) (options.headers as any)['Authorization'] = `Bearer ${token}`
       const req = http.request(options, (res) => {
         let data = ''
@@ -160,7 +163,12 @@ beforeEach(() => {
   ;(mockDb.driver.updateMany as MockFn).mockResolvedValue({ count: 0 })
   ;(mockDb.order.updateMany as MockFn).mockResolvedValue({ count: 0 })
   ;(mockDb.driver.findUnique as MockFn).mockResolvedValue(null)
+  ;(mockDb.pushToken.findMany as MockFn).mockResolvedValue([])
   ;(mockDb.$transaction as MockFn).mockImplementation((fn: (tx: typeof mockDb) => unknown) => fn(mockDb))
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
 })
 
 describe('Auth', () => {
@@ -1261,3 +1269,213 @@ describe('Admin', () => {
     expect(res.body.error).toContain('driverId')
   })
 })
+
+describe('Push tokens', () => {
+  const expoToken = 'ExponentPushToken[device-1]'
+
+  it('POST /notifications/push-token without auth returns 401', async () => {
+    const res = await request('POST', '/api/v1/notifications/push-token', {
+      token: expoToken, platform: 'android',
+    })
+
+    expect(res.status).toBe(401)
+    expect(mockDb.pushToken.upsert).not.toHaveBeenCalled()
+  })
+
+  it('POST /notifications/push-token registers the device for the authenticated user', async () => {
+    ;(mockDb.pushToken.upsert as MockFn).mockResolvedValue({ id: 'push-1', platform: 'android' })
+
+    const res = await request('POST', '/api/v1/notifications/push-token', {
+      token: expoToken, platform: 'android',
+    }, clienteToken)
+
+    expect(res.status).toBe(200)
+    expect(res.body.ok).toBe(true)
+    expect(res.body.data).toEqual({ id: 'push-1', platform: 'android' })
+    expect(mockDb.pushToken.upsert).toHaveBeenCalledWith({
+      where: { token: expoToken },
+      update: { userId: 'user-1', platform: 'android' },
+      create: { userId: 'user-1', token: expoToken, platform: 'android' },
+    })
+  })
+
+  it('POST /notifications/push-token is idempotent and ignores a body userId', async () => {
+    ;(mockDb.pushToken.upsert as MockFn).mockResolvedValue({ id: 'push-1', platform: 'ios' })
+
+    await request('POST', '/api/v1/notifications/push-token', {
+      token: expoToken, platform: 'ios', userId: 'other-user',
+    }, clienteToken)
+    await request('POST', '/api/v1/notifications/push-token', { token: expoToken, platform: 'ios' }, clienteToken)
+
+    const upsert = mockDb.pushToken.upsert as MockFn
+    expect(upsert).toHaveBeenCalledTimes(2)
+    expect(upsert.mock.calls[0]?.[0]).toMatchObject({ where: { token: expoToken }, create: { userId: 'user-1' } })
+    expect(upsert.mock.calls[1]?.[0]).toMatchObject({ where: { token: expoToken }, update: { userId: 'user-1' } })
+  })
+
+  it('POST /notifications/push-token rejects an unknown platform', async () => {
+    const res = await request('POST', '/api/v1/notifications/push-token', {
+      token: expoToken, platform: 'web',
+    }, clienteToken)
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toContain('Plataforma')
+    expect(mockDb.pushToken.upsert).not.toHaveBeenCalled()
+  })
+
+  it('POST /notifications/push-token rejects a token that is not an Expo push token', async () => {
+    const res = await request('POST', '/api/v1/notifications/push-token', {
+      token: 'not-a-push-token', platform: 'android',
+    }, clienteToken)
+
+    expect(res.status).toBe(400)
+    expect(res.body.error).toContain('Token')
+    expect(mockDb.pushToken.upsert).not.toHaveBeenCalled()
+  })
+
+  it('DELETE /notifications/push-token only removes tokens of the authenticated user', async () => {
+    ;(mockDb.pushToken.deleteMany as MockFn).mockResolvedValue({ count: 1 })
+
+    const res = await request('DELETE', '/api/v1/notifications/push-token', { token: expoToken }, clienteToken)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data).toEqual({ removed: 1 })
+    expect(mockDb.pushToken.deleteMany).toHaveBeenCalledWith({
+      where: { token: expoToken, userId: 'user-1' },
+    })
+  })
+
+  it('DELETE /notifications/push-token accepts the token in the query string', async () => {
+    ;(mockDb.pushToken.deleteMany as MockFn).mockResolvedValue({ count: 0 })
+
+    const res = await request(
+      'DELETE',
+      `/api/v1/notifications/push-token?token=${encodeURIComponent(expoToken)}`,
+      undefined,
+      clienteToken
+    )
+
+    expect(res.status).toBe(200)
+    expect(res.body.data).toEqual({ removed: 0 })
+    expect(mockDb.pushToken.deleteMany).toHaveBeenCalledWith({
+      where: { token: expoToken, userId: 'user-1' },
+    })
+  })
+
+  it('DELETE /notifications/push-token without auth returns 401', async () => {
+    const res = await request('DELETE', '/api/v1/notifications/push-token', { token: expoToken })
+
+    expect(res.status).toBe(401)
+    expect(mockDb.pushToken.deleteMany).not.toHaveBeenCalled()
+  })
+
+  it('DELETE /notifications/push-token rejects an empty token', async () => {
+    const res = await request('DELETE', '/api/v1/notifications/push-token', { token: '  ' }, clienteToken)
+
+    expect(res.status).toBe(400)
+    expect(mockDb.pushToken.deleteMany).not.toHaveBeenCalled()
+  })
+})
+
+describe('Push service', () => {
+  const expoToken = 'ExponentPushToken[device-1]'
+
+  function stubExpoResponse(payload: unknown, ok = true, status = 200): MockFn {
+    const fetchMock = vi.fn().mockResolvedValue({ ok, status, json: async () => payload })
+    vi.stubGlobal('fetch', fetchMock)
+    return fetchMock
+  }
+
+  function parseBody(call: unknown): Array<{ to?: string; sound?: string; data?: Record<string, string> }> {
+    const init = (call as [string, { body: string }])[1]
+    return JSON.parse(init.body) as Array<{ to?: string; sound?: string; data?: Record<string, string> }>
+  }
+
+  it('does nothing when the user has no registered devices', async () => {
+    const fetchMock = stubExpoResponse({ data: [] })
+    ;(mockDb.pushToken.findMany as MockFn).mockResolvedValue([])
+
+    await sendPushToUser('user-1', { title: 'Hola', body: 'Mundo' })
+
+    expect(mockDb.pushToken.findMany).toHaveBeenCalledWith({
+      where: { userId: 'user-1' },
+      select: { token: true },
+    })
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('sends the notification to Expo Push with orderId in data', async () => {
+    const fetchMock = stubExpoResponse({ data: [{ status: 'ok' }] })
+    ;(mockDb.pushToken.findMany as MockFn).mockResolvedValue([{ token: expoToken }])
+
+    await sendPushToUser('user-1', { title: 'Pedido', body: 'En camino', data: { orderId: 'order-1' } })
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    const [url, init] = fetchMock.mock.calls[0] as [string, { method: string; body: string }]
+    expect(url).toBe(EXPO_PUSH_URL)
+    expect(init.method).toBe('POST')
+    expect(parseBody(fetchMock.mock.calls[0])).toEqual([{
+      to: expoToken,
+      sound: 'default',
+      title: 'Pedido',
+      body: 'En camino',
+      priority: 'high',
+      channelId: 'default',
+      data: { orderId: 'order-1' },
+    }])
+  })
+
+  it('splits more than 100 tokens into batches of 100', async () => {
+    const tokens = Array.from({ length: 150 }, (_, index) => ({ token: `ExponentPushToken[device-${index}]` }))
+    const fetchMock = stubExpoResponse({ data: [] })
+    ;(mockDb.pushToken.findMany as MockFn).mockResolvedValue(tokens)
+
+    await sendPushToUser('user-1', { title: 'Hola', body: 'Mundo' })
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock.mock.calls.map((call) => parseBody(call).length)).toEqual([100, 50])
+  })
+
+  it('tolerates Expo API errors without throwing', async () => {
+    stubExpoResponse({ error: 'boom' }, false, 500)
+    ;(mockDb.pushToken.findMany as MockFn).mockResolvedValue([{ token: expoToken }])
+
+    await expect(sendPushToUser('user-1', { title: 'Hola', body: 'Mundo' })).resolves.toBeUndefined()
+    expect(mockDb.pushToken.deleteMany).not.toHaveBeenCalled()
+  })
+
+  it('tolerates network failures without throwing', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('ECONNRESET')))
+    ;(mockDb.pushToken.findMany as MockFn).mockResolvedValue([{ token: expoToken }])
+
+    await expect(sendPushToUser('user-1', { title: 'Hola', body: 'Mundo' })).resolves.toBeUndefined()
+  })
+
+  it('prunes tokens reported as DeviceNotRegistered', async () => {
+    stubExpoResponse({ data: [{ status: 'error', details: { error: 'DeviceNotRegistered' } }] })
+    ;(mockDb.pushToken.findMany as MockFn).mockResolvedValue([{ token: expoToken }])
+
+    await sendPushToUser('user-1', { title: 'Hola', body: 'Mundo' })
+
+    expect(mockDb.pushToken.deleteMany).toHaveBeenCalledWith({
+      where: { token: { in: [expoToken] } },
+    })
+  })
+
+  it('triggers a push when an admin changes the order status', async () => {
+    ;(mockDb.order.findUnique as MockFn).mockResolvedValue(mockOrder)
+    ;(mockDb.order.update as MockFn).mockResolvedValue({ ...mockOrder, status: 'confirmed' })
+    ;(mockDb.pushToken.findMany as MockFn).mockResolvedValue([{ token: expoToken }])
+    const fetchMock = stubExpoResponse({ data: [{ status: 'ok' }] })
+
+    const res = await request('PATCH', '/api/v1/delivery/orders/order-1/status', { status: 'confirmed' }, adminToken)
+
+    expect(res.status).toBe(200)
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+    const [payload] = parseBody(fetchMock.mock.calls[0])
+    expect(payload?.to).toBe(expoToken)
+    expect(payload?.data?.orderId).toBe('order-1')
+    expect(payload?.sound).toBe('default')
+  })
+})
+

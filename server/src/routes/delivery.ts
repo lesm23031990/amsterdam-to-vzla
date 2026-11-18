@@ -4,6 +4,7 @@ import { authMiddleware, requireRole, requireDriver } from '../middleware/auth'
 import { io } from '../index'
 import { OrderStatus } from '../generated/prisma/enums'
 import { createNotification } from '../services/notifications'
+import { sendPushToUser } from '../services/push'
 import { assignDriverToOrder } from '../services/deliveryAssignment'
 
 const router = Router()
@@ -84,6 +85,12 @@ router.patch('/orders/:id/status', authMiddleware, requireRole('admin'), async (
       { orderId: updated.id, status: updated.status },
       updated.id
     )
+
+    void sendPushToUser(order.userId, {
+      title: `Pedido ${statusLabels[status] || status}`,
+      body: `Tu pedido #${updated.id.slice(-6)} ahora está: ${statusLabels[status] || status}`,
+      data: { orderId: updated.id, status: updated.status },
+    })
 
     io.to(order.userId).emit('notification:new', {
       type: 'order_status',
@@ -280,6 +287,12 @@ router.patch('/:id/status', authMiddleware, async (req: Request, res: Response) 
       { orderId: delivery.orderId, deliveryId: delivery.id, status },
       delivery.orderId
     )
+
+    void sendPushToUser(delivery.order.userId, {
+      title: `Entrega ${label.toLowerCase()}`,
+      body: `Tu pedido #${delivery.orderId.slice(-6)} está: ${label.toLowerCase()}`,
+      data: { orderId: delivery.orderId, status },
+    })
 
     io.to(delivery.order.userId).emit('notification:new', {
       type: 'delivery_update',

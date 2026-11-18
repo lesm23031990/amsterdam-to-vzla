@@ -60,6 +60,7 @@ model User {
   stockNotifications StockNotification[]
   menuItemComments MenuItemComment[]
   driver         Driver?
+  pushTokens     PushToken[]
 
   @@map("users")
 }
@@ -320,6 +321,23 @@ model Notification {
   order Order? @relation(fields: [orderId], references: [id])
 
   @@map("notifications")
+}
+
+/// Token de Expo Push asociado a un dispositivo del usuario.
+/// El token es único: si el mismo dispositivo inicia sesión con otra cuenta,
+/// el upsert lo reasigna al nuevo `userId`.
+model PushToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid @map("user_id")
+  token     String   @unique
+  platform  String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_tokens")
 }
 
 model ProductComment {

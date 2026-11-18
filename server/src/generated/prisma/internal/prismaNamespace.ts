@@ -414,6 +414,7 @@ export const ModelName = {
   Message: 'Message',
   ExchangeRate: 'ExchangeRate',
   Notification: 'Notification',
+  PushToken: 'PushToken',
   ProductComment: 'ProductComment',
   ProductReport: 'ProductReport',
   StockNotification: 'StockNotification',
@@ -433,7 +434,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "brand" | "product" | "cart" | "cartItem" | "order" | "orderItem" | "delivery" | "deliveryLocation" | "driver" | "menuItem" | "menuOption" | "menuChoice" | "conversation" | "message" | "exchangeRate" | "notification" | "productComment" | "productReport" | "stockNotification" | "menuItemComment"
+    modelProps: "user" | "brand" | "product" | "cart" | "cartItem" | "order" | "orderItem" | "delivery" | "deliveryLocation" | "driver" | "menuItem" | "menuOption" | "menuChoice" | "conversation" | "message" | "exchangeRate" | "notification" | "pushToken" | "productComment" | "productReport" | "stockNotification" | "menuItemComment"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1695,6 +1696,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    PushToken: {
+      payload: Prisma.$PushTokenPayload<ExtArgs>
+      fields: Prisma.PushTokenFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PushTokenFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PushTokenPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PushTokenFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PushTokenPayload>
+        }
+        findFirst: {
+          args: Prisma.PushTokenFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PushTokenPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PushTokenFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PushTokenPayload>
+        }
+        findMany: {
+          args: Prisma.PushTokenFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PushTokenPayload>[]
+        }
+        create: {
+          args: Prisma.PushTokenCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PushTokenPayload>
+        }
+        createMany: {
+          args: Prisma.PushTokenCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PushTokenCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PushTokenPayload>[]
+        }
+        delete: {
+          args: Prisma.PushTokenDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PushTokenPayload>
+        }
+        update: {
+          args: Prisma.PushTokenUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PushTokenPayload>
+        }
+        deleteMany: {
+          args: Prisma.PushTokenDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PushTokenUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PushTokenUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PushTokenPayload>[]
+        }
+        upsert: {
+          args: Prisma.PushTokenUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PushTokenPayload>
+        }
+        aggregate: {
+          args: Prisma.PushTokenAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePushToken>
+        }
+        groupBy: {
+          args: Prisma.PushTokenGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PushTokenGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PushTokenCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PushTokenCountAggregateOutputType> | number
+        }
+      }
+    }
     ProductComment: {
       payload: Prisma.$ProductCommentPayload<ExtArgs>
       fields: Prisma.ProductCommentFieldRefs
@@ -2267,6 +2342,18 @@ export const NotificationScalarFieldEnum = {
 export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
 
 
+export const PushTokenScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  token: 'token',
+  platform: 'platform',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PushTokenScalarFieldEnum = (typeof PushTokenScalarFieldEnum)[keyof typeof PushTokenScalarFieldEnum]
+
+
 export const ProductCommentScalarFieldEnum = {
   id: 'id',
   productId: 'productId',
@@ -2668,6 +2755,7 @@ export type GlobalOmitConfig = {
   message?: Prisma.MessageOmit
   exchangeRate?: Prisma.ExchangeRateOmit
   notification?: Prisma.NotificationOmit
+  pushToken?: Prisma.PushTokenOmit
   productComment?: Prisma.ProductCommentOmit
   productReport?: Prisma.ProductReportOmit
   stockNotification?: Prisma.StockNotificationOmit

@@ -103,6 +103,13 @@ export type ExchangeRate = Prisma.ExchangeRateModel
  */
 export type Notification = Prisma.NotificationModel
 /**
+ * Model PushToken
+ * Token de Expo Push asociado a un dispositivo del usuario.
+ * El token es único: si el mismo dispositivo inicia sesión con otra cuenta,
+ * el upsert lo reasigna al nuevo `userId`.
+ */
+export type PushToken = Prisma.PushTokenModel
+/**
  * Model ProductComment
  * 
  */

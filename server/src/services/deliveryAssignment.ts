@@ -1,6 +1,7 @@
 import { db } from '../lib/db'
 import { OrderStatus } from '../generated/prisma/enums'
 import { createNotification } from './notifications'
+import { sendPushToUser } from './push'
 import { io } from '../index'
 
 export interface AssignedDelivery {
@@ -80,6 +81,18 @@ export async function assignDriverToOrder(orderId: string, driverId: string): Pr
     { orderId: order.id },
     order.id
   )
+
+  void sendPushToUser(order.userId, {
+    title: 'Conductor asignado',
+    body: `Tu pedido #${order.id.slice(-6)} tiene un conductor asignado: ${driverUser.name}`,
+    data: { orderId: order.id },
+  })
+
+  void sendPushToUser(driverId, {
+    title: 'Nueva entrega asignada',
+    body: `Te han asignado la entrega del pedido #${order.id.slice(-6)}`,
+    data: { orderId: order.id },
+  })
 
   io.to(order.userId).emit('notification:new', {
     type: 'driver_assigned',

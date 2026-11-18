@@ -3,6 +3,7 @@ import { db } from '../lib/db'
 import { authMiddleware } from '../middleware/auth'
 import { OrderStatus, PaymentMethod } from '../generated/prisma/enums'
 import { createNotification } from '../services/notifications'
+import { sendPushToUser } from '../services/push'
 import {
   expireOrderIfNeeded,
   expirePendingOrders,
@@ -114,6 +115,12 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       { orderId: order.id, status: order.status },
       order.id
     )
+
+    void sendPushToUser(userId, {
+      title: 'Pedido creado',
+      body: `Tu pedido #${order.id.slice(-6)} ha sido creado exitosamente`,
+      data: { orderId: order.id },
+    })
 
     io.to(userId).emit('notification:new', {
       type: 'order_status',
@@ -276,6 +283,12 @@ router.post('/orders/:id/pay', authMiddleware, async (req: Request, res: Respons
       { orderId: updated.id, paymentRef },
       updated.id
     )
+
+    void sendPushToUser(userId, {
+      title: 'Comprobante de pago enviado',
+      body: `Tu comprobante para el pedido #${updated.id.slice(-6)} está en revisión`,
+      data: { orderId: updated.id },
+    })
 
     res.json({ ok: true, data: updated })
   } catch (error) {
