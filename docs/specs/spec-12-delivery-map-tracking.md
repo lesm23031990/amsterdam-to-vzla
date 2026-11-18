@@ -2,8 +2,13 @@
 title: "Spec 12 — Delivery Map Tracking"
 labels: ["spec"]
 assignees: []
-status: in-progress
+status: archived
 ---
+
+> **Archivada:** absorbida por [Spec 06](./spec-06-orders.md). El mapa Leaflet, el tracking
+> autenticado por Socket.io y las rutas `/api/v1/delivery/:id/*` se implementaron y verificaron allí.
+> Este documento se conserva como referencia del diseño original (evento `location:updated`,
+> respuesta `driverLocation`), que no coincide con la implementación final.
 
 ## Endpoints
 

@@ -52,24 +52,52 @@ interface PaymentStatus {
   expired: boolean;
 }
 
+interface TrackingInfo {
+  deliveryId: string;
+  status: string;
+  driver: { id: string; name: string; phone: string } | null;
+  latestLocation: { lat: number; lng: number; createdAt: string } | null;
+  orderStatus: string;
+}
+
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [order, setOrder] = useState<Order | null>(null);
   const [payment, setPayment] = useState<PaymentStatus | null>(null);
+  const [tracking, setTracking] = useState<TrackingInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchOrder();
   }, [id]);
 
+  // Polling de respaldo mientras el pedido va en camino (el mapa nativo es backlog).
+  useEffect(() => {
+    if (order?.status !== 'in_transit') return;
+    const orderId = order.id;
+    const interval = setInterval(() => { void fetchTracking(orderId); }, 15000);
+    return () => clearInterval(interval);
+  }, [order?.id, order?.status]);
+
+  const fetchTracking = async (orderId: string) => {
+    try {
+      const res = await apiClient.get(`/api/v1/delivery/orders/${orderId}/tracking`);
+      setTracking(res.data.data ?? null);
+    } catch (error) {
+      console.error('Error fetching tracking:', error);
+    }
+  };
+
   const fetchOrder = async () => {
     try {
-      const [orderRes, paymentRes] = await Promise.all([
+      const [orderRes, paymentRes, trackingRes] = await Promise.all([
         apiClient.get(`/api/v1/checkout/orders/${id}`),
         apiClient.get(`/api/v1/checkout/orders/${id}/payment-status`),
+        apiClient.get(`/api/v1/delivery/orders/${id}/tracking`),
       ]);
       setOrder(orderRes.data.data);
       setPayment(paymentRes.data.data);
+      setTracking(trackingRes.data.data ?? null);
     } catch (error) {
       console.error('Error fetching order:', error);
     } finally {
@@ -94,6 +122,8 @@ export default function OrderDetailScreen() {
   }
 
   const currentStatusIndex = statusSteps.findIndex((s) => s.key === order.status);
+  const trackingDriver = tracking?.driver ?? null;
+  const latestLocation = tracking?.latestLocation ?? null;
 
   return (
     <ScrollView style={styles.container}>
@@ -219,9 +249,32 @@ export default function OrderDetailScreen() {
       )}
 
       {order.status === 'in_transit' && (
-        <View style={styles.mapPlaceholder}>
-          <Ionicons name="map-outline" size={48} color="#9CA3AF" />
-          <Text style={styles.mapText}>Mapa de seguimiento en vivo</Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Seguimiento en vivo</Text>
+          {trackingDriver ? (
+            <View style={styles.trackingCard}>
+              <View style={styles.trackingRow}>
+                <Ionicons name="bicycle-outline" size={22} color="#1E40AF" />
+                <Text style={styles.trackingDriver}>{trackingDriver.name}</Text>
+              </View>
+              {trackingDriver.phone && (
+                <TouchableOpacity
+                  style={styles.trackingCall}
+                  onPress={() => Linking.openURL(`tel:${trackingDriver.phone}`)}
+                >
+                  <Ionicons name="call-outline" size={18} color="#1E40AF" />
+                  <Text style={styles.trackingCallText}>{trackingDriver.phone}</Text>
+                </TouchableOpacity>
+              )}
+              <Text style={styles.trackingHint}>
+                {latestLocation
+                  ? `Última ubicación: ${new Date(latestLocation.createdAt).toLocaleTimeString('es-VE')}`
+                  : 'Esperando ubicación del repartidor...'}
+              </Text>
+            </View>
+          ) : (
+            <Text style={styles.mapText}>Esperando asignación del repartidor...</Text>
+          )}
         </View>
       )}
     </ScrollView>
@@ -391,15 +444,45 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#B91C1C',
   },
-  mapPlaceholder: {
-    backgroundColor: '#FFFFFF',
-    padding: 32,
-    marginTop: 12,
-    alignItems: 'center',
-  },
   mapText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#9CA3AF',
-    marginTop: 8,
+  },
+  trackingCard: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    padding: 16,
+    gap: 8,
+  },
+  trackingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  trackingDriver: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  trackingCall: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    backgroundColor: '#DBEAFE',
+  },
+  trackingCallText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1E40AF',
+  },
+  trackingHint: {
+    fontSize: 13,
+    color: '#6B7280',
   },
 });

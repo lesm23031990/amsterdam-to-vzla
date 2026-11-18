@@ -57,6 +57,10 @@ export async function assignDriverToOrder(orderId: string, driverId: string): Pr
       where: { id: order.id },
       data: { status: OrderStatus.preparing },
     })
+    io.to(order.id).to(order.userId).emit('order:status', {
+      orderId: order.id,
+      status: OrderStatus.preparing,
+    })
   }
 
   await createNotification(

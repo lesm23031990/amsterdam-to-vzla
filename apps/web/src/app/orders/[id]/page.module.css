@@ -42,6 +42,64 @@
   margin-bottom: 24px;
 }
 
+.trackingSection {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.trackingHeader {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.trackingHeader h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.driverInfo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+  color: #374151;
+}
+
+.driverPhone {
+  color: #2563eb;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.driverPhone:hover {
+  text-decoration: underline;
+}
+
+.mapLoading {
+  height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #e5e7eb;
+  border-radius: 12px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+@media (max-width: 640px) {
+  .mapLoading {
+    height: 240px;
+  }
+}
+
 .steps {
   display: flex;
   justify-content: space-between;

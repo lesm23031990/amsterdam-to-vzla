@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { app } from '../index'
+import { app, io } from '../index'
+import { authenticateSocket, registerSocketHandlers } from '../lib/socket'
 import http from 'http'
 import jwt from 'jsonwebtoken'
 
@@ -760,10 +761,21 @@ describe('Delivery', () => {
     })
     ;(mockDb.deliveryLocation.create as MockFn).mockResolvedValue(mockLocation)
 
-    const res = await request('PATCH', '/api/v1/delivery/delivery/delivery-1/location', { lat: 7.7703, lng: -72.2292 }, adminToken)
+    const res = await request('PATCH', '/api/v1/delivery/delivery-1/location', { lat: 7.7703, lng: -72.2292 }, adminToken)
 
     expect(res.status).toBe(200)
     expect(res.body.ok).toBe(true)
+  })
+
+  it('Update location rejects a user that is not the driver', async () => {
+    ;(mockDb.delivery.findUnique as MockFn).mockResolvedValue({
+      ...mockDelivery, driverId: 'driver-1', driver: { id: 'driver-1' },
+    })
+
+    const res = await request('PATCH', '/api/v1/delivery/delivery-1/location', { lat: 7.7703, lng: -72.2292 }, clienteToken)
+
+    expect(res.status).toBe(403)
+    expect(res.body.error).toContain('No autorizado')
   })
 
   it('GET /delivery/my-deliveries returns driver deliveries', async () => {
@@ -803,7 +815,7 @@ describe('Delivery', () => {
     ;(mockDb.order.update as MockFn).mockResolvedValue({ ...mockOrder, status: 'preparing' })
     ;(mockDb.driver.updateMany as MockFn).mockResolvedValue({ count: 1 })
 
-    const res = await request('PATCH', '/api/v1/delivery/delivery/delivery-1/status', { status: 'picked_up' }, driverToken)
+    const res = await request('PATCH', '/api/v1/delivery/delivery-1/status', { status: 'picked_up' }, driverToken)
 
     expect(res.status).toBe(200)
     expect(res.body.ok).toBe(true)
@@ -815,7 +827,7 @@ describe('Delivery', () => {
       ...mockDelivery, status: 'assigned', order: { ...mockOrder, status: 'confirmed' },
     })
 
-    const res = await request('PATCH', '/api/v1/delivery/delivery/delivery-1/status', { status: 'delivered' }, driverToken)
+    const res = await request('PATCH', '/api/v1/delivery/delivery-1/status', { status: 'delivered' }, driverToken)
 
     expect(res.status).toBe(400)
     expect(res.body.error).toContain('No se puede cambiar')
@@ -826,10 +838,152 @@ describe('Delivery', () => {
       ...mockDelivery, status: 'assigned', driver: { id: 'driver-1' },
     })
 
-    const res = await request('PATCH', '/api/v1/delivery/delivery/delivery-1/location', { lat: 7.7703, lng: -72.2292 }, driverToken)
+    const res = await request('PATCH', '/api/v1/delivery/delivery-1/location', { lat: 7.7703, lng: -72.2292 }, driverToken)
 
     expect(res.status).toBe(400)
     expect(res.body.error).toContain('tránsito')
+  })
+
+  it('order:status is emitted only to the order room and its owner', async () => {
+    ;(mockDb.order.findUnique as MockFn).mockResolvedValue(mockOrder)
+    ;(mockDb.order.update as MockFn).mockResolvedValue({ ...mockOrder, status: 'confirmed' })
+
+    const emit = vi.fn()
+    const broadcast: any = { emit, to: vi.fn() }
+    broadcast.to.mockReturnValue(broadcast)
+    const toSpy = vi.spyOn(io, 'to').mockReturnValue(broadcast as any)
+    const globalEmit = vi.spyOn(io, 'emit').mockImplementation(() => true as any)
+
+    try {
+      const res = await request('PATCH', '/api/v1/delivery/orders/order-1/status', { status: 'confirmed' }, adminToken)
+
+      expect(res.status).toBe(200)
+      expect(toSpy).toHaveBeenCalledWith('order-1')
+      expect(toSpy).toHaveBeenCalledWith('user-1')
+      expect(emit).toHaveBeenCalledWith('order:status', { orderId: 'order-1', status: 'confirmed' })
+      expect(globalEmit).not.toHaveBeenCalled()
+    } finally {
+      toSpy.mockRestore()
+      globalEmit.mockRestore()
+    }
+  })
+
+  it('delivery:status is not broadcast globally', async () => {
+    ;(mockDb.delivery.findUnique as MockFn).mockResolvedValue({
+      ...mockDelivery, status: 'accepted', order: { ...mockOrder, status: 'preparing' },
+    })
+    ;(mockDb.delivery.update as MockFn).mockResolvedValue({ ...mockDelivery, status: 'picked_up' })
+    ;(mockDb.order.update as MockFn).mockResolvedValue({ ...mockOrder, status: 'preparing' })
+    ;(mockDb.driver.updateMany as MockFn).mockResolvedValue({ count: 1 })
+
+    const globalEmit = vi.spyOn(io, 'emit').mockImplementation(() => true as any)
+
+    try {
+      const res = await request('PATCH', '/api/v1/delivery/delivery-1/status', { status: 'picked_up' }, driverToken)
+
+      expect(res.status).toBe(200)
+      expect(globalEmit).not.toHaveBeenCalled()
+    } finally {
+      globalEmit.mockRestore()
+    }
+  })
+})
+
+describe('Realtime', () => {
+  function fakeSocket(auth: Record<string, unknown>) {
+    const handlers: Record<string, (...args: any[]) => any> = {}
+    const socket = {
+      id: 'socket-test',
+      data: {} as Record<string, any>,
+      handshake: { auth },
+      join: vi.fn(),
+      on: vi.fn((event: string, handler: (...args: any[]) => any) => {
+        handlers[event] = handler
+      }),
+    }
+    return { socket, handlers }
+  }
+
+  function registerWithFakeIo() {
+    let connectionHandler: ((socket: any) => void) | null = null
+    const fakeIo = {
+      use: vi.fn(),
+      on: vi.fn((event: string, handler: (socket: any) => void) => {
+        if (event === 'connection') connectionHandler = handler
+      }),
+    }
+    registerSocketHandlers(fakeIo as any)
+    return { fakeIo, getConnection: () => connectionHandler! }
+  }
+
+  function connect(auth: Record<string, unknown>) {
+    const { getConnection } = registerWithFakeIo()
+    const { socket, handlers } = fakeSocket(auth)
+    authenticateSocket(socket as any, vi.fn())
+    getConnection()(socket)
+    return { socket, handlers }
+  }
+
+  it('rejects connections without a valid token', () => {
+    const { socket } = fakeSocket({})
+    const next = vi.fn()
+
+    authenticateSocket(socket as any, next)
+
+    expect(next).toHaveBeenCalledWith(expect.any(Error))
+    expect(socket.data.userId).toBeUndefined()
+  })
+
+  it('stores the JWT identity on the socket', () => {
+    const { socket } = fakeSocket({ token: clienteToken })
+    const next = vi.fn()
+
+    authenticateSocket(socket as any, next)
+
+    expect(next).toHaveBeenCalledWith()
+    expect(socket.data.userId).toBe('user-1')
+    expect(socket.data.role).toBe('cliente')
+  })
+
+  it('join only allows the own room, except for admins', () => {
+    const own = connect({ token: clienteToken })
+    own.handlers.join('user-1')
+    expect(own.socket.join).toHaveBeenCalledWith('user-1')
+
+    const hijack = connect({ token: clienteToken })
+    hijack.handlers.join('user-2')
+    expect(hijack.socket.join).not.toHaveBeenCalled()
+
+    const admin = connect({ token: adminToken })
+    admin.handlers.join('user-2')
+    expect(admin.socket.join).toHaveBeenCalledWith('user-2')
+  })
+
+  it('join:order rejects an order from another user', async () => {
+    ;(mockDb.order.findUnique as MockFn).mockResolvedValue({ userId: 'user-2' })
+    const { socket, handlers } = connect({ token: clienteToken })
+    const ack = vi.fn()
+
+    await handlers['join:order']('order-1', ack)
+
+    expect(socket.join).not.toHaveBeenCalled()
+    expect(ack).toHaveBeenCalledWith({ ok: false, error: 'No autorizado para seguir este pedido' })
+  })
+
+  it('join:order allows the owner and admins', async () => {
+    ;(mockDb.order.findUnique as MockFn).mockResolvedValue({ userId: 'user-1' })
+
+    const owner = connect({ token: clienteToken })
+    const ownerAck = vi.fn()
+    await owner.handlers['join:order']('order-1', ownerAck)
+    expect(owner.socket.join).toHaveBeenCalledWith('order-1')
+    expect(ownerAck).toHaveBeenCalledWith({ ok: true })
+
+    const admin = connect({ token: adminToken })
+    const adminAck = vi.fn()
+    await admin.handlers['join:order']('order-1', adminAck)
+    expect(admin.socket.join).toHaveBeenCalledWith('order-1')
+    expect(adminAck).toHaveBeenCalledWith({ ok: true })
   })
 })
 

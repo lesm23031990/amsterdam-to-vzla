@@ -92,7 +92,7 @@ router.patch('/orders/:id/status', authMiddleware, requireRole('admin'), async (
       orderId: updated.id,
     })
 
-    io.emit('order:status', { orderId: updated.id, status: updated.status })
+    io.to(updated.id).to(order.userId).emit('order:status', { orderId: updated.id, status: updated.status })
 
     res.json({ ok: true, data: updated })
   } catch (error) {
@@ -206,7 +206,7 @@ router.get('/my-deliveries', authMiddleware, requireDriver, async (req: Request,
 })
 
 // PATCH /api/v1/delivery/:id/status — el repartidor avanza el estado de su entrega
-router.patch('/delivery/:id/status', authMiddleware, async (req: Request, res: Response) => {
+router.patch('/:id/status', authMiddleware, async (req: Request, res: Response) => {
   try {
     const { status } = req.body
     const deliveryId = req.params.id as string
@@ -261,7 +261,7 @@ router.patch('/delivery/:id/status', authMiddleware, async (req: Request, res: R
         data: { status: nextOrderStatus },
       })
       orderStatus = updatedOrder.status
-      io.emit('order:status', { orderId: delivery.orderId, status: orderStatus })
+      io.to(delivery.orderId).to(delivery.order.userId).emit('order:status', { orderId: delivery.orderId, status: orderStatus })
     }
 
     await db.driver
@@ -293,7 +293,6 @@ router.patch('/delivery/:id/status', authMiddleware, async (req: Request, res: R
       status,
       orderStatus,
     })
-    io.emit('delivery:status', { deliveryId: delivery.id, orderId: delivery.orderId, status, orderStatus })
 
     res.json({ ok: true, data: { id: updated.id, status: updated.status, orderStatus } })
   } catch (error) {
@@ -302,7 +301,7 @@ router.patch('/delivery/:id/status', authMiddleware, async (req: Request, res: R
   }
 })
 
-router.patch('/delivery/:id/location', authMiddleware, async (req: Request, res: Response) => {
+router.patch('/:id/location', authMiddleware, async (req: Request, res: Response) => {
   try {
     const { lat, lng } = req.body
 

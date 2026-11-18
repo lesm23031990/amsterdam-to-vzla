@@ -28,7 +28,7 @@ async function request<T>(
     if (!res.ok) {
       return { ok: false, error: json.error || json.message || 'Error en la solicitud' };
     }
-    return { ok: true, data: json.data ?? json, pagination: json.pagination };
+    return { ok: true, data: json.data !== undefined ? json.data : json, pagination: json.pagination };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión' };
   }

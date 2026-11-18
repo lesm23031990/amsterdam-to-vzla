@@ -1,11 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import 'leaflet/dist/leaflet.css';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
+import { connectNotificationSocket } from '@/lib/socket';
+import type { LatLng } from '@/components/OrderMap';
 import styles from './page.module.css';
+
+const OrderMap = dynamic(() => import('@/components/OrderMap'), {
+  ssr: false,
+  loading: () => <p className={styles.mapLoading}>Cargando mapa...</p>,
+});
 
 interface Order {
   id: string;
@@ -45,6 +54,14 @@ interface PaymentStatus {
   expired: boolean;
 }
 
+interface TrackingInfo {
+  deliveryId: string;
+  status: string;
+  driver: { id: string; name: string; phone: string } | null;
+  latestLocation: { lat: number; lng: number; createdAt: string } | null;
+  orderStatus: string;
+}
+
 const statusLabels: Record<string, string> = {
   pending_payment: 'Pendiente de pago',
   confirmed: 'Confirmado',
@@ -75,34 +92,102 @@ export default function OrderDetailPage() {
   const router = useRouter();
   const [order, setOrder] = useState<Order | null>(null);
   const [payment, setPayment] = useState<PaymentStatus | null>(null);
+  const [tracking, setTracking] = useState<TrackingInfo | null>(null);
+  const [driverPos, setDriverPos] = useState<LatLng | null>(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [payRef, setPayRef] = useState('');
+  const driverPosAtRef = useRef<string | null>(null);
+
+  // Descarta posiciones viejas si las respuestas llegan desordenadas.
+  const applyDriverPos = useCallback((lat: number, lng: number, at?: string) => {
+    const timestamp = at || new Date().toISOString();
+    if (driverPosAtRef.current && timestamp < driverPosAtRef.current) return;
+    driverPosAtRef.current = timestamp;
+    setDriverPos({ lat, lng });
+  }, []);
+
+  const loadOrderData = useCallback(async (id: string) => {
+    const [orderRes, paymentRes, trackingRes] = await Promise.all([
+      api.get<Order>(`/checkout/orders/${id}`),
+      api.get<PaymentStatus>(`/checkout/orders/${id}/payment-status`),
+      api.get<TrackingInfo | null>(`/delivery/orders/${id}/tracking`),
+    ]);
+
+    const nextOrder = orderRes.ok ? orderRes.data : undefined;
+    if (nextOrder) setOrder(nextOrder);
+    if (paymentRes.ok && paymentRes.data) setPayment(paymentRes.data);
+
+    if (trackingRes.ok && trackingRes.data) {
+      setTracking(trackingRes.data);
+      const latest = trackingRes.data.latestLocation;
+      if (latest) applyDriverPos(latest.lat, latest.lng, latest.createdAt);
+    } else {
+      const fallback = nextOrder?.delivery?.locations?.[0];
+      if (fallback) applyDriverPos(fallback.lat, fallback.lng, fallback.createdAt);
+    }
+  }, [applyDriverPos]);
 
   useEffect(() => {
     if (!user) { router.push('/login'); return; }
     const id = params.id as string;
-    Promise.all([
-      api.get<Order>(`/checkout/orders/${id}`),
-      api.get<PaymentStatus>(`/checkout/orders/${id}/payment-status`),
-    ]).then(([orderRes, paymentRes]) => {
-      if (orderRes.ok && orderRes.data) setOrder(orderRes.data);
-      if (paymentRes.ok && paymentRes.data) setPayment(paymentRes.data);
-      setLoading(false);
-    });
-  }, [params.id, user]);
+    void loadOrderData(id).finally(() => setLoading(false));
+  }, [params.id, user, router, loadOrderData]);
+
+  // Tracking en vivo por socket: solo el dueño del pedido (o admin) recibe sus rooms.
+  useEffect(() => {
+    const orderId = params.id as string;
+    if (!user || !orderId) return;
+
+    const token = localStorage.getItem('token');
+    const socket = token ? connectNotificationSocket(token) : null;
+    if (!socket) return;
+
+    const joinOrder = () => { socket.emit('join:order', orderId); };
+    if (socket.connected) joinOrder();
+    socket.on('connect', joinOrder);
+
+    const handleLocation = (payload: { orderId: string; lat: number; lng: number; timestamp: string }) => {
+      if (payload.orderId !== orderId) return;
+      applyDriverPos(payload.lat, payload.lng, payload.timestamp);
+      setTracking((current) => (current ? {
+        ...current,
+        latestLocation: { lat: payload.lat, lng: payload.lng, createdAt: payload.timestamp },
+      } : current));
+    };
+
+    const handleOrderChange = (payload: { orderId: string }) => {
+      if (payload.orderId !== orderId) return;
+      void loadOrderData(orderId);
+    };
+
+    socket.on('delivery:location', handleLocation);
+    socket.on('delivery:status', handleOrderChange);
+    socket.on('order:status', handleOrderChange);
+
+    return () => {
+      socket.off('connect', joinOrder);
+      socket.off('delivery:location', handleLocation);
+      socket.off('delivery:status', handleOrderChange);
+      socket.off('order:status', handleOrderChange);
+      socket.disconnect();
+    };
+  }, [params.id, user, applyDriverPos, loadOrderData]);
+
+  // Polling de respaldo cada 15s mientras el pedido va en camino (cubre la demo sin sockets).
+  useEffect(() => {
+    if (!order || order.status !== 'in_transit') return;
+    const id = order.id;
+    const interval = window.setInterval(() => { void loadOrderData(id); }, 15000);
+    return () => window.clearInterval(interval);
+  }, [order?.id, order?.status, loadOrderData]);
 
   const handlePay = async () => {
     if (!order) return;
     setPaying(true);
     const res = await api.post(`/checkout/orders/${order.id}/pay`, { paymentRef: payRef });
     if (res.ok) {
-      const [orderRes, paymentRes] = await Promise.all([
-        api.get<Order>(`/checkout/orders/${order.id}`),
-        api.get<PaymentStatus>(`/checkout/orders/${order.id}/payment-status`),
-      ]);
-      if (orderRes.ok && orderRes.data) setOrder(orderRes.data);
-      if (paymentRes.ok && paymentRes.data) setPayment(paymentRes.data);
+      await loadOrderData(order.id);
       setPayRef('');
     }
     setPaying(false);
@@ -133,6 +218,25 @@ export default function OrderDetailPage() {
             ))}
           </div>
         </div>
+
+        {order.status === 'in_transit' && (
+          <div className={styles.trackingSection}>
+            <div className={styles.trackingHeader}>
+              <h3>Seguimiento en vivo</h3>
+              {tracking?.driver && (
+                <div className={styles.driverInfo}>
+                  <span>{tracking.driver.name}</span>
+                  {tracking.driver.phone && (
+                    <a href={`tel:${tracking.driver.phone}`} className={styles.driverPhone}>
+                      {tracking.driver.phone}
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+            <OrderMap driverPos={driverPos} destinationLabel={order.deliveryAddress} />
+          </div>
+        )}
 
         <div className={styles.grid}>
           <div className={styles.section}>

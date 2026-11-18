@@ -15,6 +15,7 @@ import adminRoutes from './routes/admin'
 import assistantRoutes from './routes/assistant'
 import ratesRoutes from './routes/rates'
 import notificationRoutes from './routes/notifications'
+import { registerSocketHandlers } from './lib/socket'
 
 const app = express()
 const httpServer = createServer(app)
@@ -42,16 +43,7 @@ app.use('/api/v1/admin', adminRoutes)
 app.use('/api/v1/rates', ratesRoutes)
 app.use('/api/v1/notifications', notificationRoutes)
 
-io.on('connection', (socket) => {
-  console.log('Cliente conectado:', socket.id)
-
-  socket.on('join', (userId: string) => {
-    socket.join(userId)
-    console.log(`Usuario ${userId} unido a su room`)
-  })
-
-  socket.on('disconnect', () => console.log('Cliente desconectado:', socket.id))
-})
+registerSocketHandlers(io)
 
 const PORT = process.env.PORT || 3001
 if (process.env.NODE_ENV !== 'test') {
