@@ -24,6 +24,8 @@ vi.mock('../lib/db', () => ({
     message: { findMany: vi.fn(), create: vi.fn(), deleteMany: vi.fn() },
     exchangeRate: { findMany: vi.fn(), upsert: vi.fn() },
     notification: { create: vi.fn(), findMany: vi.fn(), count: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
+    // Checkout dispara push (fire-and-forget): sin delegado el servicio loguearía un error.
+    pushToken: { findMany: vi.fn().mockResolvedValue([]), upsert: vi.fn(), deleteMany: vi.fn() },
   },
 }))
 
