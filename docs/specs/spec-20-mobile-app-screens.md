@@ -102,7 +102,7 @@ User login (same as web).
 - [x] Integrate delivery map (WebView or react-native-maps)
 - [x] Set up push notifications (Expo)
 - [x] Write tests (TDD)
-- [ ] PR a main
+- [x] PR a main (rama `feature/spec-20-mobile-map-push` integrada en `main`)
 
 ## Verificación (2026-11-18)
 
@@ -146,7 +146,36 @@ User login (same as web).
 - `npx tsc --noEmit` en `apps/mobile` y `server`, y `npx vitest run` (169 tests)
   en verde.
 
+### Validaciones ejecutadas (2026-11-18)
+- `npx tsc --noEmit` en `server`, `apps/mobile` y `apps/web`: sin errores.
+- `npm test`: 9 archivos / 169 tests en verde (incluye los 24 tests nuevos de
+  este spec).
+- `npm run build -w server`: compila sin errores.
+- `npx expo export --platform android` y `--platform ios`: ambos bundles Hermes
+  se generan correctamente (valida imports, plugins y código de las pantallas).
+- `npx prisma migrate status`: base local al día; migración
+  `20261118040556_add_push_tokens` aplicada. Tabla `push_tokens` verificada con
+  columnas `id`, `user_id`, `token`, `platform`, `created_at`, `updated_at`.
+- Smoke test end-to-end contra el servidor real (puerto 3001):
+  - `GET /api/v1/health` → 200.
+  - `POST /api/v1/auth/register` → 201 con JWT.
+  - `POST /api/v1/notifications/push-token` sin token → 401; con token inválido
+    o `platform` no soportada → 400; token Expo válido → 200.
+  - Reenvío del mismo token con otra plataforma → 200 con el mismo `id`
+    (upsert idempotente, no duplica registros).
+  - `DELETE /api/v1/notifications/push-token` → `removed: 1`; segundo intento →
+    `removed: 0`.
+  - `GET /api/v1/notifications` → 200.
+- Nota: `npm run build -w apps/web` falla al prerenderizar `/_global-error`
+  (`Cannot read properties of null (reading 'useContext')`). Es un fallo
+  preexistente de la app web (dos copias de React en el workspace: raíz 19.2.8
+  y `apps/web` 19.2.4) y se reproduce igual en `main` sin estos cambios; ningún
+  archivo de `apps/web` se modificó en este spec.
+
 ### Pendiente
 - Validar en dispositivo físico (token real de Expo y build EAS). Requiere
   `extra.eas.projectId` en `app.json` (`eas init`); sin él, el registro de push
   se omite con un warning y el resto de la app funciona igual.
+- Builds nativos Android/iOS (EAS o `expo run:*`): los bundles JS ya exportan
+  para ambas plataformas, pero el build nativo no se ejecutó en este entorno.
+
