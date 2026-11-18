@@ -95,3 +95,24 @@ Headers: `Authorization: Bearer <token>`
 - [x] Implementar rutas de carrito
 - [x] Validar stock contra producto actual
 - [x] PR a main
+
+---
+
+## Mejoras posteriores
+
+- 2026-11-18 ( `feat(cart): group items by brand with no-brand fallback...`,
+  rebasado sobre `main` ): se integró lo que quedaba pendiente en el branch
+  `feature/cart-brand-grouping`:
+  - Productos **sin marca** ya no desaparecen del carrito: se agrupan bajo
+    "Sin marca" (antes el `forEach` hacía `return` y el ítem se ocultaba,
+    aunque sí se cobraba en el total).
+  - Precio unitario y moneda de líneas de producto usan `item.price`
+    (precio congelado) con fallback al precio del producto; menú usa
+    `menuItem?.currency` con fallback `USD`.
+  - `GET /api/v1/cart` incluye `basePrice` y `currency` del `menuItem`,
+    necesario para renderizar líneas de menú sin recargar el catálogo.
+  - Layout: navbar `sticky` (antes `fixed` tapaba el inicio de cada página) y
+    `.pageWrapper { flex: 1 }` sobre `body` flex-column.
+  - Validado: `tsc` web + server, `next build` (23 rutas) y `npm test`
+    (169/169).
+
