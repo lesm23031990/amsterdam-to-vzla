@@ -1,0 +1,5 @@
+# Normaliza EOL del código generado por Prisma.
+# `prisma generate` escribe LF en Windows, pero los archivos estaban
+# commiteados con CRLF, así que cada `npm test` (que corre db:generate)
+# dejaba el árbol sucio con diffs de solo EOL.
+server/src/generated/** text eol=lf
