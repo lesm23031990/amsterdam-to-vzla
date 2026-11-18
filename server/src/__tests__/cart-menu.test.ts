@@ -14,7 +14,7 @@ vi.mock('../lib/db', () => ({
     menuItemComment: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), count: vi.fn() },
     cart: { findUnique: vi.fn(), upsert: vi.fn() },
     cartItem: { findFirst: vi.fn(), findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), deleteMany: vi.fn() },
-    order: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn() },
+    order: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
     orderItem: { findMany: vi.fn() },
     delivery: { findUnique: vi.fn(), create: vi.fn() },
     deliveryLocation: { create: vi.fn() },
@@ -107,7 +107,7 @@ const mockMenuItemCartItem = {
 const mockOrder = {
   id: 'order-1', userId: 'user-1', status: 'confirmed', total: 107122,
   totalCop: 107122, deliveryFee: 0, currency: 'COP', paymentMethod: 'cash', paymentStatus: 'pending',
-  createdAt: new Date('2024-01-01'), updatedAt: new Date('2024-01-01'),
+  createdAt: new Date(), updatedAt: new Date(),
 }
 
 beforeEach(() => {
@@ -119,6 +119,7 @@ beforeEach(() => {
   ;(mockDb.notification.create as MockFn).mockResolvedValue({ id: 'n1' })
   ;(mockDb.cart.upsert as MockFn).mockResolvedValue(mockCart)
   ;(mockDb.menuItem.findUnique as MockFn).mockResolvedValue(mockMenuItemFull)
+  ;(mockDb.order.updateMany as MockFn).mockResolvedValue({ count: 0 })
 })
 
 describe('Cart — menu items', () => {
@@ -371,5 +372,34 @@ describe('Checkout — mixed product + menu', () => {
     )
     const created = (mockDb.order.create as MockFn).mock.calls[0][0].data.items.create
     expect(created[1]).not.toHaveProperty('productId')
+  })
+
+  it('creates a binance_pay order with a mock payment link', async () => {
+    ;(mockDb.cart.findUnique as MockFn).mockResolvedValue({
+      ...mockCart,
+      items: [
+        {
+          ...mockMenuItemCartItem,
+          quantity: 1,
+          product: null,
+          menuItem: { id: 'menu-1', name: 'Hamburguesa' },
+        },
+      ],
+    })
+    ;(mockDb.order.create as MockFn).mockImplementation((args: any) =>
+      Promise.resolve({ ...mockOrder, ...args.data })
+    )
+    ;(mockDb.cartItem.deleteMany as MockFn).mockResolvedValue({ count: 1 })
+
+    const res = await request('POST', '/api/v1/checkout', {
+      paymentMethod: 'binance_pay', deliveryAddress: 'San Cristóbal', contactPhone: '+584241234567',
+    }, clienteToken)
+
+    expect(res.status).toBe(201)
+    const created = (mockDb.order.create as MockFn).mock.calls[0][0].data
+    expect(created.status).toBe('pending_payment')
+    expect(created.paymentStatus).toBe('pending')
+    expect(created.paymentUrl).toMatch(/^https:\/\/mock\.binance\.com\/pay\/temp-user-1-/)
+    expect(res.body.data.paymentUrl).toBe(created.paymentUrl)
   })
 })

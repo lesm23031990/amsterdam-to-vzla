@@ -3,6 +3,12 @@ import { db } from '../lib/db'
 import { authMiddleware } from '../middleware/auth'
 import { OrderStatus, PaymentMethod } from '../generated/prisma/enums'
 import { createNotification } from '../services/notifications'
+import {
+  expireOrderIfNeeded,
+  expirePendingOrders,
+  getPaymentExpiresAt,
+  isPaymentExpired,
+} from '../services/orderExpiry'
 import { io } from '../index'
 
 const router = Router()
@@ -125,8 +131,13 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
 
 router.get('/orders', authMiddleware, async (req: Request, res: Response) => {
   try {
+    const userId = req.user!.userId
+
+    // Expiración perezosa: cancela órdenes que llevan más de 24h sin pagar.
+    await expirePendingOrders(userId)
+
     const orders = await db.order.findMany({
-      where: { userId: req.user!.userId },
+      where: { userId },
       orderBy: { createdAt: 'desc' },
       include: {
         items: true,
@@ -145,9 +156,45 @@ router.get('/orders', authMiddleware, async (req: Request, res: Response) => {
   }
 })
 
+router.get('/orders/:id/payment-status', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const found = await db.order.findUnique({ where: { id: req.params.id as string } })
+
+    if (!found) {
+      res.status(404).json({ ok: false, error: 'Pedido no encontrado' })
+      return
+    }
+
+    if (found.userId !== req.user!.userId && req.user!.role !== 'admin') {
+      res.status(403).json({ ok: false, error: 'No autorizado para ver este pedido' })
+      return
+    }
+
+    const order = await expireOrderIfNeeded(found)
+    const expiresAt = getPaymentExpiresAt(order.createdAt)
+
+    res.json({
+      ok: true,
+      data: {
+        orderId: order.id,
+        orderStatus: order.status,
+        paymentMethod: order.paymentMethod,
+        paymentStatus: order.paymentStatus,
+        paymentRef: order.paymentRef ?? null,
+        paymentUrl: order.paymentUrl ?? null,
+        expiresAt: expiresAt.toISOString(),
+        expired: isPaymentExpired(order),
+      },
+    })
+  } catch (error) {
+    console.error('Payment status error:', error)
+    res.status(500).json({ ok: false, error: 'Error al consultar el estado del pago' })
+  }
+})
+
 router.get('/orders/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const order = await db.order.findUnique({
+    const found = await db.order.findUnique({
       where: { id: req.params.id as string },
       include: {
         items: true,
@@ -160,15 +207,18 @@ router.get('/orders/:id', authMiddleware, async (req: Request, res: Response) =>
       },
     })
 
-    if (!order) {
+    if (!found) {
       res.status(404).json({ ok: false, error: 'Pedido no encontrado' })
       return
     }
 
-    if (order.userId !== req.user!.userId && req.user!.role !== 'admin') {
+    if (found.userId !== req.user!.userId && req.user!.role !== 'admin') {
       res.status(403).json({ ok: false, error: 'No autorizado para ver este pedido' })
       return
     }
+
+    // Expiración perezosa al consultar el detalle.
+    const order = await expireOrderIfNeeded(found)
 
     res.json({ ok: true, data: order })
   } catch (error) {

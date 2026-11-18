@@ -400,15 +400,60 @@ async function handleCheckout(body: any, auth: any) {
   return NextResponse.json({ ok: true, data: order }, { status: 201 })
 }
 
+const ORDER_EXPIRY_MS = 24 * 60 * 60 * 1000
+
+/**
+ * Expiración perezosa de la demo (paridad con server/src/services/orderExpiry.ts):
+ * cancela órdenes que llevan más de 24h esperando el pago.
+ */
+function expireStaleOrders(userId?: string) {
+  const cutoff = Date.now() - ORDER_EXPIRY_MS
+  for (const o of orders) {
+    if (userId && o.userId !== userId) continue
+    if (o.status !== 'pending_payment' || o.paymentStatus !== 'pending') continue
+    if (new Date(o.createdAt).getTime() > cutoff) continue
+    o.status = 'cancelled'
+    o.paymentStatus = 'failed'
+    o.updatedAt = new Date().toISOString()
+  }
+}
+
 function handleGetOrders(userId: string) {
+  expireStaleOrders(userId)
   return json({ ok: true, data: orders.filter(o => o.userId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) })
 }
 
 function handleGetOrder(id: string, auth: any) {
+  expireStaleOrders()
   const o = orders.find(x => x.id === id)
   if (!o) return error('Pedido no encontrado', 404)
   if (o.userId !== auth.userId && auth.role !== 'admin') return error('No autorizado', 403)
   return json({ ok: true, data: o })
+}
+
+function handlePaymentStatus(id: string, auth: any) {
+  expireStaleOrders()
+  const o = orders.find(x => x.id === id)
+  if (!o) return error('Pedido no encontrado', 404)
+  if (o.userId !== auth.userId && auth.role !== 'admin') return error('No autorizado', 403)
+  const expiresAt = new Date(new Date(o.createdAt).getTime() + ORDER_EXPIRY_MS)
+  const expired = o.paymentStatus !== 'paid' && (
+    (o.status === 'cancelled' && o.paymentStatus === 'failed') ||
+    (o.status === 'pending_payment' && Date.now() >= expiresAt.getTime())
+  )
+  return json({
+    ok: true,
+    data: {
+      orderId: o.id,
+      orderStatus: o.status,
+      paymentMethod: o.paymentMethod,
+      paymentStatus: o.paymentStatus,
+      paymentRef: o.paymentRef ?? null,
+      paymentUrl: o.paymentUrl ?? null,
+      expiresAt: expiresAt.toISOString(),
+      expired,
+    },
+  })
 }
 
 async function handlePayOrder(id: string, body: any, auth: any) {
@@ -753,6 +798,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
   if (path.match(/^\/products\/[^/]+$/)) return handleGetProduct(path.split('/')[2], sp)
   if (path === '/cart') return auth ? handleGetCart(auth.userId) : error('No autorizado', 401)
   if (path === '/checkout/orders') return auth ? handleGetOrders(auth.userId) : error('No autorizado', 401)
+  if (path.match(/^\/checkout\/orders\/[^/]+\/payment-status$/)) return auth ? handlePaymentStatus(path.split('/')[3], auth) : error('No autorizado', 401)
   if (path.match(/^\/checkout\/orders\/[^/]+$/)) return auth ? handleGetOrder(path.split('/').pop()!, auth) : error('No autorizado', 401)
   if (path.match(/^\/delivery\/orders\/[^/]+\/tracking$/)) return auth ? handleTracking(path.split('/')[3], auth) : error('No autorizado', 401)
   if (path === '/delivery/my-deliveries') return auth ? handleMyDeliveries(auth) : error('No autorizado', 401)

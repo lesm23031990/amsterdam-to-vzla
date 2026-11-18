@@ -14,7 +14,7 @@ vi.mock('../lib/db', () => ({
     menuItemComment: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), count: vi.fn() },
     cart: { findUnique: vi.fn(), upsert: vi.fn() },
     cartItem: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), deleteMany: vi.fn() },
-    order: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn() },
+    order: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
     orderItem: { findMany: vi.fn() },
     delivery: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn() },
     deliveryLocation: { create: vi.fn() },
@@ -101,7 +101,16 @@ const mockOrder = {
   deliveryFee: 5.00,
   currency: 'USD', paymentMethod: 'cash', paymentStatus: 'pending', paymentRef: null, paymentUrl: null,
   deliveryAddress: 'Dirección', notes: null, contactPhone: '+584241234567',
-  createdAt: new Date('2024-01-01'), updatedAt: new Date('2024-01-01'),
+  createdAt: new Date(), updatedAt: new Date(),
+}
+
+// Fixture separado para probar la expiración perezosa de 24h.
+const expiredMockOrder = {
+  ...mockOrder,
+  status: 'pending_payment', paymentMethod: 'binance_pay', paymentStatus: 'pending',
+  paymentUrl: 'https://mock.binance.com/pay/temp-user-1-expired',
+  createdAt: new Date(Date.now() - 25 * 60 * 60 * 1000),
+  updatedAt: new Date(Date.now() - 25 * 60 * 60 * 1000),
 }
 
 const mockDelivery = {
@@ -148,6 +157,7 @@ beforeEach(() => {
   ])
   ;(mockDb.notification.create as MockFn).mockResolvedValue({ id: 'n1' })
   ;(mockDb.driver.updateMany as MockFn).mockResolvedValue({ count: 0 })
+  ;(mockDb.order.updateMany as MockFn).mockResolvedValue({ count: 0 })
   ;(mockDb.driver.findUnique as MockFn).mockResolvedValue(null)
   ;(mockDb.$transaction as MockFn).mockImplementation((fn: (tx: typeof mockDb) => unknown) => fn(mockDb))
 })
@@ -537,6 +547,155 @@ describe('Checkout', () => {
 
     expect(res.status).toBe(200)
     expect(res.body.ok).toBe(true)
+  })
+
+  it('Create order with binance_pay returns a mock paymentUrl and pending_payment', async () => {
+    const cartWithItems = {
+      ...mockCart,
+      items: [{
+        ...mockCartItem,
+        product: { id: 'product-1', name: 'Producto Test', priceCop: 107100, price: 25.50 },
+      }],
+    }
+    ;(mockDb.cart.findUnique as MockFn).mockResolvedValue(cartWithItems)
+    ;(mockDb.cartItem.deleteMany as MockFn).mockResolvedValue({ count: 1 })
+    ;(mockDb.order.create as MockFn).mockImplementation((args: any) =>
+      Promise.resolve({ ...mockOrder, ...args.data, id: 'order-binance-1', createdAt: new Date() })
+    )
+
+    const res = await request('POST', '/api/v1/checkout', {
+      paymentMethod: 'binance_pay', deliveryAddress: 'San Cristóbal', contactPhone: '+584241234567',
+    }, clienteToken)
+
+    expect(res.status).toBe(201)
+    expect(res.body.ok).toBe(true)
+    expect(res.body.data.status).toBe('pending_payment')
+    expect(res.body.data.paymentStatus).toBe('pending')
+    expect(res.body.data.paymentUrl).toMatch(/^https:\/\/mock\.binance\.com\/pay\/temp-user-1-/)
+  })
+
+  it('GET payment-status as owner returns 200 with expiresAt and expired false', async () => {
+    const createdAt = new Date()
+    ;(mockDb.order.findUnique as MockFn).mockResolvedValue({
+      ...mockOrder,
+      paymentMethod: 'binance_pay',
+      paymentUrl: 'https://mock.binance.com/pay/temp-user-1-123',
+      createdAt,
+    })
+
+    const res = await request('GET', '/api/v1/checkout/orders/order-1/payment-status', undefined, clienteToken)
+
+    expect(res.status).toBe(200)
+    expect(res.body.ok).toBe(true)
+    expect(res.body.data.orderId).toBe('order-1')
+    expect(res.body.data.orderStatus).toBe('pending_payment')
+    expect(res.body.data.paymentMethod).toBe('binance_pay')
+    expect(res.body.data.paymentStatus).toBe('pending')
+    expect(res.body.data.paymentUrl).toBe('https://mock.binance.com/pay/temp-user-1-123')
+    expect(res.body.data.expiresAt).toBe(new Date(createdAt.getTime() + 24 * 60 * 60 * 1000).toISOString())
+    expect(res.body.data.expired).toBe(false)
+    expect(mockDb.order.update).not.toHaveBeenCalled()
+  })
+
+  it('GET payment-status from another user returns 403', async () => {
+    ;(mockDb.order.findUnique as MockFn).mockResolvedValue({ ...mockOrder, userId: 'user-2' })
+
+    const res = await request('GET', '/api/v1/checkout/orders/order-1/payment-status', undefined, clienteToken)
+
+    expect(res.status).toBe(403)
+    expect(res.body.ok).toBe(false)
+    expect(mockDb.order.update).not.toHaveBeenCalled()
+  })
+
+  it('GET payment-status as admin returns 200', async () => {
+    ;(mockDb.order.findUnique as MockFn).mockResolvedValue({ ...mockOrder, userId: 'user-2', createdAt: new Date() })
+
+    const res = await request('GET', '/api/v1/checkout/orders/order-1/payment-status', undefined, adminToken)
+
+    expect(res.status).toBe(200)
+    expect(res.body.ok).toBe(true)
+    expect(res.body.data.orderId).toBe('order-1')
+  })
+
+  it('GET payment-status for a missing order returns 404', async () => {
+    ;(mockDb.order.findUnique as MockFn).mockResolvedValue(null)
+
+    const res = await request('GET', '/api/v1/checkout/orders/order-missing/payment-status', undefined, clienteToken)
+
+    expect(res.status).toBe(404)
+    expect(res.body.ok).toBe(false)
+  })
+
+  it('GET payment-status cancels an order pending for more than 24h', async () => {
+    ;(mockDb.order.findUnique as MockFn).mockResolvedValue(expiredMockOrder)
+    ;(mockDb.order.update as MockFn).mockResolvedValue({
+      ...expiredMockOrder, status: 'cancelled', paymentStatus: 'failed',
+    })
+
+    const res = await request('GET', '/api/v1/checkout/orders/order-1/payment-status', undefined, clienteToken)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.orderStatus).toBe('cancelled')
+    expect(res.body.data.paymentStatus).toBe('failed')
+    expect(res.body.data.expired).toBe(true)
+    expect(mockDb.order.update).toHaveBeenCalledWith({
+      where: { id: 'order-1' },
+      data: { status: 'cancelled', paymentStatus: 'failed' },
+    })
+  })
+
+  it('GET payment-status never expires a paid order', async () => {
+    ;(mockDb.order.findUnique as MockFn).mockResolvedValue({
+      ...expiredMockOrder,
+      status: 'confirmed',
+      paymentStatus: 'paid',
+      paymentRef: 'REF-PAID-1',
+    })
+
+    const res = await request('GET', '/api/v1/checkout/orders/order-1/payment-status', undefined, clienteToken)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.paymentStatus).toBe('paid')
+    expect(res.body.data.expired).toBe(false)
+    expect(mockDb.order.update).not.toHaveBeenCalled()
+  })
+
+  it('GET order detail expires an order pending for more than 24h', async () => {
+    ;(mockDb.order.findUnique as MockFn).mockResolvedValue(expiredMockOrder)
+    ;(mockDb.order.update as MockFn).mockResolvedValue({
+      ...expiredMockOrder, status: 'cancelled', paymentStatus: 'failed',
+    })
+
+    const res = await request('GET', '/api/v1/checkout/orders/order-1', undefined, clienteToken)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.status).toBe('cancelled')
+    expect(res.body.data.paymentStatus).toBe('failed')
+  })
+
+  it('GET /orders expires stale pending orders before listing', async () => {
+    ;(mockDb.order.updateMany as MockFn).mockResolvedValue({ count: 1 })
+    ;(mockDb.order.findMany as MockFn).mockResolvedValue([
+      { ...expiredMockOrder, status: 'cancelled', paymentStatus: 'failed' },
+    ])
+
+    const res = await request('GET', '/api/v1/checkout/orders', undefined, clienteToken)
+
+    expect(res.status).toBe(200)
+    expect(res.body.ok).toBe(true)
+    expect(res.body.data[0].status).toBe('cancelled')
+    expect(res.body.data[0].paymentStatus).toBe('failed')
+    expect(mockDb.order.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          userId: 'user-1',
+          status: 'pending_payment',
+          paymentStatus: 'pending',
+          createdAt: { lte: expect.any(Date) },
+        }),
+        data: { status: 'cancelled', paymentStatus: 'failed' },
+      })
+    )
   })
 })
 

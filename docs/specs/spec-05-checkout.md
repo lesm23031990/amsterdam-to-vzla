@@ -2,25 +2,28 @@
 title: "Spec 05 — Checkout y Pagos: Binance Pay, efectivo, transferencia"
 labels: ["spec"]
 assignees: []
-status: in-progress
+status: done
 ---
+
+> El router está montado en `/api/v1/checkout` (`server/src/index.ts`), por eso los
+> endpoints reales de órdenes viven bajo ese prefijo. No existe alias `/api/v1/orders`.
 
 ## Endpoints
 
 ### POST /api/v1/checkout
 Crear orden desde el carrito actual.
 
-### GET /api/v1/orders
-Listar órdenes del cliente autenticado.
+### GET /api/v1/checkout/orders
+Listar órdenes del cliente autenticado (aplica expiración perezosa de 24h).
 
-### GET /api/v1/orders/:id
-Ver detalle de orden.
+### GET /api/v1/checkout/orders/:id
+Ver detalle de orden (aplica expiración perezosa de 24h).
 
-### POST /api/v1/orders/:id/pay
+### POST /api/v1/checkout/orders/:id/pay
 Registrar pago de orden (efectivo/transferencia).
 
-### GET /api/v1/orders/:id/payment-status
-Consultar estado del pago.
+### GET /api/v1/checkout/orders/:id/payment-status
+Consultar estado del pago, vencimiento y link de pago (dueño o `admin`).
 
 ## Request
 
@@ -35,13 +38,15 @@ Headers: `Authorization: Bearer <token>`
 }
 ```
 
-### POST /api/v1/orders/:id/pay
+### POST /api/v1/checkout/orders/:id/pay
 ```json
 {
   "paymentMethod": "cash | transfer",
   "referenceNumber": "REF-123456"
 }
 ```
+
+> Nota: el endpoint real recibe `paymentRef` (y opcionalmente `paymentProof`).
 
 ## Response
 
@@ -59,13 +64,13 @@ Headers: `Authorization: Bearer <token>`
       { "productId": "uuid", "name": "Producto X", "quantity": 2, "price": 25.00 }
     ],
     "paymentMethod": "binance_pay",
-    "paymentUrl": "https://p2p.binance.com/...",
+    "paymentUrl": "https://mock.binance.com/pay/temp-<userId>-<timestamp>",
     "createdAt": "2026-07-27T00:00:00.000Z"
   }
 }
 ```
 
-### GET /api/v1/orders/:id — 200
+### GET /api/v1/checkout/orders/:id — 200
 ```json
 {
   "ok": true,
@@ -75,7 +80,7 @@ Headers: `Authorization: Bearer <token>`
     "total": 125.00,
     "currency": "USD",
     "paymentMethod": "binance_pay",
-    "paymentStatus": "pending | paid | failed",
+    "paymentStatus": "pending | pending_review | paid | failed",
     "items": [...],
     "deliveryAddress": "Av. Principal, San Cristóbal",
     "deliveryFee": 5.00,
@@ -84,24 +89,49 @@ Headers: `Authorization: Bearer <token>`
 }
 ```
 
+### GET /api/v1/checkout/orders/:id/payment-status — 200
+```json
+{
+  "ok": true,
+  "data": {
+    "orderId": "uuid",
+    "orderStatus": "pending_payment | confirmed | cancelled | ...",
+    "paymentMethod": "binance_pay | cash | transfer",
+    "paymentStatus": "pending | pending_review | paid | failed",
+    "paymentRef": null,
+    "paymentUrl": "https://mock.binance.com/pay/temp-<userId>-<timestamp>",
+    "expiresAt": "2026-11-18T23:00:00.000Z",
+    "expired": false
+  }
+}
+```
+
+### Errores — 4xx
+- `400` carrito vacío, método de pago inválido o falta `paymentRef`.
+- `401` sin token válido.
+- `403` orden de otro usuario (solo dueño o `admin`).
+- `404` orden inexistente.
+
 ## Behavior
 - Checkout solo si carrito tiene items
 - Al hacer checkout, carrito se convierte en orden y se vacía
-- **Binance Pay:** generar link de pago P2P (mock inicial)
+- **Binance Pay (mock MVP):** se genera `paymentUrl` mock (`https://mock.binance.com/pay/temp-<userId>-<timestamp>`) y la orden queda en `pending_payment` + `pending`. La integración real se difiere a la spec 19 (post-MVP).
 - **Efectivo/Transferencia:** cliente paga al repartidor o transfiere, marca como pagado después
-- Estado inicial: `pending_payment`
-- Si pago falla o expira (24h), orden pasa a `cancelled`
+- Estado inicial: `pending_payment` (Binance Pay) o `confirmed` (efectivo/transferencia)
+- **Expiración 24h (perezosa, sin cron):** antes de listar órdenes, ver detalle o consultar estado de pago, las órdenes `pending_payment` + `pending` con `createdAt <= now - 24h` pasan a `cancelled` + `failed`. Nunca expiran órdenes `paid`, `confirmed`, `preparing`, `in_transit`, `delivered` ni ya `cancelled`.
+- `expiresAt` = `createdAt + 24h`; una orden pagada nunca expira (`expired: false`).
 - Orden pertenece a Amsterdam Frozen Foods (no multi-tenant)
 - Tarifa de delivery única para toda la orden (no por tienda)
 
 ## Acceptance Criteria
 - [x] Cliente puede hacer checkout de su carrito
 - [x] Orden se crea con todos los items del carrito
-- [ ] Pago con Binance Pay genera link de pago
+- [x] Pago con Binance Pay genera link de pago (mock MVP)
 - [x] Pago en efectivo se registra con referencia
 - [x] Cliente puede ver historial de órdenes
 - [x] Cliente puede ver detalle de orden
-- [ ] Orden expira después de 24h sin pago
+- [x] Cliente puede consultar el estado del pago (`payment-status`)
+- [x] Orden expira después de 24h sin pago
 
 ---
 
@@ -111,4 +141,44 @@ Headers: `Authorization: Bearer <token>`
 - [x] Integrar carrito → orden al hacer checkout
 - [x] Mock de Binance Pay (generar link)
 - [x] Implementar rutas de orden y pago
-- [ ] PR a main
+- [x] Implementar `GET /orders/:id/payment-status`
+- [x] Implementar expiración perezosa de 24h (`server/src/services/orderExpiry.ts`)
+- [x] Paridad mínima en demo Vercel (`payment-status` + expiración en memoria)
+- [x] PR a main
+
+## Verificación (2026-11-17)
+
+**Comandos ejecutados** (desde la raíz del repo):
+
+```powershell
+npx tsc --noEmit -p apps/web/tsconfig.json
+npx tsc --noEmit -p server/tsconfig.json
+npx vitest run
+npm run build -w apps/web
+git diff --check
+git status --short
+```
+
+**Resultado:**
+- `tsc` web y server: sin errores.
+- `vitest run`: todos los tests en verde (incluye los nuevos de checkout,
+  `payment-status`, permisos dueño/admin, 404 y expiración 24h).
+- `npm run build -w apps/web`: exit code `0`.
+- `git diff --check`: sin problemas de whitespace.
+
+**Endpoint implementado:** `GET /api/v1/checkout/orders/:id/payment-status`
+- JWT obligatorio; solo dueño de la orden o `admin` (`403` en caso contrario, `404` si no existe).
+- Devuelve `orderStatus`, `paymentMethod`, `paymentStatus`, `paymentRef`, `paymentUrl`,
+  `expiresAt` (`createdAt + 24h`) y `expired`.
+- Antes de responder ejecuta la expiración perezosa: si la orden llevaba más de 24h
+  pendiente de pago se cancela (`cancelled` + `failed`) y `expired: true`.
+- La misma expiración se aplica en `GET /checkout/orders` (masiva con `order.updateMany`)
+  y en `GET /checkout/orders/:id`.
+
+**Decisión Binance:** el MVP usa el mock existente (link `https://mock.binance.com/pay/...`);
+no se implementa API real, webhooks, firma ni QR. La integración real queda diferida a la
+spec 19 (`status: archived`, post-MVP).
+
+**Limitación demo Vercel:** `apps/web/src/app/api/v1/[...slug]/route.ts` replica la expiración
+perezosa y `payment-status` en memoria para mantener paridad. La UI web todavía no consume
+`payment-status` (solo el detalle de orden y el pago manual).
