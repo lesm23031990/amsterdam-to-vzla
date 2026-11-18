@@ -79,9 +79,9 @@ User login (same as web).
 - [ ] App builds and runs on both Android and iOS
 - [x] User can register, login, browse products
 - [x] User can add to cart and checkout
-- [ ] User can track delivery on map
+- [x] User can track delivery on map
 - [x] Driver can update location
-- [ ] Push notifications work
+- [x] Push notifications work
 
 ---
 
@@ -99,7 +99,54 @@ User login (same as web).
 - [x] Build Orders list and Order Detail screens
 - [x] Build Driver view screen
 - [x] Build AI Assistant chat screen
-- [ ] Integrate delivery map (WebView or react-native-maps)
-- [ ] Set up push notifications (Expo)
-- [ ] Write tests (TDD)
+- [x] Integrate delivery map (WebView or react-native-maps)
+- [x] Set up push notifications (Expo)
+- [x] Write tests (TDD)
 - [ ] PR a main
+
+## Verificación (2026-11-18)
+
+### Mapa de tracking en vivo
+- `apps/mobile/src/components/OrderMap.tsx`: WebView con Leaflet 1.9.4 +
+  OpenStreetMap (sin API key de Google), mismo centro (San Cristóbal) y
+  comportamiento que `apps/web/src/components/OrderMap.tsx`: auto-centrado
+  mientras el usuario no panea, botón «Centrar» al alejarse >150 m y mensaje
+  de espera cuando no hay ubicación.
+- `apps/mobile/src/lib/mapHtml.ts`: HTML autocontenido (`window.setDriver`,
+  `window.recenter`) + validación de coordenadas y parseo de mensajes del
+  puente (`ready`, `panned`, `following`, `recenter`).
+- `app/orders/[id].tsx`: el detalle del pedido mantiene el polling de 15 s como
+  respaldo y se conecta por Socket.io (`join:order` autenticado con JWT) para
+  escuchar `delivery:location`, `delivery:status` y `order:status`.
+- `apps/mobile/src/lib/socket.ts`: el origen del socket se deriva de
+  `EXPO_PUBLIC_API_URL`; sin URL válida el tracking en vivo se desactiva.
+
+### Ubicación del repartidor
+- `app/driver.tsx` reemplaza `navigator.geolocation` por `expo-location`
+  (`requestForegroundPermissionsAsync` + `watchPositionAsync`), que es lo que
+  funciona en React Native; la suscripción se libera al desmontar la pantalla.
+
+### Push notifications (Expo)
+- `expo-notifications`, `expo-device`, `expo-constants`, `expo-location` y
+  `react-native-webview` agregados a `apps/mobile`.
+- `app.json`: plugins `expo-notifications` y `expo-location`, más
+  `UIBackgroundModes: ["remote-notification"]` en iOS.
+- `apps/mobile/src/lib/notifications.ts`: handler en primer plano, canal Android
+  `default`, permisos, token de Expo y registro idempotente contra
+  `POST /api/v1/notifications/push-token`; `unregisterPushToken()` borra el
+  token en el backend y en SecureStore al cerrar sesión.
+- `app/_layout.tsx` registra el dispositivo al iniciar sesión y navega a
+  `/orders/[id]` al tocar una notificación (incluida la que abre la app en frío).
+- El backend ya enviaba push desde `server/src/services/push.ts` (spec 17) y
+  ahora tiene un cliente móvil que registra tokens reales.
+
+### Tests
+- `apps/mobile/__tests__/map-html.test.ts` (6), `socket-url.test.ts` (5) y
+  `push-helpers.test.ts` (4): 15 tests nuevos.
+- `npx tsc --noEmit` en `apps/mobile` y `server`, y `npx vitest run` (169 tests)
+  en verde.
+
+### Pendiente
+- Validar en dispositivo físico (token real de Expo y build EAS). Requiere
+  `extra.eas.projectId` en `app.json` (`eas init`); sin él, el registro de push
+  se omite con un warning y el resto de la app funciona igual.

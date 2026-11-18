@@ -3,6 +3,10 @@ import { useLocalSearchParams } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { apiClient } from '@/api/client';
 import { Ionicons } from '@expo/vector-icons';
+import OrderMap from '@/components/OrderMap';
+import { connectOrderSocket } from '@/lib/socket';
+import type { LatLng } from '@/lib/mapHtml';
+import { useAuthStore } from '@/store/authStore';
 
 const statusSteps = [
   { key: 'pending_payment', label: 'Pago', icon: 'card-outline' },
@@ -62,22 +66,62 @@ interface TrackingInfo {
 
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const token = useAuthStore((state) => state.token);
   const [order, setOrder] = useState<Order | null>(null);
   const [payment, setPayment] = useState<PaymentStatus | null>(null);
   const [tracking, setTracking] = useState<TrackingInfo | null>(null);
+  const [liveLocation, setLiveLocation] = useState<LatLng | null>(null);
+  const [lastLocationAt, setLastLocationAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchOrder();
   }, [id]);
 
-  // Polling de respaldo mientras el pedido va en camino (el mapa nativo es backlog).
+  // Polling de respaldo: el socket entrega la posición al instante, pero si la
+  // conexión se cae seguimos refrescando cada 15 s.
   useEffect(() => {
     if (order?.status !== 'in_transit') return;
     const orderId = order.id;
     const interval = setInterval(() => { void fetchTracking(orderId); }, 15000);
     return () => clearInterval(interval);
   }, [order?.id, order?.status]);
+
+  // Tracking en vivo por socket autenticado (mismo contrato que la web).
+  useEffect(() => {
+    if (order?.status !== 'in_transit' || !token) return;
+    const orderId = order.id;
+    const socket = connectOrderSocket(token, orderId);
+    if (!socket) return;
+
+    const handleLocation = (payload: { lat?: unknown; lng?: unknown; timestamp?: unknown }) => {
+      if (typeof payload?.lat !== 'number' || typeof payload?.lng !== 'number') return;
+      setLiveLocation({ lat: payload.lat, lng: payload.lng });
+      setLastLocationAt(
+        typeof payload.timestamp === 'string' ? payload.timestamp : new Date().toISOString()
+      );
+    };
+    const handleRefresh = () => { void fetchTracking(orderId); };
+
+    socket.on('delivery:location', handleLocation);
+    socket.on('delivery:status', handleRefresh);
+    socket.on('order:status', handleRefresh);
+
+    return () => {
+      socket.off('delivery:location', handleLocation);
+      socket.off('delivery:status', handleRefresh);
+      socket.off('order:status', handleRefresh);
+      socket.disconnect();
+    };
+  }, [order?.id, order?.status, token]);
+
+  // Mantiene sincronizado el mapa con la última ubicación del polling.
+  useEffect(() => {
+    const latest = tracking?.latestLocation;
+    if (!latest) return;
+    setLiveLocation({ lat: latest.lat, lng: latest.lng });
+    setLastLocationAt(latest.createdAt);
+  }, [tracking?.latestLocation?.lat, tracking?.latestLocation?.lng, tracking?.latestLocation?.createdAt]);
 
   const fetchTracking = async (orderId: string) => {
     try {
@@ -123,7 +167,6 @@ export default function OrderDetailScreen() {
 
   const currentStatusIndex = statusSteps.findIndex((s) => s.key === order.status);
   const trackingDriver = tracking?.driver ?? null;
-  const latestLocation = tracking?.latestLocation ?? null;
 
   return (
     <ScrollView style={styles.container}>
@@ -251,8 +294,9 @@ export default function OrderDetailScreen() {
       {order.status === 'in_transit' && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Seguimiento en vivo</Text>
+          <OrderMap driverPos={liveLocation} destinationLabel={order.deliveryAddress} />
           {trackingDriver ? (
-            <View style={styles.trackingCard}>
+            <View style={[styles.trackingCard, styles.trackingCardSpaced]}>
               <View style={styles.trackingRow}>
                 <Ionicons name="bicycle-outline" size={22} color="#1E40AF" />
                 <Text style={styles.trackingDriver}>{trackingDriver.name}</Text>
@@ -267,13 +311,13 @@ export default function OrderDetailScreen() {
                 </TouchableOpacity>
               )}
               <Text style={styles.trackingHint}>
-                {latestLocation
-                  ? `Última ubicación: ${new Date(latestLocation.createdAt).toLocaleTimeString('es-VE')}`
+                {lastLocationAt
+                  ? `Última ubicación: ${new Date(lastLocationAt).toLocaleTimeString('es-VE')}`
                   : 'Esperando ubicación del repartidor...'}
               </Text>
             </View>
           ) : (
-            <Text style={styles.mapText}>Esperando asignación del repartidor...</Text>
+            <Text style={[styles.mapText, styles.trackingCardSpaced]}>Esperando asignación del repartidor...</Text>
           )}
         </View>
       )}
@@ -455,6 +499,9 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     padding: 16,
     gap: 8,
+  },
+  trackingCardSpaced: {
+    marginTop: 12,
   },
   trackingRow: {
     flexDirection: 'row',

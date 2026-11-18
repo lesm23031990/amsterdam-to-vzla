@@ -2,6 +2,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityInd
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/store/authStore';
+import { registerForPushNotifications } from '@/lib/notifications';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
@@ -21,6 +22,7 @@ export default function RegisterScreen() {
     setLoading(true);
     try {
       await register(name, email, password, phone);
+      void registerForPushNotifications();
       router.replace('/(tabs)');
     } catch (error: any) {
       Alert.alert(

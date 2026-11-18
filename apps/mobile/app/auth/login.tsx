@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/store/authStore';
 import { apiClient } from '@/api/client';
+import { registerForPushNotifications } from '@/lib/notifications';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -26,6 +27,7 @@ export default function LoginScreen() {
 
       if (response.data.ok) {
         await login(response.data.data.token, response.data.data.user);
+        void registerForPushNotifications();
         router.replace('/(tabs)');
       }
     } catch (error: any) {

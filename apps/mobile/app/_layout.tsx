@@ -1,17 +1,55 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import * as Notifications from 'expo-notifications';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAuthStore } from '../src/store/authStore';
+import { configureNotificationHandler, registerForPushNotifications } from '../src/lib/notifications';
+import { getOrderIdFromNotificationData } from '../src/lib/pushHelpers';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
+
+// Debe configurarse a nivel de módulo, antes de recibir notificaciones.
+configureNotificationHandler();
 
 export default function RootLayout() {
   const { isAuthenticated, loading, loadStoredAuth } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
+  const coldStartHandledRef = useRef(false);
 
   useEffect(() => {
     loadStoredAuth();
   }, []);
+
+  // Registro del token de Expo Push cuando hay sesión activa.
+  useEffect(() => {
+    if (loading || !isAuthenticated) return;
+    void registerForPushNotifications();
+  }, [isAuthenticated, loading]);
+
+  // Tocar una notificación abre el pedido correspondiente.
+  useEffect(() => {
+    const openOrder = (response: Notifications.NotificationResponse | null) => {
+      if (!response) return;
+      const orderId = getOrderIdFromNotificationData(response.notification.request.content.data);
+      if (orderId) router.push(`/orders/${orderId}`);
+    };
+
+    const subscription = Notifications.addNotificationResponseReceivedListener(openOrder);
+
+    return () => subscription.remove();
+  }, [router]);
+
+  // App cerrada: la notificación que la abrió se consulta una sola vez.
+  useEffect(() => {
+    if (loading || !isAuthenticated || coldStartHandledRef.current) return;
+    coldStartHandledRef.current = true;
+
+    void Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (!response) return;
+      const orderId = getOrderIdFromNotificationData(response.notification.request.content.data);
+      if (orderId) router.push(`/orders/${orderId}`);
+    });
+  }, [isAuthenticated, loading, router]);
 
   useEffect(() => {
     if (loading) return;

@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
+import * as Location from 'expo-location';
 import { apiClient } from '@/api/client';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -29,16 +30,14 @@ export default function DriverScreen() {
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [loading, setLoading] = useState(true);
   const [sharingLocation, setSharingLocation] = useState(false);
-  const watchRef = useRef<any>(null);
+  const watchRef = useRef<Location.LocationSubscription | null>(null);
 
   useEffect(() => {
     fetchDeliveries();
 
     return () => {
-      const geolocation = (globalThis as any).navigator?.geolocation;
-      if (watchRef.current !== null && geolocation?.clearWatch) {
-        geolocation.clearWatch(watchRef.current);
-      }
+      watchRef.current?.remove();
+      watchRef.current = null;
     };
   }, []);
 
@@ -66,7 +65,7 @@ export default function DriverScreen() {
     }
   };
 
-  const startSharingLocation = () => {
+  const startSharingLocation = async () => {
     const inTransit = deliveries.find((delivery) => delivery.status === 'in_transit');
 
     if (!inTransit) {
@@ -74,37 +73,49 @@ export default function DriverScreen() {
       return;
     }
 
-    const geolocation = (globalThis as any).navigator?.geolocation;
-    if (!geolocation?.watchPosition) {
-      Alert.alert('Ubicación', 'La geolocalización no está disponible en este dispositivo. Usa la versión web del panel de repartidor.');
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Ubicación',
+        'Necesitamos permiso de ubicación para compartir tu recorrido. Actívalo en los ajustes del dispositivo.'
+      );
       return;
     }
 
-    watchRef.current = geolocation.watchPosition(
-      (position: any) => {
-        apiClient
-          .patch(`/api/v1/delivery/${inTransit.id}/location`, {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          })
-          .catch(() => undefined);
-      },
-      () => {
-        Alert.alert('Ubicación', 'No pudimos obtener tu ubicación. Revisa los permisos del dispositivo.');
-        stopSharingLocation(false);
-      },
-      { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
-    );
+    const deliveryId = inTransit.id;
 
-    setSharingLocation(true);
-    Alert.alert('Ubicación', 'Compartiendo ubicación en tiempo real con el cliente');
+    try {
+      watchRef.current = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          timeInterval: 10000,
+          distanceInterval: 10,
+        },
+        (position) => {
+          apiClient
+            .patch(`/api/v1/delivery/${deliveryId}/location`, {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            })
+            .catch(() => undefined);
+        }
+      );
+
+      setSharingLocation(true);
+      Alert.alert('Ubicación', 'Compartiendo ubicación en tiempo real con el cliente');
+    } catch (error) {
+      console.error('Location error:', error);
+      watchRef.current = null;
+      setSharingLocation(false);
+      Alert.alert(
+        'Ubicación',
+        'No pudimos obtener tu ubicación. Revisa los permisos del dispositivo.'
+      );
+    }
   };
 
   const stopSharingLocation = (notify = true) => {
-    const geolocation = (globalThis as any).navigator?.geolocation;
-    if (watchRef.current !== null && geolocation?.clearWatch) {
-      geolocation.clearWatch(watchRef.current);
-    }
+    watchRef.current?.remove();
     watchRef.current = null;
     setSharingLocation(false);
     if (notify) Alert.alert('Ubicación', 'Dejaste de compartir tu ubicación');
@@ -135,7 +146,7 @@ export default function DriverScreen() {
             styles.locationButton,
             sharingLocation && styles.locationButtonActive,
           ]}
-          onPress={sharingLocation ? () => stopSharingLocation() : startSharingLocation}
+          onPress={sharingLocation ? () => stopSharingLocation() : () => { void startSharingLocation(); }}
         >
           <Ionicons
             name={sharingLocation ? 'location' : 'location-outline'}

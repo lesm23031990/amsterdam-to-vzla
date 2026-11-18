@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useCurrencyStore } from '@/store/currencyStore';
 import { useRouter } from 'expo-router';
 import { apiClient } from '@/api/client';
+import { unregisterPushToken } from '@/lib/notifications';
 import { Ionicons } from '@expo/vector-icons';
 
 const currencies: { value: 'COP' | 'Bs' | 'USD'; label: string }[] = [
@@ -43,6 +44,7 @@ export default function ProfileScreen() {
           text: 'Cerrar Sesión',
           style: 'destructive',
           onPress: async () => {
+            await unregisterPushToken();
             await logout();
             router.replace('/auth/login');
           },

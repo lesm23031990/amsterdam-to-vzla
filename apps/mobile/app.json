@@ -8,11 +8,28 @@
     "userInterfaceStyle": "automatic",
     "scheme": "amsterdam-frozen-foods",
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-notifications",
+        {
+          "color": "#1E40AF"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Amsterdam Frozen Foods usa tu ubicación para mostrarle al cliente dónde va su pedido mientras lo entregas."
+        }
+      ]
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.amsterdamtoVzla.mobile"
+      "bundleIdentifier": "com.amsterdamtoVzla.mobile",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
