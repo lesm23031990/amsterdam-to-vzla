@@ -2,7 +2,7 @@
 title: "Spec 19 — Binance Pay Integration"
 labels: ["spec"]
 assignees: []
-status: in-progress
+status: archived
 ---
 
 ## Endpoints
@@ -90,6 +90,24 @@ Headers: `BinancePay-Certificate-SN: <certificate-serial>`
 - On timeout, order marked as `payment_expired`
 - Handle `PAY_CANCEL` and `PAY_CLOSED` statuses gracefully
 - Binance API key and secret stored in env vars (`BINANCE_API_KEY`, `BINANCE_SECRET_KEY`)
+
+## Decisión MVP (2026-11-17)
+
+La integración real de Binance Pay se **difiere al post-MVP**. Para el MVP:
+
+- El checkout con `paymentMethod: "binance_pay"` ya funciona con un **`paymentUrl` mock**
+  (`https://mock.binance.com/pay/temp-<userId>-<timestamp>`), por lo que el flujo de UI
+  (mostrar link/botón de pago) puede construirse sin credenciales reales.
+- No se implementan: creación de órdenes en la API de Binance, webhooks, verificación de
+  firma, QR real ni polling de estado.
+- La orden queda en `pending_payment` + `pending` y expira a las 24h (expiración perezosa
+  implementada en la spec 05). El estado se consulta con
+  `GET /api/v1/checkout/orders/:id/payment-status`.
+- Las tareas técnicas de abajo se conservan como referencia para retomar la integración
+  cuando existan credenciales (`BINANCE_API_KEY`, `BINANCE_SECRET_KEY`).
+
+Esta spec queda `status: archived` (excluida del progreso activo) hasta que se retome
+post-MVP.
 
 ## Acceptance Criteria
 - [x] User can select Binance Pay at checkout
