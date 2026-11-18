@@ -30,7 +30,7 @@ docker compose up -d
 
 # 3. Verificar el env local (ya apunta a localhost)
 #    server/.env.development ->
-#    DATABASE_URL=postgresql://postgres:postgres@localhost:5432/amsterdam_to_vzla?schema=public
+#    DATABASE_URL=postgresql://postgres:postgres@localhost:5433/amsterdam_to_vzla?schema=public
 
 # 4. Generar cliente Prisma + baseline de migraciones contra la BD local limpia
 npm run db:generate -w server
@@ -98,9 +98,16 @@ queda sincronizado y con versionado real.
 
 ## Troubleshooting
 
-- **`ECONNREFUSED localhost:5432`** -> `docker compose up -d` y `docker ps` para ver el contenedor.
-- **Puerto 5432 ocupado** (tienes Postgres nativo): cambia el mapeo en `docker-compose.yml` a `"5433:5432"`
-  y actualiza `DATABASE_URL` local a `...localhost:5433/...`.
+- **500 en `GET /api/v1/products` y `GET /api/v1/rates`** (consola del navegador muestra
+  `500 Internal Server Error`): la base local no responde. Ambos endpoints leen
+  `exchange_rates` al inicio del handler, así que si la BD/Docker está caída ambos
+  devuelven 500. Verifica `docker ps` y levanta el contenedor con `docker compose up -d`.
+- **`ECONNREFUSED localhost:5433`** (puerto de `docker-compose.yml`): Docker Desktop no está
+  corriendo o el contenedor está detenido. Abre Docker Desktop, espera a que el engine
+  arranque y ejecuta `docker compose up -d`; luego `npx prisma migrate status` desde
+  `server/` para confirmar que el esquema está al día.
+- **Puerto 5432 ocupado** (tienes Postgres nativo): por eso `docker-compose.yml` mapea
+  `"5433:5432"`; `DATABASE_URL` local debe usar `...localhost:5433/...`.
 - **Reset total de la base local** (destruye datos locales, NUNCA la demo):
   `docker compose down -v` y vuelve al paso 4 de Setup.
 - **El server conecta a Neon en vez de local**: revisa que `NODE_ENV` no sea `production`
@@ -108,9 +115,9 @@ queda sincronizado y con versionado real.
 
 ## Estado actual del repo
 
-- `server/.env.development` ya apunta a Postgres local.
-- `docker-compose.yml` creado en la raiz.
-- Falta ejecutar el re-baseline de migraciones (paso 4 de Setup) porque la unica
-  migracion histórica (`20260728064425_init`) esta desincronizada: crea tablas borradas
-  (`stores`, `subscription_plans`) y no incluye los modelos nuevos
-  (`brands`, `notifications`, `exchange_rates`, `product_comments`, etc.).
+- `server/.env.development` ya apunta a Postgres local en `localhost:5433`.
+- `docker-compose.yml` creado en la raiz (mapea `5433:5432` porque el 5432 lo usa un
+  Postgres nativo de Windows).
+- Migraciones versionadas y aplicadas en local (`20260910054940_init`,
+  `20261111000000_add_menu_items_to_cart_and_orders`, `20261116000000_add_drivers`);
+  `npx prisma migrate status` reporta "Database schema is up to date!".
