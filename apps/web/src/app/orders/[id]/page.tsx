@@ -34,6 +34,17 @@ interface Order {
   };
 }
 
+interface PaymentStatus {
+  orderId: string;
+  orderStatus: string;
+  paymentMethod: string;
+  paymentStatus: string;
+  paymentRef: string | null;
+  paymentUrl: string | null;
+  expiresAt: string;
+  expired: boolean;
+}
+
 const statusLabels: Record<string, string> = {
   pending_payment: 'Pendiente de pago',
   confirmed: 'Confirmado',
@@ -51,11 +62,19 @@ const paymentLabels: Record<string, string> = {
   binance_pay: 'Binance Pay',
 };
 
+const paymentStatusLabels: Record<string, string> = {
+  pending: 'Pendiente',
+  pending_review: 'En revisión',
+  paid: 'Pagado',
+  failed: 'Vencido / rechazado',
+};
+
 export default function OrderDetailPage() {
   const params = useParams();
   const { user } = useAuth();
   const router = useRouter();
   const [order, setOrder] = useState<Order | null>(null);
+  const [payment, setPayment] = useState<PaymentStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [payRef, setPayRef] = useState('');
@@ -63,19 +82,27 @@ export default function OrderDetailPage() {
   useEffect(() => {
     if (!user) { router.push('/login'); return; }
     const id = params.id as string;
-    api.get<Order>(`/checkout/orders/${id}`).then((res) => {
-      if (res.ok && res.data) setOrder(res.data);
+    Promise.all([
+      api.get<Order>(`/checkout/orders/${id}`),
+      api.get<PaymentStatus>(`/checkout/orders/${id}/payment-status`),
+    ]).then(([orderRes, paymentRes]) => {
+      if (orderRes.ok && orderRes.data) setOrder(orderRes.data);
+      if (paymentRes.ok && paymentRes.data) setPayment(paymentRes.data);
       setLoading(false);
     });
   }, [params.id, user]);
 
   const handlePay = async () => {
+    if (!order) return;
     setPaying(true);
-    const res = await api.post(`/checkout/orders/${order!.id}/pay`, { paymentRef: payRef });
+    const res = await api.post(`/checkout/orders/${order.id}/pay`, { paymentRef: payRef });
     if (res.ok) {
-      api.get<Order>(`/checkout/orders/${order!.id}`).then((r) => {
-        if (r.ok && r.data) setOrder(r.data);
-      });
+      const [orderRes, paymentRes] = await Promise.all([
+        api.get<Order>(`/checkout/orders/${order.id}`),
+        api.get<PaymentStatus>(`/checkout/orders/${order.id}/payment-status`),
+      ]);
+      if (orderRes.ok && orderRes.data) setOrder(orderRes.data);
+      if (paymentRes.ok && paymentRes.data) setPayment(paymentRes.data);
       setPayRef('');
     }
     setPaying(false);
@@ -145,6 +172,10 @@ export default function OrderDetailPage() {
                 <span>{paymentLabels[order.paymentMethod] || order.paymentMethod}</span>
               </div>
               <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>Estado del pago</span>
+                <span>{paymentStatusLabels[order.paymentStatus] || order.paymentStatus}</span>
+              </div>
+              <div className={styles.detailRow}>
                 <span className={styles.detailLabel}>Dirección</span>
                 <span>{order.deliveryAddress}</span>
               </div>
@@ -159,6 +190,43 @@ export default function OrderDetailPage() {
                 </div>
               )}
             </div>
+
+            {order.paymentMethod === 'binance_pay' && order.paymentStatus !== 'paid' && (
+              <div className={styles.paySection}>
+                <h3>Pago con Binance Pay</h3>
+                {payment?.expired || order.status === 'cancelled' ? (
+                  <div className={styles.expiredBox}>
+                    <p>La ventana de pago de 24 horas venció y el pedido fue cancelado.</p>
+                    <p>Vuelve a hacer el pedido desde el carrito para generar un nuevo link.</p>
+                  </div>
+                ) : (
+                  <div className={styles.payForm}>
+                    <p className={styles.payInfo}>
+                      Total a pagar: <strong>{order.currency} {Number(order.total).toLocaleString()}</strong>
+                    </p>
+                    {payment?.paymentUrl && (
+                      <a
+                        href={payment.paymentUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.payLink}
+                      >
+                        Pagar con Binance
+                      </a>
+                    )}
+                    {payment && (
+                      <p className={styles.payHint}>
+                        Tienes hasta el{' '}
+                        {new Date(payment.expiresAt).toLocaleString('es-VE', {
+                          day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
+                        })}{' '}
+                        para completar el pago (link de demostración del MVP).
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {(order.paymentMethod === 'cash' || order.paymentMethod === 'transfer') && order.paymentStatus !== 'paid' && (
               <div className={styles.paySection}>

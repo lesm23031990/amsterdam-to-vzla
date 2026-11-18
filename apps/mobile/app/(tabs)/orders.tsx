@@ -7,24 +7,25 @@ interface Order {
   id: string;
   status: string;
   total: number;
+  currency: string;
   createdAt: string;
-  items: number;
+  items: Array<{ id: string }>;
 }
 
 const statusLabels: Record<string, string> = {
-  pending: 'Pendiente',
+  pending_payment: 'Pendiente de pago',
   confirmed: 'Confirmado',
   preparing: 'Preparando',
-  shipping: 'En camino',
+  in_transit: 'En camino',
   delivered: 'Entregado',
   cancelled: 'Cancelado',
 };
 
 const statusColors: Record<string, string> = {
-  pending: '#F59E0B',
+  pending_payment: '#F59E0B',
   confirmed: '#3B82F6',
   preparing: '#8B5CF6',
-  shipping: '#10B981',
+  in_transit: '#10B981',
   delivered: '#6B7280',
   cancelled: '#EF4444',
 };
@@ -41,7 +42,7 @@ export default function OrdersScreen() {
 
   const fetchOrders = async () => {
     try {
-      const response = await apiClient.get('/api/v1/orders');
+      const response = await apiClient.get('/api/v1/checkout/orders');
       setOrders(response.data.data || []);
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -101,10 +102,10 @@ export default function OrdersScreen() {
             </View>
             <View style={styles.details}>
               <Text style={styles.detailText}>
-                {item.items} producto{item.items !== 1 ? 's' : ''}
+                {(item.items?.length || 0)} producto{(item.items?.length || 0) !== 1 ? 's' : ''}
               </Text>
               <Text style={styles.detailText}>
-                Bs {item.total.toFixed(2)}
+                {item.currency} {Number(item.total).toFixed(2)}
               </Text>
             </View>
             <Text style={styles.date}>

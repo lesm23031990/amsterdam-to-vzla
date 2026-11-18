@@ -532,7 +532,10 @@ function handleAdminStats() {
   return json({ ok: true, data: { totalProducts: products.length, totalOrders: orders.length, totalUsers: [...seedUsers, ...registeredUsers].length, totalRevenue: orders.reduce((s, o) => s + o.total, 0), recentOrders: orders.slice(-5).reverse() } })
 }
 
-function handleAdminOrders() { return json({ ok: true, data: orders }) }
+function handleAdminOrders() {
+  expireStaleOrders()
+  return json({ ok: true, data: orders })
+}
 
 function handleAdminUsers() { return json({ ok: true, data: [...seedUsers, ...registeredUsers].map(u => ({ id: u.id, email: u.email, name: u.name, phone: u.phone, role: u.role, ordersCount: orders.filter((o: any) => o.userId === u.id).length, createdAt: u.createdAt })) }) }
 

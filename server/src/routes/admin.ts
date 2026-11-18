@@ -4,6 +4,7 @@ import crypto from 'crypto'
 import { db } from '../lib/db'
 import { authMiddleware, requireRole } from '../middleware/auth'
 import { assignDriverToOrder } from '../services/deliveryAssignment'
+import { expirePendingOrders } from '../services/orderExpiry'
 
 const router = Router()
 
@@ -43,6 +44,10 @@ router.get('/users', authMiddleware, requireRole('admin'), async (_req: Request,
 // GET /api/v1/admin/orders — Lista todas las órdenes
 router.get('/orders', authMiddleware, requireRole('admin'), async (_req: Request, res: Response) => {
   try {
+    // Expiración perezosa global: el panel admin no debe mostrar órdenes
+    // impagas de más de 24h como si siguieran pendientes.
+    await expirePendingOrders()
+
     const orders = await db.order.findMany({
       orderBy: { createdAt: 'desc' },
       include: {

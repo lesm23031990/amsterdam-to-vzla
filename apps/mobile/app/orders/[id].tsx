@@ -1,24 +1,39 @@
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { apiClient } from '@/api/client';
 import { Ionicons } from '@expo/vector-icons';
 
 const statusSteps = [
-  { key: 'pending', label: 'Pendiente', icon: 'time-outline' },
+  { key: 'pending_payment', label: 'Pago', icon: 'card-outline' },
   { key: 'confirmed', label: 'Confirmado', icon: 'checkmark-circle-outline' },
   { key: 'preparing', label: 'Preparando', icon: 'restaurant-outline' },
-  { key: 'shipping', label: 'En camino', icon: 'bicycle-outline' },
+  { key: 'in_transit', label: 'En camino', icon: 'bicycle-outline' },
   { key: 'delivered', label: 'Entregado', icon: 'checkmark-done-circle-outline' },
 ];
+
+const paymentLabels: Record<string, string> = {
+  cash: 'Efectivo',
+  transfer: 'Transferencia',
+  binance_pay: 'Binance Pay',
+};
+
+const paymentStatusLabels: Record<string, string> = {
+  pending: 'Pendiente',
+  pending_review: 'En revisión',
+  paid: 'Pagado',
+  failed: 'Vencido / rechazado',
+};
 
 interface Order {
   id: string;
   status: string;
   total: number;
+  currency: string;
   createdAt: string;
-  address: string;
+  deliveryAddress: string | null;
   paymentMethod: string;
+  paymentStatus: string;
   items: Array<{
     id: string;
     name: string;
@@ -27,9 +42,20 @@ interface Order {
   }>;
 }
 
+interface PaymentStatus {
+  orderId: string;
+  orderStatus: string;
+  paymentMethod: string;
+  paymentStatus: string;
+  paymentUrl: string | null;
+  expiresAt: string;
+  expired: boolean;
+}
+
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [order, setOrder] = useState<Order | null>(null);
+  const [payment, setPayment] = useState<PaymentStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,8 +64,12 @@ export default function OrderDetailScreen() {
 
   const fetchOrder = async () => {
     try {
-      const response = await apiClient.get(`/api/v1/orders/${id}`);
-      setOrder(response.data.data);
+      const [orderRes, paymentRes] = await Promise.all([
+        apiClient.get(`/api/v1/checkout/orders/${id}`),
+        apiClient.get(`/api/v1/checkout/orders/${id}/payment-status`),
+      ]);
+      setOrder(orderRes.data.data);
+      setPayment(paymentRes.data.data);
     } catch (error) {
       console.error('Error fetching order:', error);
     } finally {
@@ -126,7 +156,7 @@ export default function OrderDetailScreen() {
               {item.name} x{item.quantity}
             </Text>
             <Text style={styles.itemPrice}>
-              Bs {(item.price * item.quantity).toFixed(2)}
+              {order.currency} {(item.price * item.quantity).toFixed(2)}
             </Text>
           </View>
         ))}
@@ -136,19 +166,59 @@ export default function OrderDetailScreen() {
         <Text style={styles.sectionTitle}>Información</Text>
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Dirección:</Text>
-          <Text style={styles.infoValue}>{order.address}</Text>
+          <Text style={styles.infoValue}>{order.deliveryAddress || 'No especificada'}</Text>
         </View>
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Pago:</Text>
-          <Text style={styles.infoValue}>{order.paymentMethod}</Text>
+          <Text style={styles.infoValue}>{paymentLabels[order.paymentMethod] || order.paymentMethod}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Estado pago:</Text>
+          <Text style={styles.infoValue}>{paymentStatusLabels[order.paymentStatus] || order.paymentStatus}</Text>
         </View>
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total:</Text>
-          <Text style={styles.totalValue}>Bs {order.total.toFixed(2)}</Text>
+          <Text style={styles.totalValue}>{order.currency} {Number(order.total).toFixed(2)}</Text>
         </View>
       </View>
 
-      {order.status === 'shipping' && (
+      {order.paymentMethod === 'binance_pay' && order.paymentStatus !== 'paid' && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Pago con Binance Pay</Text>
+          {payment?.expired || order.status === 'cancelled' ? (
+            <View style={styles.expiredBox}>
+              <Text style={styles.expiredText}>
+                La ventana de pago de 24 horas venció y el pedido fue cancelado.
+              </Text>
+              <Text style={styles.expiredText}>
+                Vuelve a hacer el pedido para generar un nuevo link.
+              </Text>
+            </View>
+          ) : (
+            <>
+              {payment?.paymentUrl && (
+                <TouchableOpacity
+                  style={styles.payButton}
+                  onPress={() => Linking.openURL(payment.paymentUrl as string)}
+                >
+                  <Text style={styles.payButtonText}>Pagar con Binance</Text>
+                </TouchableOpacity>
+              )}
+              {payment && (
+                <Text style={styles.payHint}>
+                  Tienes hasta el{' '}
+                  {new Date(payment.expiresAt).toLocaleString('es-VE', {
+                    day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
+                  })}{' '}
+                  para completar el pago (link de demostración del MVP).
+                </Text>
+              )}
+            </>
+          )}
+        </View>
+      )}
+
+      {order.status === 'in_transit' && (
         <View style={styles.mapPlaceholder}>
           <Ionicons name="map-outline" size={48} color="#9CA3AF" />
           <Text style={styles.mapText}>Mapa de seguimiento en vivo</Text>
@@ -294,6 +364,32 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#1E40AF',
+  },
+  payButton: {
+    backgroundColor: '#F0B90B',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  payButtonText: {
+    color: '#111827',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  payHint: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginTop: 12,
+  },
+  expiredBox: {
+    backgroundColor: '#FEE2E2',
+    borderRadius: 12,
+    padding: 16,
+    gap: 6,
+  },
+  expiredText: {
+    fontSize: 14,
+    color: '#B91C1C',
   },
   mapPlaceholder: {
     backgroundColor: '#FFFFFF',

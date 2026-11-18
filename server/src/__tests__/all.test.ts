@@ -998,6 +998,7 @@ describe('Admin', () => {
   })
 
   it('GET /admin/orders returns 200', async () => {
+    ;(mockDb.order.updateMany as MockFn).mockResolvedValue({ count: 0 })
     ;(mockDb.order.findMany as MockFn).mockResolvedValue([mockOrder])
 
     const res = await request('GET', '/api/v1/admin/orders', undefined, adminToken)
@@ -1005,6 +1006,24 @@ describe('Admin', () => {
     expect(res.status).toBe(200)
     expect(res.body.ok).toBe(true)
     expect(Array.isArray(res.body.data)).toBe(true)
+  })
+
+  it('GET /admin/orders applies lazy expiry to every user before listing', async () => {
+    ;(mockDb.order.updateMany as MockFn).mockResolvedValue({ count: 1 })
+    ;(mockDb.order.findMany as MockFn).mockResolvedValue([
+      { ...expiredMockOrder, status: 'cancelled', paymentStatus: 'failed' },
+    ])
+
+    const res = await request('GET', '/api/v1/admin/orders', undefined, adminToken)
+
+    expect(res.status).toBe(200)
+    expect(mockDb.order.updateMany).toHaveBeenCalledTimes(1)
+    const args = (mockDb.order.updateMany as MockFn).mock.calls[0][0]
+    expect(args.where).not.toHaveProperty('userId')
+    expect(args.where.status).toBe('pending_payment')
+    expect(args.where.paymentStatus).toBe('pending')
+    expect(args.data).toEqual({ status: 'cancelled', paymentStatus: 'failed' })
+    expect(res.body.data[0].status).toBe('cancelled')
   })
 
   it('GET /admin/users without admin role returns 403', async () => {

@@ -239,6 +239,39 @@
   cursor: not-allowed;
 }
 
+.payLink {
+  display: block;
+  text-align: center;
+  padding: 12px;
+  background: #f0b90b;
+  color: #111827;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: filter 0.2s;
+}
+
+.payLink:hover {
+  filter: brightness(0.95);
+}
+
+.payHint {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.expiredBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background: #fee2e2;
+  color: #b91c1c;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
 .loading {
   text-align: center;
   padding: 60px;
