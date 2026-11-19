@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
+import { resolveMediaUrl } from '@/lib/media';
 import CommentImagePicker from './CommentImagePicker';
 import styles from './MenuItemComments.module.css';
 
@@ -158,11 +159,11 @@ export default function MenuItemComments({ menuItemId }: Props) {
                       key={img}
                       type="button"
                       className={styles.imageBtn}
-                      onClick={() => setPreview(img)}
+                      onClick={() => setPreview(resolveMediaUrl(img))}
                       aria-label={`Ampliar foto ${i + 1} de ${c.user.name}`}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={img} alt={`Foto ${i + 1} de ${c.user.name}`} loading="lazy" />
+                      <img src={resolveMediaUrl(img) ?? img} alt={`Foto ${i + 1} de ${c.user.name}`} loading="lazy" />
                     </button>
                   ))}
                 </div>

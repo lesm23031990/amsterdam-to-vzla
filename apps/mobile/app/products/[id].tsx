@@ -1,10 +1,15 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image, Dimensions, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image, Dimensions, TextInput, Alert, Share } from 'react-native';
 import { useState, useEffect, useCallback } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { apiClient } from '@/api/client';
 import { useCurrencyStore } from '@/store/currencyStore';
 import { useAuthStore } from '@/store/authStore';
 import { Ionicons } from '@expo/vector-icons';
+import ImageLightbox from '@/components/ImageLightbox';
+import { CommentsSkeleton, ProductDetailSkeleton } from '@/components/Skeleton';
+import { COMMENT_FILTERS, COMMENT_FILTER_LABELS, commentsEndpoint, type CommentFilter } from '@/lib/comments';
+import { resolveMediaUrl } from '@/lib/media';
+import { buildShareMessage, productUrl } from '@/lib/share';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -119,10 +124,12 @@ export default function ProductDetailScreen() {
 
   const [comments, setComments] = useState<CommentsData | null>(null);
   const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentFilter, setCommentFilter] = useState<CommentFilter>('all');
   const [newComment, setNewComment] = useState('');
   const [postingComment, setPostingComment] = useState(false);
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
+  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
 
   const [related, setRelated] = useState<{ sameCategory: RelatedProduct[]; boughtTogether: RelatedProduct[] } | null>(null);
   const [relatedLoading, setRelatedLoading] = useState(false);
@@ -158,16 +165,24 @@ export default function ProductDetailScreen() {
     }
   }, [activeTab]);
 
-  const fetchComments = async () => {
+  const fetchComments = async (filter: CommentFilter = commentFilter) => {
     setCommentsLoading(true);
     try {
-      const response = await apiClient.get(`/api/v1/products/${id}/comments`);
+      const response = await apiClient.get(
+        commentsEndpoint(`/api/v1/products/${id}/comments`, filter),
+      );
       setComments(response.data.data);
     } catch (err) {
       console.error('Error fetching comments:', err);
     } finally {
       setCommentsLoading(false);
     }
+  };
+
+  const changeCommentFilter = (filter: CommentFilter) => {
+    if (filter === commentFilter) return;
+    setCommentFilter(filter);
+    fetchComments(filter);
   };
 
   const fetchRelated = async () => {
@@ -239,12 +254,20 @@ export default function ProductDetailScreen() {
     }
   };
 
+  const shareProduct = async () => {
+    if (!product) return;
+    const price = product.displayPrice || formatPrice(product.priceCop);
+    const url = productUrl(product.id);
+    const message = buildShareMessage(product.name, price, url);
+    try {
+      await Share.share({ message, title: product.name, url });
+    } catch (err) {
+      console.error('Error sharing product:', err);
+    }
+  };
+
   if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#1E40AF" />
-      </View>
-    );
+    return <ProductDetailSkeleton />;
   }
 
   if (!product || error) {
@@ -260,6 +283,9 @@ export default function ProductDetailScreen() {
   }
 
   const images = Array.isArray(product.images) ? product.images.filter(Boolean) : [];
+  const resolvedImages = images
+    .map((uri) => resolveMediaUrl(uri))
+    .filter((uri): uri is string => Boolean(uri));
   const badges = Array.isArray(product.badges) ? product.badges.filter((b): b is string => typeof b === 'string') : [];
   const brandName = typeof product.brand === 'string' ? product.brand : product.brand?.name ?? null;
 
@@ -291,8 +317,16 @@ export default function ProductDetailScreen() {
                 setImageIndex(Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH))
               }
             >
-              {images.map((uri, i) => (
-                <Image key={`${uri}-${i}`} source={{ uri }} style={styles.galleryImage} resizeMode="cover" />
+              {resolvedImages.map((uri, i) => (
+                <TouchableOpacity
+                  key={`${uri}-${i}`}
+                  activeOpacity={0.9}
+                  onPress={() => setLightbox({ images: resolvedImages, index: i })}
+                  accessibilityRole="imagebutton"
+                  accessibilityLabel={`Ver imagen ${i + 1} de ${resolvedImages.length}`}
+                >
+                  <Image source={{ uri }} style={styles.galleryImage} resizeMode="cover" />
+                </TouchableOpacity>
               ))}
             </ScrollView>
           ) : (
@@ -310,6 +344,16 @@ export default function ProductDetailScreen() {
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
           </TouchableOpacity>
+          {images.length > 0 && (
+            <TouchableOpacity
+              style={styles.shareButton}
+              onPress={shareProduct}
+              accessibilityRole="button"
+              accessibilityLabel="Compartir producto"
+            >
+              <Ionicons name="share-social-outline" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Info */}
@@ -431,6 +475,29 @@ export default function ProductDetailScreen() {
 
         {activeTab === 'comments' && (
           <View style={styles.section}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filtersRow}
+            >
+              {COMMENT_FILTERS.map((filter) => {
+                const active = filter === commentFilter;
+                return (
+                  <TouchableOpacity
+                    key={filter}
+                    style={[styles.filterChip, active && styles.filterChipActive]}
+                    onPress={() => changeCommentFilter(filter)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
+                  >
+                    <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
+                      {COMMENT_FILTER_LABELS[filter]}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
             <View style={styles.commentForm}>
               <TextInput
                 style={styles.commentInput}
@@ -453,7 +520,7 @@ export default function ProductDetailScreen() {
             </View>
 
             {commentsLoading ? (
-              <ActivityIndicator size="large" color="#1E40AF" style={styles.tabLoader} />
+              <CommentsSkeleton />
             ) : (
               comments?.comments.map((c) => (
                 <View key={c.id} style={styles.commentCard}>
@@ -480,6 +547,31 @@ export default function ProductDetailScreen() {
                     ) : null}
                   </View>
                   <Text style={styles.commentContent}>{c.content}</Text>
+                  {(c.images?.length ?? 0) > 0 && (() => {
+                    const gallery = c.images
+                      .map((img) => resolveMediaUrl(img))
+                      .filter((img): img is string => Boolean(img));
+                    if (gallery.length === 0) return null;
+                    return (
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.commentImagesRow}
+                      >
+                        {gallery.map((uri, imgIndex) => (
+                          <TouchableOpacity
+                            key={`${c.id}-img-${imgIndex}`}
+                            activeOpacity={0.85}
+                            onPress={() => setLightbox({ images: gallery, index: imgIndex })}
+                            accessibilityRole="imagebutton"
+                            accessibilityLabel={`Ver foto ${imgIndex + 1} del comentario`}
+                          >
+                            <Image source={{ uri }} style={styles.commentImageThumb} resizeMode="cover" />
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    );
+                  })()}
                   {c.reactions?.helpful ? (
                     <Text style={styles.helpfulText}>👍 {c.reactions.helpful} persona(s) les resultó útil</Text>
                   ) : null}
@@ -604,15 +696,23 @@ export default function ProductDetailScreen() {
           <Text style={styles.stickyButtonText}>Comprar</Text>
         </TouchableOpacity>
       </View>
+
+      <ImageLightbox
+        visible={lightbox !== null}
+        images={lightbox?.images ?? []}
+        index={lightbox?.index ?? 0}
+        onClose={() => setLightbox(null)}
+      />
     </View>
   );
 }
 
 function RelatedCard({ product, onPress }: { product: RelatedProduct; onPress: () => void }) {
+  const imageUri = resolveMediaUrl(product.images?.[0]);
   return (
     <TouchableOpacity style={styles.relatedCard} onPress={onPress}>
-      {product.images?.[0] ? (
-        <Image source={{ uri: product.images[0] }} style={styles.relatedImage} />
+      {imageUri ? (
+        <Image source={{ uri: imageUri }} style={styles.relatedImage} />
       ) : (
         <View style={[styles.relatedImage, styles.relatedPlaceholder]}>
           <Text style={styles.relatedPlaceholderText}>{product.name.charAt(0)}</Text>
@@ -695,6 +795,17 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 48,
     left: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  shareButton: {
+    position: 'absolute',
+    top: 48,
+    right: 16,
     width: 36,
     height: 36,
     borderRadius: 18,
@@ -882,6 +993,32 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#111827',
   },
+  filtersRow: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingBottom: 12,
+  },
+  filterChip: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  filterChipActive: {
+    backgroundColor: '#1E40AF',
+    borderColor: '#1E40AF',
+  },
+  filterChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#4B5563',
+  },
+  filterChipTextActive: {
+    color: '#FFFFFF',
+  },
+
   commentForm: {
     marginBottom: 16,
   },
@@ -977,6 +1114,17 @@ const styles = StyleSheet.create({
     color: '#374151',
     marginTop: 8,
     lineHeight: 20,
+  },
+  commentImagesRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 10,
+  },
+  commentImageThumb: {
+    width: 88,
+    height: 88,
+    borderRadius: 10,
+    backgroundColor: '#E5E7EB',
   },
   helpfulText: {
     fontSize: 12,

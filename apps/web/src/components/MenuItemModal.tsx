@@ -33,7 +33,10 @@ export default function MenuItemModal({ item, onClose }: Props) {
     return defaults;
   }, [item.options]);
 
-  const activeSelection: Selection = { ...singleChoiceDefaults, ...selection };
+  const activeSelection: Selection = useMemo(
+    () => ({ ...singleChoiceDefaults, ...selection }),
+    [singleChoiceDefaults, selection],
+  );
 
   const toggleSingle = (optionId: string, choiceId: string) => {
     setSelection((prev) => ({ ...prev, [optionId]: choiceId }));

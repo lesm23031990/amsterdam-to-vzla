@@ -9,6 +9,7 @@ import { api } from '@/lib/api';
 import ShareButton from '@/components/ShareButton';
 import CommentImagePicker from '@/components/CommentImagePicker';
 import { COMMENT_FILTER_LABELS, CommentFilter, commentsEndpoint } from '@/lib/comments';
+import { resolveMediaUrl } from '@/lib/media';
 import styles from './page.module.css';
 
 interface Product {
@@ -307,7 +308,8 @@ export default function ProductDetailPage() {
   }
   if (!product) return <p className={styles.loading}>Producto no encontrado</p>;
 
-  const hasImages = product.images && product.images.length > 0;
+  const galleryImages = product.images.map((img) => resolveMediaUrl(img) ?? img);
+  const hasImages = galleryImages.length > 0;
   const isAdmin = user?.role === 'admin';
 
   return (
@@ -329,7 +331,7 @@ export default function ProductDetailPage() {
               ref={imgRef}
               className={styles.mainImage}
               style={{
-                backgroundImage: hasImages ? `url(${product.images[activeImage]})` : undefined,
+                backgroundImage: hasImages ? `url(${galleryImages[activeImage]})` : undefined,
                 ...zoomStyle,
               }}
               onClick={() => hasImages && setLightboxOpen(true)}
@@ -342,9 +344,9 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            {hasImages && product.images.length > 1 && (
+            {hasImages && galleryImages.length > 1 && (
               <div className={styles.thumbnails}>
-                {product.images.map((img, i) => (
+                {galleryImages.map((img, i) => (
                   <button
                     key={i}
                     className={`${styles.thumb} ${i === activeImage ? styles.thumbActive : ''}`}
@@ -352,7 +354,7 @@ export default function ProductDetailPage() {
                     style={{ backgroundImage: `url(${img})` }}
                   />
                 ))}
-                <span className={styles.imageCounter}>{activeImage + 1}/{product.images.length}</span>
+                <span className={styles.imageCounter}>{activeImage + 1}/{galleryImages.length}</span>
               </div>
             )}
 
@@ -618,11 +620,11 @@ export default function ProductDetailPage() {
                           key={img}
                           type="button"
                           className={styles.commentImage}
-                          onClick={() => setPreviewImage(img)}
+                          onClick={() => setPreviewImage(resolveMediaUrl(img))}
                           aria-label={`Ampliar foto ${i + 1} de ${c.user.name}`}
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={img} alt={`Foto ${i + 1} de ${c.user.name}`} loading="lazy" />
+                          <img src={resolveMediaUrl(img) ?? img} alt={`Foto ${i + 1} de ${c.user.name}`} loading="lazy" />
                         </button>
                       ))}
                     </div>
@@ -734,23 +736,23 @@ export default function ProductDetailPage() {
           <button className={styles.lightboxClose} onClick={() => setLightboxOpen(false)}>✕</button>
           <button
             className={styles.lightboxNav}
-            onClick={(e) => { e.stopPropagation(); setActiveImage((prev) => (prev > 0 ? prev - 1 : product.images.length - 1)); }}
+            onClick={(e) => { e.stopPropagation(); setActiveImage((prev) => (prev > 0 ? prev - 1 : galleryImages.length - 1)); }}
           >
             ‹
           </button>
           <img
-            src={product.images[activeImage]}
+            src={galleryImages[activeImage]}
             alt={product.name}
             className={styles.lightboxImg}
             onClick={(e) => e.stopPropagation()}
           />
           <button
             className={`${styles.lightboxNav} ${styles.lightboxNext}`}
-            onClick={(e) => { e.stopPropagation(); setActiveImage((prev) => (prev < product.images.length - 1 ? prev + 1 : 0)); }}
+            onClick={(e) => { e.stopPropagation(); setActiveImage((prev) => (prev < galleryImages.length - 1 ? prev + 1 : 0)); }}
           >
             ›
           </button>
-          <span className={styles.lightboxCounter}>{activeImage + 1}/{product.images.length}</span>
+          <span className={styles.lightboxCounter}>{activeImage + 1}/{galleryImages.length}</span>
         </div>
       )}
 
