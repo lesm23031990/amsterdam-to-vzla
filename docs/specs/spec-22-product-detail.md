@@ -499,7 +499,7 @@ Dos secciones en la parte inferior:
 - [x] Tests para notificación de stock
 - [x] Integrar con frontend (web: galería, comentarios, filtros, fotos, share, skeletons)
 - [x] Integrar con mobile (mobile: detalle Product con lightbox, MenuItemSheet, skeletons, share nativo)
-- [ ] PR a main
+- [x] PR a main — https://github.com/lesm23031990/amsterdam-to-vzla/pull/9
 
 ---
 
