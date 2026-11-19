@@ -180,4 +180,15 @@ User login (same as web).
   se omite con un warning y el resto de la app funciona igual.
 - Builds nativos Android/iOS (EAS o `expo run:*`): los bundles JS ya exportan
   para ambas plataformas, pero el build nativo no se ejecutó en este entorno.
+- Preparación lista para ejecutarlo (2026-11-18):
+  - `apps/mobile/eas.json` con perfiles `preview` (APK interno) y `production`
+    (AAB con `autoIncrement`).
+  - `npm run mobile:env` (`scripts/mobile-preflight.mjs --write-env`) detecta la
+    IP LAN, escribe `apps/mobile/.env` y evita interfaces virtuales (WSL,
+    Hyper-V, VirtualBox).
+  - `npm run mobile:check` valida `app.json` (plugins, `projectId`, package,
+    bundle id, `UIBackgroundModes`), la URL del API y `GET /api/v1/health`
+    contra la IP LAN.
+  - Guía paso a paso (EAS init, env del perfil, credenciales FCM/APNs, build,
+    matriz de pruebas y troubleshooting): `docs/MOBILE-DEVICE-VALIDATION.md`.
 

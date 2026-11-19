@@ -12,6 +12,8 @@
     "server": "npm run dev -w server",
     "web": "npm run dev -w apps/web",
     "mobile": "npm run start -w apps/mobile",
+    "mobile:env": "node scripts/mobile-preflight.mjs --write-env",
+    "mobile:check": "node scripts/mobile-preflight.mjs",
     "test": "vitest run",
     "pretest": "npm run db:generate",
     "test:watch": "vitest",
