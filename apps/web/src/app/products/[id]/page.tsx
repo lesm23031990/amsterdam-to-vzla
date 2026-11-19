@@ -1,11 +1,14 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { api } from '@/lib/api';
+import ShareButton from '@/components/ShareButton';
+import CommentImagePicker from '@/components/CommentImagePicker';
+import { COMMENT_FILTER_LABELS, CommentFilter, commentsEndpoint } from '@/lib/comments';
 import styles from './page.module.css';
 
 interface Product {
@@ -68,6 +71,10 @@ interface RelatedData {
   boughtTogether: { id: string; name: string; price: number; priceCop: number; images: string[]; category: string; displayPrice: string }[];
 }
 
+const NEW_PRODUCT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
+const COMMENT_FILTERS: CommentFilter[] = ['all', 'question', 'comment', 'withImages', 'withRating'];
+
 const REPORT_REASONS = [
   { value: 'misleading_info', label: 'Informacion enganosa' },
   { value: 'wrong_price', label: 'Precio incorrecto' },
@@ -89,7 +96,7 @@ export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
-  const { currency, formatPrice } = useCurrency();
+  const { currency } = useCurrency();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
@@ -105,13 +112,15 @@ export default function ProductDetailPage() {
   // Comments
   const [commentsData, setCommentsData] = useState<CommentsData | null>(null);
   const [commentsLoading, setCommentsLoading] = useState(true);
-  const [commentFilter, setCommentFilter] = useState('all');
+  const [commentFilter, setCommentFilter] = useState<CommentFilter>('all');
   const [newComment, setNewComment] = useState('');
   const [newRating, setNewRating] = useState(0);
   const [commentType, setCommentType] = useState<'question' | 'comment'>('comment');
+  const [commentImages, setCommentImages] = useState<string[]>([]);
+  const [commentError, setCommentError] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
-  const [commentsPage, setCommentsPage] = useState(1);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Related
   const [relatedData, setRelatedData] = useState<RelatedData | null>(null);
@@ -124,31 +133,47 @@ export default function ProductDetailPage() {
 
   // Stock notification
   const [subscribedStock, setSubscribedStock] = useState(false);
-
-  // Share
-  const [copied, setCopied] = useState(false);
+  const [isNewProduct, setIsNewProduct] = useState(false);
 
   const productId = params.id as string;
 
   useEffect(() => {
     Promise.all([
       api.get<Product>(`/products/${productId}?currency=${currency}`),
-      api.get<CommentsData>(`/products/${productId}/comments?perPage=10`),
       api.get<RelatedData>(`/products/${productId}/related?currency=${currency}`),
-    ]).then(([productRes, commentsRes, relatedRes]) => {
+    ]).then(([productRes, relatedRes]) => {
       if (productRes.ok && productRes.data) {
         setProduct(productRes.data);
-      }
-      if (commentsRes.ok && commentsRes.data) {
-        setCommentsData(commentsRes.data);
+        setIsNewProduct(Date.now() - new Date(productRes.data.createdAt).getTime() < NEW_PRODUCT_WINDOW_MS);
       }
       if (relatedRes.ok && relatedRes.data) {
         setRelatedData(relatedRes.data);
       }
       setLoading(false);
-      setCommentsLoading(false);
     });
   }, [productId, currency]);
+
+  // Comentarios: se recargan al cambiar el filtro (todos / preguntas / comentarios / con fotos / con rating)
+  const reloadComments = useCallback(async () => {
+    const res = await api.get<CommentsData>(commentsEndpoint(productId, commentFilter));
+    if (res.ok && res.data) setCommentsData(res.data);
+    setCommentsLoading(false);
+  }, [productId, commentFilter]);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.get<CommentsData>(commentsEndpoint(productId, commentFilter)).then((res) => {
+      if (cancelled) return;
+      if (res.ok && res.data) setCommentsData(res.data);
+      setCommentsLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [productId, commentFilter]);
+
+  const changeCommentFilter = (filter: CommentFilter) => {
+    setCommentsLoading(true);
+    setCommentFilter(filter);
+  };
 
   const handleAddToCart = async () => {
     if (!user) { router.push('/login'); return; }
@@ -178,30 +203,22 @@ export default function ProductDetailPage() {
     setZoomStyle({ transform: 'scale(1)', transition: 'transform 0.3s ease' });
   };
 
-  const handleShare = async () => {
-    const url = window.location.href;
-    const text = `Mira este producto en Amsterdam Frozen Foods: ${product?.name} - ${product?.displayPrice}`;
-    if (navigator.share) {
-      try { await navigator.share({ title: product?.name, text, url }); } catch {}
-    } else {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
   const handleCreateComment = async () => {
     if (!user || !newComment.trim()) return;
+    setCommentError('');
     const res = await api.post(`/products/${productId}/comments`, {
       type: commentType,
       content: newComment.trim(),
       rating: commentType === 'comment' && newRating > 0 ? newRating : undefined,
+      images: commentImages.length > 0 ? commentImages : undefined,
     });
     if (res.ok) {
       setNewComment('');
       setNewRating(0);
-      const commentsRes = await api.get<CommentsData>(`/products/${productId}/comments?perPage=10`);
-      if (commentsRes.ok && commentsRes.data) setCommentsData(commentsRes.data);
+      setCommentImages([]);
+      await reloadComments();
+    } else {
+      setCommentError(res.error || 'No se pudo publicar el comentario');
     }
   };
 
@@ -213,8 +230,7 @@ export default function ProductDetailPage() {
     if (res.ok) {
       setReplyContent('');
       setReplyingTo(null);
-      const commentsRes = await api.get<CommentsData>(`/products/${productId}/comments?perPage=10`);
-      if (commentsRes.ok && commentsRes.data) setCommentsData(commentsRes.data);
+      await reloadComments();
     }
   };
 
@@ -224,16 +240,14 @@ export default function ProductDetailPage() {
       reaction: 'helpful',
     });
     if (res.ok) {
-      const commentsRes = await api.get<CommentsData>(`/products/${productId}/comments?perPage=10`);
-      if (commentsRes.ok && commentsRes.data) setCommentsData(commentsRes.data);
+      await reloadComments();
     }
   };
 
   const handleResolve = async (commentId: string) => {
     const res = await api.post(`/products/${productId}/comments/${commentId}/resolve`, {});
     if (res.ok) {
-      const commentsRes = await api.get<CommentsData>(`/products/${productId}/comments?perPage=10`);
-      if (commentsRes.ok && commentsRes.data) setCommentsData(commentsRes.data);
+      await reloadComments();
     }
   };
 
@@ -265,7 +279,32 @@ export default function ProductDetailPage() {
     );
   };
 
-  if (loading) return <p className={styles.loading}>Cargando producto...</p>;
+  if (loading) {
+    return (
+      <div className={styles.page} aria-busy="true" aria-label="Cargando producto">
+        <div className={styles.container}>
+          <div className={`${styles.skeleton} ${styles.skeletonBreadcrumb}`} />
+          <div className={styles.mainGrid}>
+            <div className={styles.gallerySection}>
+              <div className={`${styles.skeleton} ${styles.skeletonImage}`} />
+              <div className={styles.skeletonThumbs}>
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className={`${styles.skeleton} ${styles.skeletonThumb}`} />
+                ))}
+              </div>
+            </div>
+            <div className={styles.infoSection}>
+              <div className={`${styles.skeleton} ${styles.skeletonTitle}`} />
+              <div className={`${styles.skeleton} ${styles.skeletonLine}`} />
+              <div className={`${styles.skeleton} ${styles.skeletonLine}`} />
+              <div className={`${styles.skeleton} ${styles.skeletonPrice}`} />
+              <div className={`${styles.skeleton} ${styles.skeletonButton}`} />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (!product) return <p className={styles.loading}>Producto no encontrado</p>;
 
   const hasImages = product.images && product.images.length > 0;
@@ -319,9 +358,7 @@ export default function ProductDetailPage() {
 
             {/* Share & Report */}
             <div className={styles.metaActions}>
-              <button className={styles.shareBtn} onClick={handleShare}>
-                {copied ? '✓ Link copiado' : '📤 Compartir'}
-              </button>
+              <ShareButton title={product.name} price={product.displayPrice} />
               <button className={styles.reportLink} onClick={() => setReportOpen(true)}>
                 Reportar producto
               </button>
@@ -335,7 +372,7 @@ export default function ProductDetailPage() {
               {product.badges?.includes('trending') && <span className={`${styles.badge} ${styles.badgeTrending}`}>🔥 Trending</span>}
               {product.badges?.includes('best-seller') && <span className={`${styles.badge} ${styles.badgeBest}`}>🏆 Mas vendido</span>}
               {product.isFeatured && <span className={`${styles.badge} ${styles.badgeFeatured}`}>⭐ Destacado</span>}
-              {new Date(product.createdAt).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000 && (
+              {isNewProduct && (
                 <span className={`${styles.badge} ${styles.badgeNew}`}>🆕 Nuevo</span>
               )}
             </div>
@@ -443,14 +480,20 @@ export default function ProductDetailPage() {
           </h2>
 
           {/* Filters */}
-          <div className={styles.commentFilters}>
-            {['all', 'question', 'comment'].map((f) => (
+          <div className={styles.commentFilters} role="tablist" aria-label="Filtrar comentarios">
+            {COMMENT_FILTERS.map((f) => (
               <button
                 key={f}
+                role="tab"
+                aria-selected={commentFilter === f}
                 className={`${styles.commentFilter} ${commentFilter === f ? styles.commentFilterActive : ''}`}
-                onClick={() => setCommentFilter(f)}
+                onClick={() => changeCommentFilter(f)}
               >
-                {f === 'all' ? 'Todos' : f === 'question' ? `Preguntas (${commentsData?.totalQuestions || 0})` : `Comentarios (${commentsData?.totalComments || 0})`}
+                {f === 'question'
+                  ? `Preguntas (${commentsData?.totalQuestions || 0})`
+                  : f === 'comment'
+                    ? `Comentarios (${commentsData?.totalComments || 0})`
+                    : COMMENT_FILTER_LABELS[f]}
               </button>
             ))}
           </div>
@@ -528,12 +571,25 @@ export default function ProductDetailPage() {
                   Publicar
                 </button>
               </div>
+              <CommentImagePicker value={commentImages} onChange={setCommentImages} />
+              {commentError && <p className={styles.commentError} role="alert">{commentError}</p>}
             </div>
           )}
 
           {/* Comments List */}
           {commentsLoading ? (
-            <p className={styles.loading}>Cargando comentarios...</p>
+            <div className={styles.commentsList} aria-busy="true" aria-label="Cargando comentarios">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className={styles.commentCard}>
+                  <div className={styles.skeletonHeader}>
+                    <div className={`${styles.skeleton} ${styles.skeletonAvatar}`} />
+                    <div className={`${styles.skeleton} ${styles.skeletonLineShort}`} />
+                  </div>
+                  <div className={`${styles.skeleton} ${styles.skeletonLine}`} />
+                  <div className={`${styles.skeleton} ${styles.skeletonLine}`} />
+                </div>
+              ))}
+            </div>
           ) : commentsData && commentsData.comments.length > 0 ? (
             <div className={styles.commentsList}>
               {commentsData.comments.map((c) => (
@@ -555,6 +611,22 @@ export default function ProductDetailPage() {
                     )}
                   </div>
                   <p className={styles.commentContent}>{c.content}</p>
+                  {c.images && c.images.length > 0 && (
+                    <div className={styles.commentImages}>
+                      {c.images.map((img, i) => (
+                        <button
+                          key={img}
+                          type="button"
+                          className={styles.commentImage}
+                          onClick={() => setPreviewImage(img)}
+                          aria-label={`Ampliar foto ${i + 1} de ${c.user.name}`}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={img} alt={`Foto ${i + 1} de ${c.user.name}`} loading="lazy" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <div className={styles.commentFooter}>
                     <button className={styles.reactBtn} onClick={() => handleReact(c.id)}>
                       👍 Útil ({c.reactions?.helpful || 0})
@@ -679,6 +751,25 @@ export default function ProductDetailPage() {
             ›
           </button>
           <span className={styles.lightboxCounter}>{activeImage + 1}/{product.images.length}</span>
+        </div>
+      )}
+
+      {/* Comment image lightbox */}
+      {previewImage && (
+        <div
+          className={styles.lightbox}
+          onClick={() => setPreviewImage(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Foto del comentario"
+        >
+          <button className={styles.lightboxClose} onClick={() => setPreviewImage(null)} aria-label="Cerrar">✕</button>
+          <img
+            src={previewImage}
+            alt="Foto del comentario"
+            className={styles.lightboxImg}
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
 

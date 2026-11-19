@@ -1,0 +1,50 @@
+.wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.wrap button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.wrap button:hover {
+  background: #f3f4f6;
+}
+
+.primary {
+  border-color: #1e40af;
+  color: #1e40af;
+}
+
+.whatsapp {
+  border-color: #25d366;
+  color: #128c7e;
+}
+
+.copy {
+  color: #4b5563;
+}
+
+.compact button {
+  padding: 6px;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.error {
+  color: #dc2626;
+  font-size: 12px;
+}
