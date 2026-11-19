@@ -461,7 +461,6 @@ Dos secciones en la parte inferior:
 - [x] GET /api/v1/menu-items/:id/comments — listar comentarios de MenuItem
 - [x] POST /api/v1/menu-items/:id/comments — crear comentario MenuItem (auth)
 - [x] POST /api/v1/menu-items/:id/comments/:commentId/reply — responder (auth)
-- [ ] Middleware: verificar comprador verificado para rating (obsoleto: el spec indica "sin verified buyer estricto")
 - [x] Middleware: solo admin puede resolver preguntas y ocultar comentarios
 - [x] Servicio de notificaciones: responder pregunta, reporte, stock restaurado
 - [x] Algoritmo "comprados juntos": agrupar por orderId, contar frecuencia
@@ -491,9 +490,11 @@ Dos secciones en la parte inferior:
 - [x] Carrusel de productos relacionados
 
 ### General
+> **Alcance:** el "verified buyer" para rating quedó descartado por diseño (ver
+> "Sin verified buyer estricto" en la sección de MenuItem), así que no hay
+> middleware ni tests de verified buyer.
 - [x] Tests para endpoints de comentarios
 - [x] Tests para endpoints de MenuItem comments
-- [ ] Tests para verified buyer middleware (obsoleto junto con el middleware)
 - [x] Tests para algoritmo "comprados juntos"
 - [x] Tests para notificación de stock
 - [ ] Integrar con frontend
