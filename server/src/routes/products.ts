@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express'
 import { db } from '../lib/db'
 import { authMiddleware, requireRole } from '../middleware/auth'
 import { createNotification } from '../services/notifications'
+import { validateCommentImages } from '../services/uploads'
 
 const router = Router()
 
@@ -349,9 +350,12 @@ router.get('/:id/comments', async (req: Request, res: Response) => {
       return
     }
 
-    const { type, page = '1', perPage = '10' } = req.query
+    const { type, hasImages, hasRating, page = '1', perPage = '10' } = req.query
     const pageNum = Math.max(1, parseInt(String(page)) || 1)
     const perPageNum = Math.min(50, Math.max(1, parseInt(String(perPage)) || 10))
+
+    const wantsImages = String(hasImages) === 'true' || String(hasImages) === '1'
+    const wantsRating = String(hasRating) === 'true' || String(hasRating) === '1'
 
     const where: Record<string, unknown> = {
       productId: String(req.params.id),
@@ -359,6 +363,13 @@ router.get('/:id/comments', async (req: Request, res: Response) => {
     }
     if (type && VALID_COMMENT_TYPES.includes(type as any)) {
       where.type = type
+    }
+    if (wantsRating) {
+      where.type = 'comment'
+      where.rating = { not: null }
+    }
+    if (wantsImages) {
+      where.images = { isEmpty: false }
     }
 
     const [comments, total, ratingAgg] = await Promise.all([
@@ -468,6 +479,12 @@ router.post('/:id/comments', authMiddleware, async (req: Request, res: Response)
       return
     }
 
+    const imagesValidation = validateCommentImages(images)
+    if (!imagesValidation.ok) {
+      res.status(400).json({ ok: false, error: imagesValidation.error })
+      return
+    }
+
     if (rating !== undefined && rating !== null) {
       if (type !== 'comment') {
         res.status(400).json({ ok: false, error: 'Rating solo aplica a comentarios' })
@@ -486,7 +503,7 @@ router.post('/:id/comments', authMiddleware, async (req: Request, res: Response)
         userId: req.user!.userId,
         type,
         content: content.trim(),
-        images: images || [],
+        images: imagesValidation.images,
         rating: rating ? Number(rating) : null,
         reactions: {},
       },

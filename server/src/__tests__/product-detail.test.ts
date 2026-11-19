@@ -152,6 +152,36 @@ describe('Product Comments', () => {
       expect(res.status).toBe(200)
       expect(res.body.ok).toBe(true)
     })
+
+    it('filters comments that have images', async () => {
+      ;(mockDb.product.findUnique as MockFn).mockResolvedValue(mockProduct)
+      ;(mockDb.productComment.findMany as MockFn).mockResolvedValue([])
+      ;(mockDb.productComment.count as MockFn).mockResolvedValue(0)
+      ;(mockDb.productComment.aggregate as MockFn).mockResolvedValue({ _avg: { rating: null } })
+
+      const res = await request('GET', '/api/v1/products/product-1/comments?hasImages=true')
+
+      expect(res.status).toBe(200)
+      expect(mockDb.productComment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ images: { isEmpty: false } }) }),
+      )
+    })
+
+    it('filters comments that have a rating', async () => {
+      ;(mockDb.product.findUnique as MockFn).mockResolvedValue(mockProduct)
+      ;(mockDb.productComment.findMany as MockFn).mockResolvedValue([])
+      ;(mockDb.productComment.count as MockFn).mockResolvedValue(0)
+      ;(mockDb.productComment.aggregate as MockFn).mockResolvedValue({ _avg: { rating: null } })
+
+      const res = await request('GET', '/api/v1/products/product-1/comments?hasRating=true')
+
+      expect(res.status).toBe(200)
+      expect(mockDb.productComment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ type: 'comment', rating: { not: null } }),
+        }),
+      )
+    })
   })
 
   describe('POST /api/v1/products/:id/comments', () => {
@@ -223,6 +253,49 @@ describe('Product Comments', () => {
       }, clienteToken)
 
       expect(res.status).toBe(400)
+    })
+
+    it('rejects more than 3 images', async () => {
+      ;(mockDb.product.findUnique as MockFn).mockResolvedValue(mockProduct)
+
+      const res = await request('POST', '/api/v1/products/product-1/comments', {
+        type: 'comment', content: 'Mira las fotos', rating: 5,
+        images: ['/uploads/a.png', '/uploads/b.png', '/uploads/c.png', '/uploads/d.png'],
+      }, clienteToken)
+
+      expect(res.status).toBe(400)
+      expect(res.body.error).toContain('3 imagenes')
+    })
+
+    it('rejects image URLs with unsupported schemes', async () => {
+      ;(mockDb.product.findUnique as MockFn).mockResolvedValue(mockProduct)
+
+      const res = await request('POST', '/api/v1/products/product-1/comments', {
+        type: 'comment', content: 'XSS', images: ['javascript:alert(1)'],
+      }, clienteToken)
+
+      expect(res.status).toBe(400)
+    })
+
+    it('persists up to 3 uploaded images', async () => {
+      ;(mockDb.product.findUnique as MockFn).mockResolvedValue(mockProduct)
+      ;(mockDb.productComment.create as MockFn).mockImplementation((args: any) =>
+        Promise.resolve({ ...mockComment, id: 'new-comment', images: args.data.images }),
+      )
+
+      const res = await request('POST', '/api/v1/products/product-1/comments', {
+        type: 'comment', content: 'Con fotos', rating: 4,
+        images: ['/uploads/comments/2026-11/a.png', 'https://cdn.test/b.png'],
+      }, clienteToken)
+
+      expect(res.status).toBe(201)
+      expect(mockDb.productComment.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            images: ['/uploads/comments/2026-11/a.png', 'https://cdn.test/b.png'],
+          }),
+        }),
+      )
     })
   })
 
