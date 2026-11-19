@@ -8,7 +8,7 @@ Trabajas en el monorepo `c:\Projects\amsterdam-to-vzla` (npm workspaces: `server
 
 ## Estado verificado (2026-11-18)
 
-- Rama `main` = `origin/main` = `4b43b0e`, árbol limpio.
+- Rama `main` sincronizada con `origin/main`, árbol limpio (este handoff es el commit `docs(handoff)` más reciente).
 - `npm test` → 169 tests en verde. `npm run specs` → **371/390 (95%)**.
 - Stack: Next.js 14 App Router + TS (web), React Native Expo + TS (mobile), Express + TS + Prisma/PostgreSQL (server), Vitest, Socket.io, Leaflet/OpenStreetMap.
 - **No cambies `react`/`react-dom`**: están fijados en `19.2.8` para evitar dos copias que rompían `next build` con `Cannot read properties of null (reading 'useContext')` en `/_global-error`. Ver `docs/DEPLOY.md`.
