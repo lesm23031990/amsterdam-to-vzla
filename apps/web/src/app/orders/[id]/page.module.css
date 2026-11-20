@@ -319,6 +319,19 @@
   color: #6b7280;
 }
 
+.payInfo {
+  font-size: 14px;
+  color: #111827;
+}
+
+.payError {
+  font-size: 13px;
+  color: #b91c1c;
+  background: #fee2e2;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
 .expiredBox {
   display: flex;
   flex-direction: column;

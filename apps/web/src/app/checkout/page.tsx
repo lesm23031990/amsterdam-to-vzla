@@ -36,9 +36,14 @@ export default function CheckoutPage() {
     e.preventDefault();
     setError('');
     setSubmitting(true);
-    const res = await api.post('/checkout', form);
-    if (res.ok) {
-      router.push('/orders');
+    const res = await api.post<{ id: string }>('/checkout', form);
+    if (res.ok && res.data) {
+      // Binance Pay se confirma en la pantalla del pedido (QR / botón + polling).
+      if (form.paymentMethod === 'binance_pay') {
+        router.push(`/orders/${res.data.id}`);
+      } else {
+        router.push('/orders');
+      }
     } else {
       setError(res.error || 'Error al procesar el pedido');
       setSubmitting(false);

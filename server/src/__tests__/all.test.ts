@@ -558,7 +558,7 @@ describe('Checkout', () => {
     expect(res.body.ok).toBe(true)
   })
 
-  it('Create order with binance_pay returns a mock paymentUrl and pending_payment', async () => {
+  it('Create order with binance_pay returns pending_payment without a mock paymentUrl', async () => {
     const cartWithItems = {
       ...mockCart,
       items: [{
@@ -580,7 +580,8 @@ describe('Checkout', () => {
     expect(res.body.ok).toBe(true)
     expect(res.body.data.status).toBe('pending_payment')
     expect(res.body.data.paymentStatus).toBe('pending')
-    expect(res.body.data.paymentUrl).toMatch(/^https:\/\/mock\.binance\.com\/pay\/temp-user-1-/)
+    // Sin credenciales de Binance no se inventa un link de demostración.
+    expect(res.body.data.paymentUrl ?? null).toBeNull()
   })
 
   it('GET payment-status as owner returns 200 with expiresAt and expired false', async () => {
@@ -588,7 +589,7 @@ describe('Checkout', () => {
     ;(mockDb.order.findUnique as MockFn).mockResolvedValue({
       ...mockOrder,
       paymentMethod: 'binance_pay',
-      paymentUrl: 'https://mock.binance.com/pay/temp-user-1-123',
+      paymentUrl: 'https://pay.binance.com/checkout/mock-123',
       createdAt,
     })
 
@@ -600,8 +601,8 @@ describe('Checkout', () => {
     expect(res.body.data.orderStatus).toBe('pending_payment')
     expect(res.body.data.paymentMethod).toBe('binance_pay')
     expect(res.body.data.paymentStatus).toBe('pending')
-    expect(res.body.data.paymentUrl).toBe('https://mock.binance.com/pay/temp-user-1-123')
-    expect(res.body.data.expiresAt).toBe(new Date(createdAt.getTime() + 24 * 60 * 60 * 1000).toISOString())
+    expect(res.body.data.paymentUrl).toBe('https://pay.binance.com/checkout/mock-123')
+    expect(res.body.data.expiresAt).toBe(new Date(createdAt.getTime() + 15 * 60 * 1000).toISOString())
     expect(res.body.data.expired).toBe(false)
     expect(mockDb.order.update).not.toHaveBeenCalled()
   })
@@ -635,7 +636,7 @@ describe('Checkout', () => {
     expect(res.body.ok).toBe(false)
   })
 
-  it('GET payment-status cancels an order pending for more than 24h', async () => {
+  it('GET payment-status cancels a Binance Pay order pending for more than 15 minutes', async () => {
     ;(mockDb.order.findUnique as MockFn).mockResolvedValue(expiredMockOrder)
     ;(mockDb.order.update as MockFn).mockResolvedValue({
       ...expiredMockOrder, status: 'cancelled', paymentStatus: 'failed',
@@ -669,7 +670,7 @@ describe('Checkout', () => {
     expect(mockDb.order.update).not.toHaveBeenCalled()
   })
 
-  it('GET order detail expires an order pending for more than 24h', async () => {
+  it('GET order detail expires a Binance Pay order pending for more than 15 minutes', async () => {
     ;(mockDb.order.findUnique as MockFn).mockResolvedValue(expiredMockOrder)
     ;(mockDb.order.update as MockFn).mockResolvedValue({
       ...expiredMockOrder, status: 'cancelled', paymentStatus: 'failed',
@@ -1179,12 +1180,18 @@ describe('Admin', () => {
     const res = await request('GET', '/api/v1/admin/orders', undefined, adminToken)
 
     expect(res.status).toBe(200)
-    expect(mockDb.order.updateMany).toHaveBeenCalledTimes(1)
-    const args = (mockDb.order.updateMany as MockFn).mock.calls[0][0]
-    expect(args.where).not.toHaveProperty('userId')
-    expect(args.where.status).toBe('pending_payment')
-    expect(args.where.paymentStatus).toBe('pending')
-    expect(args.data).toEqual({ status: 'cancelled', paymentStatus: 'failed' })
+    expect(mockDb.order.updateMany).toHaveBeenCalledTimes(2)
+    const calls = (mockDb.order.updateMany as MockFn).mock.calls.map((c: any[]) => c[0])
+    const binanceCall = calls.find((c: any) => c.where.paymentMethod === 'binance_pay')
+    const otherCall = calls.find((c: any) => c.where.paymentMethod?.not === 'binance_pay')
+    expect(binanceCall).toBeTruthy()
+    expect(otherCall).toBeTruthy()
+    for (const args of [binanceCall, otherCall]) {
+      expect(args.where).not.toHaveProperty('userId')
+      expect(args.where.status).toBe('pending_payment')
+      expect(args.where.paymentStatus).toBe('pending')
+      expect(args.data).toEqual({ status: 'cancelled', paymentStatus: 'failed' })
+    }
     expect(res.body.data[0].status).toBe('cancelled')
   })
 
