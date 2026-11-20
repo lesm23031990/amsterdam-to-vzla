@@ -293,3 +293,7 @@
   .priceBlock { margin-right: 0; }
   .addBtn { width: 100%; }
 }
+
+.shareRow {
+  margin: 8px 0 12px;
+}

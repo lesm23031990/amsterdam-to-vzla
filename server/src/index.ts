@@ -15,9 +15,11 @@ import adminRoutes from './routes/admin'
 import assistantRoutes from './routes/assistant'
 import ratesRoutes from './routes/rates'
 import notificationRoutes from './routes/notifications'
+import uploadRoutes from './routes/uploads'
 import binanceRoutes from './routes/binance'
 import webhookRoutes from './routes/webhooks'
 import { registerSocketHandlers } from './lib/socket'
+import { getUploadsRoot } from './services/uploads'
 
 const app = express()
 const httpServer = createServer(app)
@@ -37,6 +39,13 @@ app.use(
   })
 )
 
+// Archivos subidos (imagenes de comentarios). Handler perezoso para respetar UPLOADS_DIR.
+let uploadsStaticHandler: express.RequestHandler | null = null
+app.use('/uploads', (req, res, next) => {
+  uploadsStaticHandler ??= express.static(getUploadsRoot(), { maxAge: '7d', immutable: true })
+  uploadsStaticHandler(req, res, next)
+})
+
 app.get('/api/v1/health', (_req, res) => {
   res.json({ ok: true, name: 'amsterdam-to-vzla' })
 })
@@ -54,6 +63,7 @@ app.use('/api/v1/assistant', assistantRoutes)
 app.use('/api/v1/admin', adminRoutes)
 app.use('/api/v1/rates', ratesRoutes)
 app.use('/api/v1/notifications', notificationRoutes)
+app.use('/api/v1/uploads', uploadRoutes)
 
 registerSocketHandlers(io)
 

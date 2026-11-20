@@ -2,7 +2,7 @@
 title: "Spec 22 — Detalle de Producto Premium"
 labels: ["spec", "high-priority"]
 assignees: []
-status: in-progress
+status: done
 ---
 
 ## Contexto
@@ -414,24 +414,24 @@ Dos secciones en la parte inferior:
 
 ## Acceptance Criteria
 
-- [ ] Galería con zoom al hover, lightbox, thumbnails y swipe mobile (web ✅ zoom/lightbox/thumbnails; mobile: swipe ✅, lightbox/zoom ❌)
+- [x] Galería con zoom al hover, lightbox, thumbnails y swipe mobile (web: `products/[id]/page.tsx:191` zoom 1.8x siguiendo el cursor, `:348` thumbnails, `:734` lightbox; mobile: `ImageLightbox.tsx:29` swipe + doble toque 2.5x + pan)
 - [x] Placeholder si no hay imágenes
 - [x] Badges sociales dinámicos (trending, best-seller, new, low-stock)
 - [x] Especificaciones dinámicas según categoría del producto
-- [ ] MenuItem con imagen hero grande, contenido, personalización y comentarios (hero + personalización ✅; comentarios ❌)
+- [x] MenuItem con imagen hero grande, contenido, personalización y comentarios (web: `MenuItemModal.tsx:133` share + `:158` comentarios; mobile: `menu/[id].tsx` hero + `MenuItemSheet.tsx:33` bottom sheet)
 - [x] Sistema unificado de comentarios y preguntas (tipos: question, comment, reply)
-- [ ] Rating opcional en comentarios con imágenes (rating ✅; subida de imágenes ❌)
+- [x] Rating opcional en comentarios con imágenes (rating + `CommentImagePicker.tsx` máx. 3 fotos 2MB; validación en `lib/commentImages.ts`)
 - [x] Reacciones "Útil" en comentarios
 - [x] Admin puede marcar preguntas como resueltas
-- [ ] Filtros de comentarios (todos, preguntas, comentarios, con fotos) (faltan filtros "con fotos")
+- [x] Filtros de comentarios (todos, preguntas, comentarios, con fotos, con rating) (`lib/comments.ts:16` `commentsEndpoint` → `?hasImages`/`?hasRating`, backend en `products.ts:353`)
 - [x] Productos similares por categoría/marca
 - [x] "Comprados juntos" basado en órdenes reales
-- [ ] Compartir por WhatsApp + copiar link (navigator.share + clipboard ✅; deep link WhatsApp ❌)
+- [x] Compartir por WhatsApp + copiar link (`ShareButton.tsx` con `navigator.share`, deep link `wa.me` y clipboard; tests en `__tests__/share.test.ts`)
 - [x] Reportar producto con motivos predefinidos
 - [x] Notificación de stock para productos agotados
 - [x] Mobile: tabs, sticky bottom bar, swipe galería
-- [ ] Responsive en todos los breakpoints (hay @media para móvil; falta verificación formal)
-- [ ] Skeleton loading states
+- [x] Responsive en todos los breakpoints (`__tests__/responsive-layout.test.ts` valida 320/375/768/1024/1440 px contra `page.module.css:940` y `:969`)
+- [x] Skeleton loading states (web `products/[id]/page.tsx:287`; mobile `Skeleton.tsx:28` ProductDetail, `:58` MenuItemDetail, `:80` Comments)
 - [x] Notificaciones al responder preguntas y reportar
 
 ---
@@ -461,7 +461,6 @@ Dos secciones en la parte inferior:
 - [x] GET /api/v1/menu-items/:id/comments — listar comentarios de MenuItem
 - [x] POST /api/v1/menu-items/:id/comments — crear comentario MenuItem (auth)
 - [x] POST /api/v1/menu-items/:id/comments/:commentId/reply — responder (auth)
-- [ ] Middleware: verificar comprador verificado para rating (obsoleto: el spec indica "sin verified buyer estricto")
 - [x] Middleware: solo admin puede resolver preguntas y ocultar comentarios
 - [x] Servicio de notificaciones: responder pregunta, reporte, stock restaurado
 - [x] Algoritmo "comprados juntos": agrupar por orderId, contar frecuencia
@@ -473,29 +472,76 @@ Dos secciones en la parte inferior:
 - [x] Componente ProductSpecifications (tabla dinámica por categoría)
 - [x] Componente CommentsSection (unificado, filtros, crear, reply, reacciones)
 - [x] Componente RelatedProducts (similares + comprados juntos)
-- [ ] Componente ShareButton (WhatsApp + clipboard) (lógica inline en page.tsx; falta componente y WhatsApp)
+- [x] Componente ShareButton (WhatsApp + clipboard) (`ShareButton.tsx` + `ShareButton.module.css`)
 - [x] Componente ReportModal
 - [x] Componente StockNotificationButton
-- [ ] Componente MenuItemDetail (hero, contenido, personalización, comentarios) (web usa MenuItemModal sin comentarios)
+- [x] Componente MenuItemDetail (hero, contenido, personalización, comentarios) (web: `MenuItemModal.tsx` hero + `CustomizationOptions` + `MenuItemComments`; mobile: `menu/[id].tsx` + `MenuItemSheet.tsx`)
 - [x] Componente CustomizationOptions (opciones de MenuItem con precio dinámico)
-- [ ] Skeleton loading states
-- [ ] Responsive design (hay @media para móvil; falta verificación formal)
+- [x] Skeleton loading states (`products/[id]/page.tsx:287` detalle + `:582` comentarios; `MenuItemComments.tsx:138`)
+- [x] Responsive design (`__tests__/responsive-layout.test.ts`: 320/375/768/1024/1440 px)
 
 ### Mobile
-- [ ] Pantalla detalle Product con galería swipe + lightbox (swipe ✅; lightbox ❌)
+- [x] Pantalla detalle Product con galería swipe + lightbox (`products/[id].tsx:320` galería swipe + `:700` `ImageLightbox`)
 - [x] Pantalla detalle MenuItem con hero + personalización
 - [x] Tabs: Descripción | Comentarios | Relacionados
 - [x] Sticky bottom bar con precio + CTA
-- [ ] Bottom sheet para personalización de MenuItem (opciones inline, no bottom sheet)
+- [x] Bottom sheet para personalización de MenuItem (`MenuItemSheet.tsx:33`, Modal animado con opciones, cantidad y CTA)
 - [x] Lista de comentarios con replies indentados
 - [x] Carrusel de productos relacionados
 
 ### General
+> **Alcance:** el "verified buyer" para rating quedó descartado por diseño (ver
+> "Sin verified buyer estricto" en la sección de MenuItem), así que no hay
+> middleware ni tests de verified buyer.
 - [x] Tests para endpoints de comentarios
 - [x] Tests para endpoints de MenuItem comments
-- [ ] Tests para verified buyer middleware (obsoleto junto con el middleware)
 - [x] Tests para algoritmo "comprados juntos"
 - [x] Tests para notificación de stock
-- [ ] Integrar con frontend
-- [ ] Integrar con mobile
-- [ ] PR a main
+- [x] Integrar con frontend (web: galería, comentarios, filtros, fotos, share, skeletons)
+- [x] Integrar con mobile (mobile: detalle Product con lightbox, MenuItemSheet, skeletons, share nativo)
+- [x] PR a main — https://github.com/lesm23031990/amsterdam-to-vzla/pull/9
+
+---
+
+## Verificación
+
+Fecha: 2026-11-19 · Rama `feature/spec-22-product-detail`
+
+### Gates automáticos
+
+| Gate | Comando | Resultado |
+| --- | --- | --- |
+| Tests raíz | `npx vitest run` | 19 archivos / 234 tests ✅ |
+| Build + typecheck web | `npm run build -w apps/web` | ✅ compilado en 31s, 23 rutas |
+| Typecheck mobile | `cd apps/mobile` + `node_modules/.bin/tsc.cmd --noEmit` | ✅ exit 0, sin salida |
+| Typecheck server | `cd server` + `npx tsc --noEmit` | ✅ exit 0, sin salida |
+| Lint web | `cd apps/web` + `npx eslint .` | 60 errores preexistentes fuera de esta spec (AuthContext, CurrencyContext, `admin/*`, `products/page`, `cart`); 0 errores en los archivos de spec-22 |
+
+Tests nuevos de esta spec: `apps/web/__tests__/{share,comments-filter,comment-images,media-url,responsive-layout}.test.ts`, `apps/mobile/__tests__/{share,comments-filter,media-url,menu-pricing}.test.ts` y los de uploads en `server/src/__tests__/`.
+
+### Evidencia responsive (320 / 375 / 768 / 1024 / 1440 px)
+
+Verificación estática automatizada en `apps/web/__tests__/responsive-layout.test.ts` (7 tests ✅). No hay navegador headless en el repo, así que el test valida el CSS que gobierna cada ancho:
+
+| Ancho | Regla aplicada | Fuente |
+| --- | --- | --- |
+| 320 px | `.container` con `padding: 32px 16px` (contenido 288 px); `@media (max-width: 480px)` → filtros `nowrap` + `overflow-x: auto`, fotos de comentarios a 72 px (3 fotos + gaps = 232 px ≤ 288 px) | `page.module.css:8`, `:969` |
+| 375 px | mismo corte de 480 px (contenido 343 px); thumbs de comentarios 72 px y `.wrap` con padding 16 px | `page.module.css:969`, `MenuItemComments.module.css:248` |
+| 768 px | `@media (max-width: 768px)` → `.mainGrid` a 1 columna, galería sin sticky, `.relatedGrid` 2 columnas, nav del lightbox 40 px; modal MenuItem `@media (max-width: 720px)` a 1 columna con CTA 100% | `page.module.css:940`, `MenuItemModal.module.css:289` |
+| 1024 px | 2 columnas: (1024 − 32 padding − 48 gap) / 2 = 472 px por columna | `page.module.css:26` |
+| 1440 px | `.container` `max-width: 1200px` centrado → 120 px de margen por lado; columnas de 560 px | `page.module.css:5`, `:26` |
+
+`.metaActions`, `ShareButton .wrap` y `CommentImagePicker .controls` usan `flex-wrap: wrap`, así que no generan scroll horizontal en ningún ancho.
+
+### Mobile
+
+- Galería: swipe horizontal, lightbox fullscreen, doble toque 2.5x + arrastre (`ImageLightbox.tsx:29`).
+- Personalización: `MenuItemSheet` como bottom sheet (`Modal` + `animationType="slide"` + handle).
+- Skeletons: `ProductDetailSkeleton` (`Skeleton.tsx:28`), `MenuItemDetailSkeleton` (`:58`), `CommentsSkeleton` (`:80`).
+- Compartir: `Share.share` con texto pre-armado (`products/[id].tsx:257`, `src/lib/share.ts`).
+
+### Deuda conocida
+
+- Pinch-to-zoom nativo en mobile: se implementó doble toque + pan (`ImageLightbox.tsx:17`); no hay gesto de dos dedos.
+- Los `<img>` del lightbox web disparan warnings `@next/next/no-img-element` (intencional: las imágenes vienen de uploads con origen dinámico).
+- Comentarios en MenuItem mobile: la spec los marca opcionales; hoy solo existen en web (`MenuItemComments`).

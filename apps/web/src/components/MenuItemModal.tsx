@@ -4,6 +4,8 @@ import { useState, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import { MenuItem, MenuOption, Customization, formatMenuPrice } from '@/lib/fastfood';
+import MenuItemComments from './MenuItemComments';
+import ShareButton from './ShareButton';
 import styles from './MenuItemModal.module.css';
 
 interface Props {
@@ -31,7 +33,10 @@ export default function MenuItemModal({ item, onClose }: Props) {
     return defaults;
   }, [item.options]);
 
-  const activeSelection: Selection = { ...singleChoiceDefaults, ...selection };
+  const activeSelection: Selection = useMemo(
+    () => ({ ...singleChoiceDefaults, ...selection }),
+    [singleChoiceDefaults, selection],
+  );
 
   const toggleSingle = (optionId: string, choiceId: string) => {
     setSelection((prev) => ({ ...prev, [optionId]: choiceId }));
@@ -125,6 +130,13 @@ export default function MenuItemModal({ item, onClose }: Props) {
           <div className={styles.right}>
             {item.category && <span className={styles.category}>{item.category}</span>}
             <h2 className={styles.name}>{item.name}</h2>
+            <div className={styles.shareRow}>
+              <ShareButton
+                title={item.name}
+                price={formatMenuPrice(Number(item.basePrice), item.currency)}
+                compact
+              />
+            </div>
             {item.preparationTime > 0 && (
               <span className={styles.time}>⏱ {item.preparationTime} min</span>
             )}
@@ -142,6 +154,8 @@ export default function MenuItemModal({ item, onClose }: Props) {
             ))}
           </div>
         </div>
+
+        <MenuItemComments menuItemId={item.id} />
 
         <div className={styles.footer}>
           <div className={styles.qtyControl}>

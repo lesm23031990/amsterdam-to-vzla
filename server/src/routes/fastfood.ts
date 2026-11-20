@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express'
 import { db } from '../lib/db'
 import { authMiddleware, requireRole } from '../middleware/auth'
 import { createNotification } from '../services/notifications'
+import { validateCommentImages } from '../services/uploads'
 
 const router = Router()
 
@@ -169,11 +170,14 @@ router.get('/menu/:id/comments', async (req: Request, res: Response) => {
       return
     }
 
-    const { page = '1', perPage = '10' } = req.query
+    const { hasImages, page = '1', perPage = '10' } = req.query
     const pageNum = Math.max(1, parseInt(String(page)) || 1)
     const perPageNum = Math.min(50, Math.max(1, parseInt(String(perPage)) || 10))
 
-    const where = { menuItemId: String(req.params.id), parentId: null }
+    const where: Record<string, unknown> = { menuItemId: String(req.params.id), parentId: null }
+    if (String(hasImages) === 'true' || String(hasImages) === '1') {
+      where.images = { isEmpty: false }
+    }
 
     const [comments, total] = await Promise.all([
       db.menuItemComment.findMany({
@@ -234,7 +238,7 @@ router.post('/menu/:id/comments', authMiddleware, async (req: Request, res: Resp
       return
     }
 
-    const { content } = req.body
+    const { content, images } = req.body
 
     if (!content || content.trim().length === 0) {
       res.status(400).json({ ok: false, error: 'El contenido es requerido' })
@@ -246,11 +250,18 @@ router.post('/menu/:id/comments', authMiddleware, async (req: Request, res: Resp
       return
     }
 
+    const imagesValidation = validateCommentImages(images)
+    if (!imagesValidation.ok) {
+      res.status(400).json({ ok: false, error: imagesValidation.error })
+      return
+    }
+
     const comment = await db.menuItemComment.create({
       data: {
         menuItemId: String(req.params.id),
         userId: req.user!.userId,
         content: content.trim(),
+        images: imagesValidation.images,
       },
     })
 
