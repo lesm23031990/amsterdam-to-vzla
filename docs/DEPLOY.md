@@ -60,6 +60,10 @@ Ya creado. Lo que necesitas copiar:
 |---|---|
 | `DATABASE_URL` | Pega el connection string de Neon (paso 1). |
 | `CORS_ORIGIN` | Mientras Vercel no esté desplegado: déjalo vacío o usa `*` temporalmente. Tan pronto tengas la URL de Vercel, **éditalo** y pon esa URL exacta. |
+| `BINANCE_PAY_API_KEY`, `BINANCE_PAY_SECRET_KEY`, `BINANCE_PAY_PUBLIC_KEY` | Opcionales (spec-19). Sin ellas el checkout con Binance Pay responde `503 code=not_configured` y el pedido queda pendiente. `PUBLIC_KEY` es la clave RSA de Binance para verificar webhooks. |
+
+Webhook a registrar en el panel de Binance Pay:
+`https://<tu-servicio>.onrender.com/api/v1/webhooks/binance`
 
 5. `JWT_SECRET` se genera automáticamente (`generateValue: true`).
 6. **Create Web Service**. Render hace:

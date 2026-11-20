@@ -19,3 +19,11 @@ services:
         value: "*"
       - key: PORT
         value: "3001"
+      # Binance Pay (spec-19): pegar los valores en el dashboard de Render.
+      # Sin credenciales el checkout con Binance Pay responde 503 code=not_configured.
+      - key: BINANCE_PAY_API_KEY
+        sync: false
+      - key: BINANCE_PAY_SECRET_KEY
+        sync: false
+      - key: BINANCE_PAY_PUBLIC_KEY
+        sync: false

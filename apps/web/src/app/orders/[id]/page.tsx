@@ -54,6 +54,14 @@ interface PaymentStatus {
   expired: boolean;
 }
 
+interface BinancePayLink {
+  paymentUrl: string | null;
+  qrContent?: string | null;
+  prepayId?: string | null;
+  expiresAt: string;
+  reused?: boolean;
+}
+
 interface TrackingInfo {
   deliveryId: string;
   status: string;
@@ -97,6 +105,9 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [payRef, setPayRef] = useState('');
+  const [binancePay, setBinancePay] = useState<BinancePayLink | null>(null);
+  const [payLinkError, setPayLinkError] = useState('');
+  const [copied, setCopied] = useState(false);
   const driverPosAtRef = useRef<string | null>(null);
 
   // Descarta posiciones viejas si las respuestas llegan desordenadas.
@@ -182,6 +193,46 @@ export default function OrderDetailPage() {
     return () => window.clearInterval(interval);
   }, [order?.id, order?.status, loadOrderData]);
 
+  // Binance Pay: recupera el link vigente o crea uno nuevo al abrir el pedido.
+  // El endpoint es idempotente, así que recargar la página no duplica la orden.
+  useEffect(() => {
+    if (!order || order.paymentMethod !== 'binance_pay') return;
+    if (order.paymentStatus !== 'pending' || order.status !== 'pending_payment') return;
+    if (binancePay?.paymentUrl) return;
+
+    const id = order.id;
+    let cancelled = false;
+    void (async () => {
+      const res = await api.post<BinancePayLink>('/checkout/pay/binance', { orderId: id });
+      if (cancelled) return;
+      if (res.ok && res.data) {
+        setBinancePay(res.data);
+        setPayLinkError('');
+      } else {
+        setPayLinkError(res.error || 'No se pudo generar el enlace de pago con Binance Pay');
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [order?.id, order?.paymentMethod, order?.paymentStatus, order?.status, binancePay?.paymentUrl]);
+
+  // Respaldo del webhook: consulta Binance cada 5s hasta que el pago se confirme.
+  useEffect(() => {
+    if (!order || order.paymentMethod !== 'binance_pay' || order.paymentStatus !== 'pending') return;
+    const id = order.id;
+
+    const tick = async () => {
+      const res = await api.get<PaymentStatus>(`/checkout/pay/binance/${id}/status`);
+      const next = res.data;
+      if (!res.ok || !next) return;
+      setPayment((current) => (current ? { ...current, ...next } : next));
+      if (next.paymentStatus !== 'pending') await loadOrderData(id);
+    };
+
+    const interval = window.setInterval(() => { void tick(); }, 5000);
+    return () => window.clearInterval(interval);
+  }, [order?.id, order?.paymentMethod, order?.paymentStatus, loadOrderData]);
+
   const handlePay = async () => {
     if (!order) return;
     setPaying(true);
@@ -191,6 +242,19 @@ export default function OrderDetailPage() {
       setPayRef('');
     }
     setPaying(false);
+  };
+
+  const payUrl = binancePay?.paymentUrl || payment?.paymentUrl || null;
+
+  const handleCopyPayLink = async () => {
+    if (!payUrl) return;
+    try {
+      await navigator.clipboard.writeText(payUrl);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
   };
 
   if (loading) return <p className={styles.loading}>Cargando pedido...</p>;
@@ -300,7 +364,7 @@ export default function OrderDetailPage() {
                 <h3>Pago con Binance Pay</h3>
                 {payment?.expired || order.status === 'cancelled' ? (
                   <div className={styles.expiredBox}>
-                    <p>La ventana de pago de 24 horas venció y el pedido fue cancelado.</p>
+                    <p>La ventana de pago de 15 minutos venció y el pedido fue cancelado.</p>
                     <p>Vuelve a hacer el pedido desde el carrito para generar un nuevo link.</p>
                   </div>
                 ) : (
@@ -308,15 +372,24 @@ export default function OrderDetailPage() {
                     <p className={styles.payInfo}>
                       Total a pagar: <strong>{order.currency} {Number(order.total).toLocaleString()}</strong>
                     </p>
-                    {payment?.paymentUrl && (
-                      <a
-                        href={payment.paymentUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.payLink}
-                      >
-                        Pagar con Binance
-                      </a>
+                    {payUrl ? (
+                      <>
+                        <a
+                          href={payUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.payLink}
+                        >
+                          Abrir Binance Pay
+                        </a>
+                        <button type="button" onClick={handleCopyPayLink} className={styles.payBtn}>
+                          {copied ? 'Enlace copiado' : 'Copiar enlace de pago'}
+                        </button>
+                      </>
+                    ) : payLinkError ? (
+                      <p className={styles.payError}>{payLinkError}</p>
+                    ) : (
+                      <p className={styles.payHint}>Generando enlace de pago seguro…</p>
                     )}
                     {payment && (
                       <p className={styles.payHint}>
@@ -324,9 +397,12 @@ export default function OrderDetailPage() {
                         {new Date(payment.expiresAt).toLocaleString('es-VE', {
                           day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
                         })}{' '}
-                        para completar el pago (link de demostración del MVP).
+                        para completar el pago. El cargo se hace en USD/USDT al tipo de cambio del día.
                       </p>
                     )}
+                    <p className={styles.payHint}>
+                      Esta pantalla se actualiza automáticamente en cuanto Binance confirma el pago.
+                    </p>
                   </div>
                 )}
               </div>
