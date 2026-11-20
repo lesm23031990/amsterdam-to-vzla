@@ -5,6 +5,38 @@ Cierra el último criterio abierto de `docs/specs/spec-20-mobile-app-screens.md`
 `expo export` para android/ios, `tsc`, 169 tests y el smoke test del endpoint de
 push contra el servidor real. Falta lo que solo se puede hacer con hardware.
 
+## Estado de dependencias (2026-11-19)
+
+`apps/mobile` arrastraba versiones de SDK 52 (`expo-router@4`, `expo-constants@17`,
+`expo-secure-store@14`, `react-native-screens@4.0`, `safe-area-context@5.0`) mezcladas
+con `expo@57`, y dos copias de React (19.2.3 en mobile y 19.2.8 en la raíz). Eso hacía
+que `expo-doctor` fallara 5 de 21 chequeos y que un build nativo pudiera romper por
+"Invalid hook call".
+
+Corregido con `npx expo install --fix` + dedupe:
+
+| Paquete | Antes | Ahora |
+|---|---|---|
+| `expo` | 57.0.8 | 57.0.33 |
+| `expo-router` | 4.0.22 | 57.0.31 |
+| `expo-constants` | 17.0.8 | 57.0.24 |
+| `expo-linking` | 7.0.5 | 57.0.14 |
+| `expo-secure-store` | 14.0.1 | 57.0.4 |
+| `react-native` | 0.86.0 | 0.86.3 |
+| `react-native-screens` | 4.0.0 | 4.26.2 |
+| `react-native-safe-area-context` | 5.0.0 | 5.7.0 |
+| `@expo/vector-icons` | 14.1.0 | 15.1.1 |
+| `react` | 19.2.3 (dos copias) | 19.2.8 (una copia) |
+
+`expo.install.exclude` en `apps/mobile/package.json` silencia el aviso de patch de
+`react` (19.2.8 es la versión que ya usa `apps/web`). `expo-doctor`: **19/21**; los dos
+restantes son el chequeo de schema de `app.json` (falla por red a la API de Expo) y el
+aviso de red de ese mismo chequeo.
+
+Validado tras el cambio: `tsc --noEmit` (mobile), 32 tests mobile, 196 tests de la suite,
+`build -w apps/web` y `expo export --platform android` + `--platform ios` (bundles Hermes
+de 3.52 MB y 3.12 MB).
+
 ## Qué se valida
 
 1. La app móvil obtiene un **token real de Expo Push** y lo registra en
@@ -23,6 +55,36 @@ push contra el servidor real. Falta lo que solo se puede hacer con hardware.
 | Teléfono en la **misma red Wi-Fi** que el PC | o un túnel HTTPS (ver paso 1) |
 | Backend corriendo en `:3001` | `npm run server` |
 | Android: proyecto Firebase | obligatorio para push remotas en Android |
+
+## Prueba rápida sin credenciales (Expo Go)
+
+Sirve para recorrer la app en un teléfono **hoy mismo**, sin cuenta Expo, sin Firebase
+y sin build nativo. No cubre push remotas: el registro del token exige
+`extra.eas.projectId` y Expo Go en Android ya no soporta push remotas desde SDK 53.
+
+```powershell
+# Terminal 1 - backend
+npm run server
+
+# Terminal 2 - IP LAN + arranque del bundler
+npm run mobile:env           # reescribe apps/mobile/.env con la IP Wi-Fi actual
+npm run mobile:check         # solo debe fallar el chequeo de projectId
+cd apps/mobile
+npx expo start               # QR en pantalla
+```
+
+1. Instala **Expo Go** desde Play Store / App Store en el teléfono (misma Wi-Fi).
+2. Escanea el QR. Verifica que tu versión de Expo Go soporte SDK 57; si la tienda
+   trae una más vieja, cae al paso 5 (build `preview`) o a `expo run:android`.
+3. Si la red bloquea la LAN, arranca con túnel: `npx expo start --tunnel`.
+
+Recorrido mínimo: registro/login → catálogo → carrito con productos de dos tiendas →
+checkout (efectivo, transferencia y Binance Pay; sin credenciales
+`/checkout/pay/binance` debe responder `503 not_configured`) → mis pedidos → detalle
+del pedido → chat IA.
+
+Filas de la matriz (§ Paso 6) validables así: **6, 7 y 8**. Las filas **1-5** necesitan
+`eas init` + build `preview` + credenciales FCM/APNs.
 
 ---
 
