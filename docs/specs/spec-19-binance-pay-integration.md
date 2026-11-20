@@ -87,9 +87,10 @@ Headers: `BinancePay-Certificate-SN: <certificate-serial>`
 - On `PAY_SUCCESS`, order payment status updated to `paid`
 - Frontend polls `GET /checkout/pay/binance/:orderId/status` every 5 seconds as fallback
 - Payment timeout after 15 minutes if not confirmed
-- On timeout, order marked as `payment_expired`
+- On timeout, order marked as `cancelled` + `paymentStatus: failed` (no existe `payment_expired`)
 - Handle `PAY_CANCEL` and `PAY_CLOSED` statuses gracefully
-- Binance API key and secret stored in env vars (`BINANCE_API_KEY`, `BINANCE_SECRET_KEY`)
+- Binance API key and secret stored in env vars (`BINANCE_PAY_API_KEY`, `BINANCE_PAY_SECRET_KEY`;
+  se aceptan los alias `BINANCE_API_KEY`, `BINANCE_SECRET_KEY`)
 
 ## Implementación (2026-11-19)
 
