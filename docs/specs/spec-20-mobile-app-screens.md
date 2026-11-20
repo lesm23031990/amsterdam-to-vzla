@@ -173,6 +173,12 @@ User login (same as web).
   `19.2.4`. Se alineó `apps/web` a `react`/`react-dom` `19.2.8`, npm deduplicó
   (sin copia en `apps/web/node_modules`) y el build web vuelve a pasar
   (23 rutas, 0 errores). Ver `docs/DEPLOY.md`.
+- Dependencias realineadas con SDK 57 (2026-11-19): `apps/mobile` mezclaba paquetes de
+  SDK 52 (`expo-router@4`, `expo-constants@17`, `expo-secure-store@14`, `screens@4.0`,
+  `safe-area-context@5.0`) con `expo@57` y tenía dos copias de React. Se aplicó
+  `npx expo install --fix`, se deduplicó React (19.2.8) y `expo-doctor` subió de 16/21 a
+  19/21; `expo export` para android/ios sigue generando los bundles Hermes. Ver
+  `docs/MOBILE-DEVICE-VALIDATION.md`.
 
 ### Pendiente
 - Validar en dispositivo físico (token real de Expo y build EAS). Requiere
