@@ -22,7 +22,7 @@ Trabajas en el monorepo `c:\Projects\amsterdam-to-vzla` (npm workspaces: `server
 | spec-01 … spec-11, 14, 15, 16, 17, 18, 21, 23 | done | 100% | Nada que hacer |
 | `spec-12-delivery-map-tracking` | archived | 2/16 | 14 checkboxes sin marcar, pero **ya implementado** (ver tarea 1) |
 | `spec-13-subscriptions-ui` | archived | 5/5 | Nada que hacer |
-| `spec-19-binance-pay-integration` | archived | 2/17 | 15 tareas **reales**: solo existe un mock (ver tarea 3) |
+| `spec-19-binance-pay-integration` | done | 17/17 | Integración real + webhook + UI (2026-11-19) |
 | `spec-20-mobile-app-screens` | in-progress | 22/23 | Bloqueada por credenciales Expo (tarea 4) |
 | `spec-22-product-detail` | in-progress | 53/71 | 18 abiertas, 2 obsoletas (tarea 2) |
 
@@ -66,24 +66,16 @@ Ajusta cualquier conteo o nota de cierre del spec que las mencione y corre `npm 
 7. **Verificación responsive formal**: 320 / 375 / 768 / 1024 / 1440 px en `products/[id]` y menú; deja evidencia escrita en el spec antes de tildar.
 8. **Cierre**: marcar checkboxes con evidencia (archivo:línea), `status: done`, PR a main con prefijo `feat(spec-22):`.
 
-### 3. spec-19 Binance Pay — 15 tareas (la única deuda que rompe ventas)
+### 3. spec-19 Binance Pay — ✅ completada (2026-11-19)
 
-**Estado real:** en `server/src/routes/checkout.ts:101-104` el cobro es un mock:
-```ts
-if (paymentMethod === 'binance_pay') {
-  const tempId = `temp-${userId}-${Date.now()}`
-  orderData.paymentUrl = `https://mock.binance.com/pay/${tempId}`
-}
-```
-El pedido queda en `pending_payment` (`:80`) y nunca se confirma por pago. No hay cliente API, ni webhook, ni verificación de firma, ni UI de QR.
-
-**Plan:**
-1. Rama `feature/spec-19-binance-pay` y `status: in-progress` en el spec (desarchivar solo al terminar, para no inflar el progreso a medias).
-2. Cliente en `server/src/services/binancePay.ts`: firma HMAC-SHA512 (`nonce` + `timestamp` + `body`, header `BinancePay-Signature`), `createOrder`, `getOrder`, timeouts y tipos estrictos. Credenciales por env (`BINANCE_PAY_API_KEY`, `BINANCE_PAY_SECRET`, `BINANCE_PAY_BASE_URL`), documentadas en `.env.example`; **nunca** hardcodear ni commitear secretos.
-3. `POST /api/v1/checkout/pay/binance` (crear orden de pago) y `POST /api/v1/webhooks/binance-pay` (webhook público, fuera de auth, con verificación de firma, **idempotente** por `merchantTradeNo`, transición `pending_payment → confirmed`, `paymentStatus: paid`, `paymentRef`, notificación al cliente con `createNotification` y evento socket).
-4. Quitar el mock de `checkout.ts:101-104` y devolver la URL/QR real.
-5. UI: mostrar QR + redirect en checkout web y mobile (`apps/web/src/app/checkout/page.tsx` y su equivalente móvil) y estado "pago confirmado".
-6. Tests con mocks del HTTP de Binance (nada de red real): firma correcta, webhook idempotente (2 envíos = 1 transición), firma inválida = 401, orden inexistente = 404. Mantén verde `npm test`.
+Ya no hay mock. Cliente HMAC-SHA512 en `server/src/services/binancePay.ts`, endpoints
+`POST /api/v1/checkout/pay/binance`, `GET /api/v1/checkout/pay/binance/:orderId/status` y
+webhook `POST /api/v1/webhooks/binance` con verificación de firma e idempotencia
+(`server/src/services/binancePaymentSync.ts`), ventana de 15 min en
+`server/src/services/orderExpiry.ts:26`, UI web y mobile con link + polling cada 5 s.
+Detalle y evidencia en `docs/specs/spec-19-binance-pay-integration.md`.
+Pendiente del dueño: cargar `BINANCE_PAY_API_KEY`, `BINANCE_PAY_SECRET_KEY` y registrar el
+webhook en Binance; sin credenciales los endpoints responden `503 code=not_configured`.
 
 ### 4. spec-20 — bloqueada por credenciales (no la intentes sin ellas)
 
@@ -93,7 +85,7 @@ Pasos del dueño: `npx -y eas-cli login` → `npx -y eas-cli init` (genera `extr
 ## Definición de terminado (en cada entrega)
 
 ```powershell
-npm test                                    # debe seguir verde (hoy 169)
+npm test                                    # debe seguir verde (hoy 173)
 cd server; npx tsc --noEmit; cd ..\..
 cd apps\web; npx tsc --noEmit; cd ..\..
 cd apps\mobile; npx tsc --noEmit; cd ..\..
@@ -116,7 +108,7 @@ npm run specs
 
 ## Orden recomendado
 
-1. Tarea 1 (sanear reporte) → 2 commits `docs(spec-12)` y `docs(spec-22)`.
-2. Tarea 2 (spec-22, 17 tareas) en `feature/spec-22-product-detail`.
-3. Tarea 3 (Binance Pay) en `feature/spec-19-binance-pay`.
+1. ~~Tarea 1 (sanear reporte)~~ → hecho en PR #9.
+2. ~~Tarea 2 (spec-22)~~ → PR #9 abierto, CI verde, listo para merge.
+3. ~~Tarea 3 (Binance Pay)~~ → PR #10 abierto, CI verde, listo para merge.
 4. Tarea 4 en cuanto el dueño comparta las credenciales Expo.

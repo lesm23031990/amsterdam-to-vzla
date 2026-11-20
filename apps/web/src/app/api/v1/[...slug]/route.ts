@@ -387,7 +387,7 @@ async function handleCheckout(body: any, auth: any) {
     id, userId: auth.userId, status: paymentMethod === 'binance_pay' ? 'pending_payment' : 'confirmed',
     total: Math.round(gt * 100) / 100, totalCop: totalCop + fee, deliveryFee: fee, currency: cur, paymentMethod,
     paymentStatus: paymentMethod === 'binance_pay' ? 'pending' : (paymentProof ? 'pending_review' : 'pending'),
-    paymentRef: null, paymentUrl: paymentMethod === 'binance_pay' ? `https://mock.binance.com/pay/${id}` : null,
+    paymentRef: null, paymentUrl: null,
     paymentProof: paymentProof || null, deliveryAddress: deliveryAddress || null,
     notes: notes || null, contactPhone: contactPhone || null,
     createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), items: oItems, delivery: null,
@@ -401,17 +401,27 @@ async function handleCheckout(body: any, auth: any) {
 }
 
 const ORDER_EXPIRY_MS = 24 * 60 * 60 * 1000
+/** Binance Pay cierra su ventana de pago a los 15 minutos (paridad con el server). */
+const BINANCE_PAY_EXPIRY_MS = 15 * 60 * 1000
+
+function expiryMsFor(paymentMethod: string): number {
+  return paymentMethod === 'binance_pay' ? BINANCE_PAY_EXPIRY_MS : ORDER_EXPIRY_MS
+}
+
+function paymentExpiresAt(o: Order): Date {
+  return new Date(new Date(o.createdAt).getTime() + expiryMsFor(o.paymentMethod))
+}
 
 /**
  * Expiración perezosa de la demo (paridad con server/src/services/orderExpiry.ts):
- * cancela órdenes que llevan más de 24h esperando el pago.
+ * cancela órdenes que siguen esperando el pago pasada su ventana (15 min Binance Pay, 24h resto).
  */
 function expireStaleOrders(userId?: string) {
-  const cutoff = Date.now() - ORDER_EXPIRY_MS
+  const now = Date.now()
   for (const o of orders) {
     if (userId && o.userId !== userId) continue
     if (o.status !== 'pending_payment' || o.paymentStatus !== 'pending') continue
-    if (new Date(o.createdAt).getTime() > cutoff) continue
+    if (paymentExpiresAt(o).getTime() > now) continue
     o.status = 'cancelled'
     o.paymentStatus = 'failed'
     o.updatedAt = new Date().toISOString()
@@ -436,7 +446,7 @@ function handlePaymentStatus(id: string, auth: any) {
   const o = orders.find(x => x.id === id)
   if (!o) return error('Pedido no encontrado', 404)
   if (o.userId !== auth.userId && auth.role !== 'admin') return error('No autorizado', 403)
-  const expiresAt = new Date(new Date(o.createdAt).getTime() + ORDER_EXPIRY_MS)
+  const expiresAt = paymentExpiresAt(o)
   const expired = o.paymentStatus !== 'paid' && (
     (o.status === 'cancelled' && o.paymentStatus === 'failed') ||
     (o.status === 'pending_payment' && Date.now() >= expiresAt.getTime())
@@ -466,6 +476,57 @@ async function handlePayOrder(id: string, body: any, auth: any) {
   o.paymentProof = body.paymentProof || null
   o.updatedAt = new Date().toISOString()
   return json({ ok: true, data: o })
+}
+
+/**
+ * La demo pública no tiene credenciales del comercio: responde igual que el
+ * server real (`code: 'not_configured'`, 503) en vez de inventar un link falso.
+ */
+function handleCreateBinancePay(body: any, auth: any) {
+  expireStaleOrders()
+  const o = orders.find(x => x.id === body?.orderId)
+  if (!o) return error('Pedido no encontrado', 404)
+  if (o.userId !== auth.userId) return error('No autorizado para pagar este pedido', 403)
+  if (o.paymentMethod !== 'binance_pay') return error('Este pedido no usa Binance Pay', 400)
+  if (o.paymentStatus === 'paid') return error('Este pedido ya fue pagado', 400)
+  if (o.status === 'cancelled') {
+    return NextResponse.json(
+      { ok: false, error: 'La ventana de pago de 15 minutos venció', code: 'expired' },
+      { status: 400 }
+    )
+  }
+  return NextResponse.json({
+    ok: false,
+    error: 'Binance Pay requiere credenciales del comercio (BINANCE_PAY_API_KEY / BINANCE_PAY_SECRET_KEY)',
+    code: 'not_configured',
+  }, { status: 503 })
+}
+
+/** Estado del pago con ventana de 15 minutos (paridad con el endpoint del server). */
+function handleBinancePayStatus(id: string, auth: any) {
+  expireStaleOrders()
+  const o = orders.find(x => x.id === id)
+  if (!o) return error('Pedido no encontrado', 404)
+  if (o.userId !== auth.userId && auth.role !== 'admin') return error('No autorizado', 403)
+  const expiresAt = paymentExpiresAt(o)
+  const expired = o.paymentStatus !== 'paid' && (
+    (o.status === 'cancelled' && o.paymentStatus === 'failed') ||
+    (o.status === 'pending_payment' && Date.now() >= expiresAt.getTime())
+  )
+  return json({
+    ok: true,
+    data: {
+      orderId: o.id,
+      orderStatus: o.status,
+      paymentMethod: o.paymentMethod,
+      paymentStatus: o.paymentStatus,
+      paymentRef: o.paymentRef ?? null,
+      paymentUrl: o.paymentUrl ?? null,
+      paidAt: o.paymentStatus === 'paid' ? o.updatedAt : null,
+      expiresAt: expiresAt.toISOString(),
+      expired,
+    },
+  })
 }
 
 function handleTracking(id: string, auth: any) {
@@ -800,6 +861,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
   if (path.match(/^\/products\/[^/]+\/comments$/)) return handleGetComments(path.split('/')[2], sp)
   if (path.match(/^\/products\/[^/]+$/)) return handleGetProduct(path.split('/')[2], sp)
   if (path === '/cart') return auth ? handleGetCart(auth.userId) : error('No autorizado', 401)
+  if (path.match(/^\/checkout\/pay\/binance\/[^/]+\/status$/)) return auth ? handleBinancePayStatus(path.split('/')[4], auth) : error('No autorizado', 401)
   if (path === '/checkout/orders') return auth ? handleGetOrders(auth.userId) : error('No autorizado', 401)
   if (path.match(/^\/checkout\/orders\/[^/]+\/payment-status$/)) return auth ? handlePaymentStatus(path.split('/')[3], auth) : error('No autorizado', 401)
   if (path.match(/^\/checkout\/orders\/[^/]+$/)) return auth ? handleGetOrder(path.split('/').pop()!, auth) : error('No autorizado', 401)
@@ -831,6 +893,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   if (path === '/auth/register') return handleRegister(body)
   if (path === '/cart/items') return auth ? handleAddToCart(body, auth) : error('No autorizado', 401)
   if (path === '/checkout') return auth ? handleCheckout(body, auth) : error('No autorizado', 401)
+  if (path === '/checkout/pay/binance') return auth ? handleCreateBinancePay(body, auth) : error('No autorizado', 401)
   if (path.match(/^\/checkout\/orders\/[^/]+\/pay$/)) return auth ? handlePayOrder(path.split('/')[3], body, auth) : error('No autorizado', 401)
   if (path.match(/^\/products\/[^/]+\/comments$/)) return auth ? handleCreateComment(path.split('/')[2], body, auth) : error('No autorizado', 401)
   if (path.match(/^\/products\/[^/]+\/comments\/[^/]+\/reply$/)) return auth ? handleReply(path.split('/')[2], path.split('/')[4], body, auth) : error('No autorizado', 401)

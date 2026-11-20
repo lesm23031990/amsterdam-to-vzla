@@ -10,6 +10,12 @@ import {
   getPaymentExpiresAt,
   isPaymentExpired,
 } from '../services/orderExpiry'
+import {
+  binanceAmountForOrder,
+  createBinancePayOrder,
+  isBinancePayConfigured,
+  toMerchantTradeNo,
+} from '../services/binancePay'
 import { io } from '../index'
 
 const router = Router()
@@ -98,12 +104,31 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       },
     }
 
-    if (paymentMethod === 'binance_pay') {
-      const tempId = `temp-${userId}-${Date.now()}`
-      orderData.paymentUrl = `https://mock.binance.com/pay/${tempId}`
-    }
-
     const order = await db.order.create({ data: orderData })
+
+    // Binance Pay real (spec-19): el pedido se crea primero para usar su id como
+    // merchantTradeNo. Si Binance falla, el pedido queda pendiente y sin link; el
+    // cliente puede reintentar desde POST /checkout/pay/binance.
+    let createdOrder = order
+    let binancePayError: string | null = null
+    if (paymentMethod === 'binance_pay' && isBinancePayConfigured()) {
+      try {
+        const usdRate = rates.find((rate) => rate.currency === 'USD')?.rate
+        const binanceOrder = await createBinancePayOrder({
+          merchantTradeNo: toMerchantTradeNo(order.id),
+          amount: binanceAmountForOrder(order, usdRate),
+          currency: 'USD',
+          description: `Pedido #${order.id.slice(-6)}`,
+        })
+        createdOrder = await db.order.update({
+          where: { id: order.id },
+          data: { paymentUrl: binanceOrder.paymentUrl, paymentRef: binanceOrder.prepayId },
+        })
+      } catch (error) {
+        binancePayError = error instanceof Error ? error.message : 'Error al crear el pago con Binance Pay'
+        console.error('Binance Pay order creation error:', error)
+      }
+    }
 
     await db.cartItem.deleteMany({ where: { cartId: cart.id } })
 
@@ -129,7 +154,11 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       orderId: order.id,
     })
 
-    res.status(201).json({ ok: true, data: order })
+    res.status(201).json({
+      ok: true,
+      data: createdOrder,
+      ...(binancePayError ? { binancePayError } : {}),
+    })
   } catch (error) {
     console.error('Checkout error:', error)
     res.status(500).json({ ok: false, error: 'Error al procesar el checkout' })
@@ -178,7 +207,7 @@ router.get('/orders/:id/payment-status', authMiddleware, async (req: Request, re
     }
 
     const order = await expireOrderIfNeeded(found)
-    const expiresAt = getPaymentExpiresAt(order.createdAt)
+    const expiresAt = getPaymentExpiresAt(order.createdAt, order.paymentMethod)
 
     res.json({
       ok: true,

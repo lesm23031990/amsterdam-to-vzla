@@ -72,11 +72,53 @@ export default function OrderDetailScreen() {
   const [tracking, setTracking] = useState<TrackingInfo | null>(null);
   const [liveLocation, setLiveLocation] = useState<LatLng | null>(null);
   const [lastLocationAt, setLastLocationAt] = useState<string | null>(null);
+  const [payError, setPayError] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchOrder();
   }, [id]);
+
+  // Binance Pay: si el link no se creó en el checkout, se reintenta al abrir el pedido
+  // (el endpoint es idempotente, así que no duplica la orden de pago).
+  useEffect(() => {
+    if (!order || order.paymentMethod !== 'binance_pay' || order.paymentStatus !== 'pending') return;
+    if (payment?.paymentUrl) return;
+    const orderId = order.id;
+    void (async () => {
+      try {
+        const res = await apiClient.post('/api/v1/checkout/pay/binance', { orderId });
+        if (res.data?.ok) {
+          setPayError('');
+          void fetchOrder();
+        }
+      } catch (error) {
+        const data = (error as { response?: { data?: { error?: string } } })?.response?.data;
+        setPayError(data?.error || 'No se pudo generar el enlace de pago');
+      }
+    })();
+  }, [order?.id, order?.paymentMethod, order?.paymentStatus, payment?.paymentUrl]);
+
+  // Respaldo del webhook: consulta el estado del pago cada 5 s hasta que se confirme.
+  useEffect(() => {
+    if (!order || order.paymentMethod !== 'binance_pay' || order.paymentStatus !== 'pending') return;
+    const orderId = order.id;
+    const interval = setInterval(async () => {
+      try {
+        const res = await apiClient.get(`/api/v1/checkout/pay/binance/${orderId}/status`);
+        const next = res.data?.data;
+        if (!next) return;
+        setPayment(next);
+        if (next.paymentStatus !== 'pending') {
+          clearInterval(interval);
+          void fetchOrder();
+        }
+      } catch (error) {
+        console.error('Error polling binance payment:', error);
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [order?.id, order?.paymentMethod, order?.paymentStatus]);
 
   // Polling de respaldo: el socket entrega la posición al instante, pero si la
   // conexión se cae seguimos refrescando cada 15 s.
@@ -261,7 +303,7 @@ export default function OrderDetailScreen() {
           {payment?.expired || order.status === 'cancelled' ? (
             <View style={styles.expiredBox}>
               <Text style={styles.expiredText}>
-                La ventana de pago de 24 horas venció y el pedido fue cancelado.
+                La ventana de pago de 15 minutos venció y el pedido fue cancelado.
               </Text>
               <Text style={styles.expiredText}>
                 Vuelve a hacer el pedido para generar un nuevo link.
@@ -269,13 +311,17 @@ export default function OrderDetailScreen() {
             </View>
           ) : (
             <>
-              {payment?.paymentUrl && (
+              {payment?.paymentUrl ? (
                 <TouchableOpacity
                   style={styles.payButton}
                   onPress={() => Linking.openURL(payment.paymentUrl as string)}
                 >
-                  <Text style={styles.payButtonText}>Pagar con Binance</Text>
+                  <Text style={styles.payButtonText}>Abrir Binance Pay</Text>
                 </TouchableOpacity>
+              ) : payError ? (
+                <Text style={styles.expiredText}>{payError}</Text>
+              ) : (
+                <Text style={styles.payHint}>Generando enlace de pago seguro...</Text>
               )}
               {payment && (
                 <Text style={styles.payHint}>
@@ -283,9 +329,12 @@ export default function OrderDetailScreen() {
                   {new Date(payment.expiresAt).toLocaleString('es-VE', {
                     day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
                   })}{' '}
-                  para completar el pago (link de demostración del MVP).
+                  para completar el pago. El cargo se hace en USD/USDT al tipo de cambio del día.
                 </Text>
               )}
+              <Text style={styles.payHint}>
+                Esta pantalla se actualiza automáticamente en cuanto Binance confirma el pago.
+              </Text>
             </>
           )}
         </View>

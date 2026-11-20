@@ -1,25 +1,34 @@
 import { db } from '../lib/db'
 import { OrderStatus } from '../generated/prisma/enums'
+import { BINANCE_PAY_TIMEOUT_MINUTES } from './binancePay'
 
 /** Horas que una orden puede permanecer pendiente de pago antes de expirar. */
 export const PAYMENT_TIMEOUT_HOURS = 24
 
 const PAYMENT_TIMEOUT_MS = PAYMENT_TIMEOUT_HOURS * 60 * 60 * 1000
 
+/** Binance Pay cierra su ventana de pago a los 15 minutos (spec-19). */
+const BINANCE_PAY_TIMEOUT_MS = BINANCE_PAY_TIMEOUT_MINUTES * 60 * 1000
+
 export interface ExpirableOrder {
   id: string
   status: string
   paymentStatus: string
   createdAt: Date
+  paymentMethod?: string | null
 }
 
-/** Momento en que expira la ventana de pago de una orden: createdAt + 24h. */
-export function getPaymentExpiresAt(createdAt: Date): Date {
-  return new Date(createdAt.getTime() + PAYMENT_TIMEOUT_MS)
+/**
+ * Momento en que expira la ventana de pago de una orden: createdAt + 24h,
+ * o createdAt + 15 minutos cuando el pago es con Binance Pay.
+ */
+export function getPaymentExpiresAt(createdAt: Date, paymentMethod?: string | null): Date {
+  const timeoutMs = paymentMethod === 'binance_pay' ? BINANCE_PAY_TIMEOUT_MS : PAYMENT_TIMEOUT_MS
+  return new Date(createdAt.getTime() + timeoutMs)
 }
 
-function isPaymentWindowClosed(createdAt: Date, now: Date): boolean {
-  return getPaymentExpiresAt(createdAt).getTime() <= now.getTime()
+function isPaymentWindowClosed(createdAt: Date, paymentMethod: string | null | undefined, now: Date): boolean {
+  return getPaymentExpiresAt(createdAt, paymentMethod).getTime() <= now.getTime()
 }
 
 /**
@@ -30,13 +39,14 @@ export function shouldExpireOrder(order: ExpirableOrder, now: Date = new Date())
   return (
     order.status === OrderStatus.pending_payment &&
     order.paymentStatus === 'pending' &&
-    isPaymentWindowClosed(order.createdAt, now)
+    isPaymentWindowClosed(order.createdAt, order.paymentMethod, now)
   )
 }
 
 /**
  * Estado de expiración para la respuesta de `payment-status`.
- * Una orden pagada nunca expira, aunque haya pasado la ventana de 24h.
+ * Una orden pagada nunca expira, aunque haya pasado la ventana de pago.
+ * La ventana es de 15 minutos para Binance Pay y de 24h para el resto.
  */
 export function isPaymentExpired(order: ExpirableOrder, now: Date = new Date()): boolean {
   if (order.paymentStatus === 'paid') return false
@@ -62,19 +72,35 @@ export async function expireOrderIfNeeded<T extends ExpirableOrder>(order: T): P
 
 /**
  * Expiración masiva usada antes de listar órdenes. Devuelve cuántas órdenes cambió.
+ * Binance Pay expira a los 15 minutos; el resto de métodos a las 24h.
  */
 export async function expirePendingOrders(userId?: string): Promise<number> {
-  const cutoff = new Date(Date.now() - PAYMENT_TIMEOUT_MS)
+  const base = {
+    ...(userId ? { userId } : {}),
+    status: OrderStatus.pending_payment,
+    paymentStatus: 'pending',
+  }
+  const data = { status: OrderStatus.cancelled, paymentStatus: 'failed' }
+  const now = Date.now()
 
-  const result = await db.order.updateMany({
-    where: {
-      ...(userId ? { userId } : {}),
-      status: OrderStatus.pending_payment,
-      paymentStatus: 'pending',
-      createdAt: { lte: cutoff },
-    },
-    data: { status: OrderStatus.cancelled, paymentStatus: 'failed' },
-  })
+  const [binance, others] = await Promise.all([
+    db.order.updateMany({
+      where: {
+        ...base,
+        paymentMethod: 'binance_pay',
+        createdAt: { lte: new Date(now - BINANCE_PAY_TIMEOUT_MS) },
+      },
+      data,
+    }),
+    db.order.updateMany({
+      where: {
+        ...base,
+        paymentMethod: { not: 'binance_pay' },
+        createdAt: { lte: new Date(now - PAYMENT_TIMEOUT_MS) },
+      },
+      data,
+    }),
+  ])
 
-  return result.count
+  return binance.count + others.count
 }

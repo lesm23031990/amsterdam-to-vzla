@@ -376,7 +376,7 @@ describe('Checkout — mixed product + menu', () => {
     expect(created[1]).not.toHaveProperty('productId')
   })
 
-  it('creates a binance_pay order with a mock payment link', async () => {
+  it('creates a binance_pay order without a fabricated payment link', async () => {
     ;(mockDb.cart.findUnique as MockFn).mockResolvedValue({
       ...mockCart,
       items: [
@@ -401,7 +401,7 @@ describe('Checkout — mixed product + menu', () => {
     const created = (mockDb.order.create as MockFn).mock.calls[0][0].data
     expect(created.status).toBe('pending_payment')
     expect(created.paymentStatus).toBe('pending')
-    expect(created.paymentUrl).toMatch(/^https:\/\/mock\.binance\.com\/pay\/temp-user-1-/)
-    expect(res.body.data.paymentUrl).toBe(created.paymentUrl)
+    expect(created.paymentUrl ?? null).toBeNull()
+    expect(res.body.data.paymentUrl).toBeFalsy()
   })
 })
