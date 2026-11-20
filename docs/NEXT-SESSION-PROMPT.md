@@ -108,7 +108,7 @@ npm run specs
 
 ## Orden recomendado
 
-1. Tarea 1 (sanear reporte) → 2 commits `docs(spec-12)` y `docs(spec-22)`.
-2. Tarea 2 (spec-22, 17 tareas) en `feature/spec-22-product-detail`.
-3. Tarea 3 (Binance Pay) en `feature/spec-19-binance-pay`.
+1. ~~Tarea 1 (sanear reporte)~~ → hecho en PR #9.
+2. ~~Tarea 2 (spec-22)~~ → PR #9 abierto, CI verde, listo para merge.
+3. ~~Tarea 3 (Binance Pay)~~ → PR #10 abierto, CI verde, listo para merge.
 4. Tarea 4 en cuanto el dueño comparta las credenciales Expo.
